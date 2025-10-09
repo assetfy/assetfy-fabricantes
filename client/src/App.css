@@ -1,0 +1,1227 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.login-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.admin-panel {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 1400px;
+  text-align: center;
+}
+
+.login-container h2,
+.admin-panel h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.form-group.form-group-checkbox label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  font-weight: normal;
+}
+
+.form-group.form-group-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.form-group input {
+  width: 95%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Input with button container styles */
+.input-with-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-with-button input {
+  flex: 1;
+  width: auto;
+}
+
+.generate-serial-btn {
+  width: auto;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.generate-serial-btn:hover {
+  background-color: #218838;
+}
+
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button.secondary-button {
+  background-color: #6c757d;
+}
+
+button.secondary-button:hover {
+  background-color: #5a6268;
+}
+
+.error-message {
+  color: red;
+  margin-top: 1rem;
+}
+
+.admin-panel nav ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  justify-content: space-around;
+}
+
+.admin-panel nav ul li a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: bold;
+}
+
+/* Estilos para el panel del apoderado */
+.apoderado-panel {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 1400px;
+  text-align: center;
+}
+
+.apoderado-panel h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.apoderado-panel nav ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.apoderado-panel nav ul li a {
+  text-decoration: none;
+  color: #1976d2;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
+.apoderado-panel nav ul li a:hover {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(33, 150, 243, 0.3);
+}
+
+.apoderado-panel .content {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+/* Estilos para listas y tablas */
+.list-container {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.list-container h3 {
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+/* Estilos para formularios */
+.form-container {
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h3 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 95%;
+}
+
+.admin-panel .content {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+/* File upload styles */
+.file-list {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.file-list ul {
+  list-style-type: none;
+  padding-left: 0;
+  margin: 0.5rem 0;
+}
+
+.file-list li {
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.existing-files {
+  margin-top: 0.5rem;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.file-item a {
+  color: #007bff;
+  text-decoration: none;
+  flex-grow: 1;
+}
+
+.file-item a:hover {
+  text-decoration: underline;
+}
+
+.delete-file-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  width: auto;
+}
+
+.delete-file-btn:hover {
+  background-color: #c82333;
+}
+
+/* Checkbox styling for representantes coverage */
+.checkbox-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  margin: 0;
+  font-weight: normal;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+  line-height: 1.4;
+}
+
+.checkbox-label:hover {
+  background-color: #f8f9fa;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.selected-items {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #666;
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.form-buttons button {
+  flex: 1;
+}
+
+/* Warranty Management Styles */
+.warranty-form {
+  padding: 1rem 0;
+}
+
+.warranty-period {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.warranty-period h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.warranty-period-inputs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.warranty-period-inputs input {
+  flex: 1;
+  min-width: 100px;
+}
+
+.warranty-period-inputs select {
+  flex: 1;
+  min-width: 120px;
+}
+
+.warranty-info {
+  padding: 1rem 0;
+}
+
+.readonly-field {
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  color: #495057;
+  min-height: 1.2rem;
+}
+
+.warranty-active {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.warranty-expired {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.expired-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Table styling for warranty expiration */
+table .warranty-expired {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Form group modifications for warranty */
+.form-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.form-group label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+}
+
+/* Override for checkbox-label specific styles to ensure proper alignment */
+.checkbox-label input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  margin-right: 0 !important;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* View toggle styles */
+.view-toggle {
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.view-toggle label {
+  margin-right: 5px;
+  font-weight: bold;
+}
+
+.view-toggle select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Products grid view styles - Basic structure, detailed styling in index.css */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Product card styles defined in index.css for consistency */
+
+/* Marcas grid view styles - Similar to products grid */
+.marcas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Multimedia form styles */
+.multimedia-form {
+  max-width: 100%;
+}
+
+/* Main Image Preview Section - Similar to Profile Modal */
+.main-image-preview-section {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.main-image-preview-section h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.main-image-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin-bottom: 1rem;
+}
+
+.main-image-preview img {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #ddd;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.main-image-preview img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.file-preview {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.current-media {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.imagen-principal-thumb {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.imagen-principal-thumb:hover {
+  transform: scale(1.05);
+}
+
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-item {
+  text-align: center;
+}
+
+.videos-list, .manuales-list {
+  margin-top: 10px;
+}
+
+.video-item, .manual-item {
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+/* Modal styles for image preview */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Utility classes */
+.hidden {
+  display: none !important;
+}
+
+/* Administración Panel Styles */
+.administracion-panel {
+  margin: 1rem 0;
+}
+
+.exportacion-datos, .importacion-datos {
+  padding: 1rem;
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.form-actions {
+  margin: 1.5rem 0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.export-button, .import-button, .validate-button, .template-button {
+  background-color: #007bff;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.export-button:hover, .import-button:hover, 
+.validate-button:hover, .template-button:hover {
+  background-color: #0056b3;
+}
+
+.export-button:disabled, .import-button:disabled, 
+.validate-button:disabled, .template-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.template-button {
+  background-color: #28a745;
+}
+
+.template-button:hover {
+  background-color: #218838;
+}
+
+.validate-button {
+  background-color: #fd7e14;
+}
+
+.validate-button:hover {
+  background-color: #e96100;
+}
+
+.file-info {
+  margin-top: 0.5rem;
+  color: #007bff;
+  font-style: italic;
+}
+
+.validation-results {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.validation-results.success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.validation-results.error {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.success-message, .error-message {
+  margin: 0;
+}
+
+.error-message ul {
+  margin: 1rem 0 0 1rem;
+  padding: 0;
+}
+
+.error-message li {
+  margin-bottom: 0.5rem;
+}
+
+.export-info, .import-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.export-info h5, .import-info h5 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.export-info ul, .import-info ul {
+  margin: 0.5rem 0 0 1rem;
+  color: #6c757d;
+}
+
+.export-info li, .import-info li {
+  margin-bottom: 0.25rem;
+}
+
+/* Registro Producto Styles */
+.form-description {
+  margin-bottom: 1.5rem;
+  color: #666;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.field-help {
+  display: block;
+  margin-top: 0.25rem;
+  color: #888;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.success-message {
+  text-align: center;
+  padding: 2rem;
+}
+
+.success-message h2 {
+  color: #28a745;
+  margin-bottom: 1.5rem;
+}
+
+.registration-details {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1.5rem 0;
+  text-align: left;
+  border-left: 4px solid #28a745;
+}
+
+.registration-details p {
+  margin: 0.5rem 0;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.success-text {
+  color: #666;
+  margin: 1.5rem 0;
+  line-height: 1.4;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.form-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.form-footer small {
+  color: #888;
+  line-height: 1.4;
+}
+
+/* Warranty Management Styles */
+.warranty-manager-form {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.warranty-tab-content {
+  padding: 1rem 0;
+}
+
+.warranty-duration .duration-inputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.warranty-duration .duration-inputs input {
+  flex: 1;
+}
+
+.warranty-duration .duration-inputs select {
+  flex: 1;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.submit-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.submit-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.cancel-btn:hover {
+  background-color: #5a6268;
+}
+
+/* Warranty List Styles */
+.warranty-list {
+  margin: 1rem 0;
+}
+
+.warranty-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.warranty-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.warranty-table th,
+.warranty-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.warranty-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #495057;
+}
+
+.id-cell {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.name-cell {
+  min-width: 200px;
+}
+
+.name-container .name {
+  font-weight: bold;
+  color: #333;
+}
+
+.coverage-summary {
+  font-size: 0.9rem;
+}
+
+.coverage-item {
+  margin-bottom: 0.25rem;
+}
+
+.coverage-item strong {
+  color: #666;
+}
+
+.cost-badge, .status-badge, .boolean-badge, .payment-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.cost-badge.included {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.cost-badge.additional {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.activa {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactiva {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.boolean-badge.yes {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.boolean-badge.no {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.payment-badge.covered {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.payment-badge.client {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #f8f9fa;
+}
+
+.view-btn:hover {
+  border-color: #73bd69;
+  background-color: #73bd69;
+  color: white;
+}
+
+.edit-btn {
+  color: #28a745;
+}
+
+.edit-btn:hover {
+  border-color: #28a745;
+  background-color: #28a745;
+  color: white;
+}
+
+.delete-btn:hover {
+  border-color: #dc3545;
+  background-color: #dc3545;
+  color: white;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Warranty Details Styles */
+.warranty-details {
+  max-width: 100%;
+}
+
+.warranty-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.warranty-details-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0.25rem;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.warranty-details-content {
+  padding: 1rem 0;
+}
+
+.detail-item {
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.detail-item label {
+  font-weight: bold;
+  color: #666;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.detail-item span {
+  flex: 1;
+  color: #333;
+}
+
+.warranty-details-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.close-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.close-button:hover {
+  background-color: #5a6268;
+}
+
+/* Bienes badge styles */
+.badge-creado {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge-registrado {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Button group for bienes panel */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.button-group button {
+  flex: 1;
+  max-width: 300px;
+}
+
+.button-group .register-button {
+  background-color: #17a2b8;
+}
+
+.button-group .register-button:hover {
+  background-color: #138496;
+}
+
+/* Read-only form styles */
+.form-group.read-only label {
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 0.25rem;
+}
+
+.form-group.read-only p {
+  margin: 0 0 1rem 0;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  color: #333;
+}
+
+/* Verification result styles */
+.verification-result {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.verification-result h4 {
+  margin-top: 0;
+  color: #155724;
+}
+
+.product-details {
+  text-align: left;
+}
+
+.product-details p {
+  margin: 0.5rem 0;
+}
+
+/* Info message for registered bienes */
+.info-message {
+  background-color: #d1ecf1;
+  border-left: 4px solid #0c5460;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+}
+
+.info-message p {
+  margin: 0;
+  color: #0c5460;
+}
+
+/* Product tipo in grid view */
+.product-tipo {
+  margin: 0.5rem 0;
+}
+
+/* Attributes table */
+.attributes-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.attributes-table th,
+.attributes-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.attributes-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.attributes-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+}

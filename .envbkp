@@ -1,0 +1,5 @@
+MONGODB_URI=mongodb://127.0.0.1:27017/assetfy
+
+
+
+#mongodb+srv://elpineda_db_user:NiYVB4haGD59fA3e@assetfab.hhu6565.mongodb.net/?retryWrites=true&w=majority&appName=assetfab
