@@ -42,13 +42,31 @@ app.get('/api/health', (req, res) => {
 
 // Servir frontend (React build)
 const buildPath = path.join(__dirname, 'build');
-app.use(express.static(buildPath));
 
-// Catch-all universal: SOLO sirve index.html si la ruta NO es de API
+// Middleware para asegurar que las rutas /api/* NUNCA sean manejadas por static
 app.use((req, res, next) => {
+  // Si la ruta comienza con /api, pasar al siguiente middleware (rutas API o 404)
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  // Para rutas no-API, continuar al middleware estático
+  next();
+});
+
+// Servir archivos estáticos con configuración explícita
+// index: false previene que express.static sirva index.html automáticamente
+app.use(express.static(buildPath, {
+  index: false,
+  fallthrough: true
+}));
+
+// Catch-all para rutas no-API: sirve index.html para SPA routing
+app.use((req, res, next) => {
+  // Doble verificación: si es ruta API, retornar 404 JSON
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
+  // Para todas las demás rutas, servir el index.html de React
   res.sendFile(path.join(buildPath, 'index.html'));
 });
 

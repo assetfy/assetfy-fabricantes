@@ -2,9 +2,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-baseURL:'https://fabricantes.asset-fy.com/api',
-
-
+  // Usar URL relativa para que funcione en cualquier entorno
+  // En desarrollo: usa proxy configurado en package.json
+  // En producción: usa el mismo dominio donde está desplegado el frontend
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
