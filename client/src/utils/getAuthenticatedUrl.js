@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = 'https://fabricantes.asset-fy.com/api'; // sin barra final
+const DEFAULT_API_BASE = 'https://fabricantes.asset-fy.com'; // sin barra final ni /api
 
 const normaliseBaseUrl = (url) => {
     if (!url) return DEFAULT_API_BASE;
