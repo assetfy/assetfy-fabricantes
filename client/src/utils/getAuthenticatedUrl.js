@@ -1,14 +1,17 @@
-const DEFAULT_API_BASE = 'http://localhost:5000';
+const DEFAULT_API_BASE = 'https://fabricantes.asset-fy.com/api'; // sin barra final
 
 const normaliseBaseUrl = (url) => {
     if (!url) return DEFAULT_API_BASE;
-    return url.endsWith('/') ? url.slice(0, -1) : url;
+    // quita espacios y barra final si la hubiera
+    let cleaned = url.trim();
+    return cleaned.endsWith('/') ? cleaned.slice(0, -1) : cleaned;
 };
 
 export const getAuthenticatedUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
 
-    const baseUrl = normaliseBaseUrl(process.env.REACT_APP_API_URL || DEFAULT_API_BASE);
+    // quita espacios y barra final, da prioridad a env
+const baseUrl = normaliseBaseUrl((process.env.REACT_APP_API_URL || DEFAULT_API_BASE).trim());
 
     let fullUrl = url;
     if (url.startsWith('/api/')) {

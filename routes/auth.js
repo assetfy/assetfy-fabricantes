@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -11,27 +10,28 @@ const { hasRole, getPrimaryRole } = require('../utils/roleHelper');
 // @desc    Authenticate user and get token
 // @access  Public
 router.post('/login', async (req, res) => {
-    const { correoElectronico } = req.body;
-    const contrasena = req.body.contrasena ?? req.body['contraseña'];
+    // Soporta campos alternativos para mayor robustez
+    const correoElectronico = req.body.correoElectronico ?? req.body.usuario ?? req.body.email;
+    const contrasena = req.body.contrasena ?? req.body['contraseña'] ?? req.body.password;
 
     if (!correoElectronico || !contrasena) {
-        return res.status(400).json('Invalid credentials');
+        return res.status(400).json({ error: 'Credenciales inválidas' });
     }
 
     try {
         let usuario = await Usuario.findOne({ correoElectronico });
 
         if (!usuario) {
-            return res.status(400).json('Invalid credentials');
+            return res.status(400).json({ error: 'Credenciales inválidas' });
         }
 
         const isMatch = await bcrypt.compare(contrasena, usuario['contraseña']);
 
         if (!isMatch) {
-            return res.status(400).json('Invalid credentials');
+            return res.status(400).json({ error: 'Credenciales inválidas' });
         }
 
-        // If user has an activation token and is logging in for the first time, activate the account
+        // Activación automática si corresponde
         if (usuario.activationToken && usuario.estadoApoderado === 'Invitado') {
             usuario.estadoApoderado = 'Activo';
             usuario.activationToken = null;
@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
             await usuario.save();
         }
 
-        // Check if apoderado has at least one enabled fabricante
+        // Chequeo de fabricantes habilitados para apoderado
         if (hasRole(usuario.roles, 'apoderado')) {
             const fabricantesHabilitados = await Fabricante.countDocuments({
                 $or: [
@@ -49,11 +49,9 @@ router.post('/login', async (req, res) => {
             });
 
             if (fabricantesHabilitados === 0) {
-                return res.status(403).json('No tiene fabricantes habilitados');
+                return res.status(403).json({ error: 'No tiene fabricantes habilitados' });
             }
         }
-
-        // usuario_bienes doesn't need fabricante validation
 
         const payload = {
             usuario: {
@@ -67,18 +65,20 @@ router.post('/login', async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '1h' },
             (err, token) => {
-                if (err) throw err;
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: 'Error al generar el token' });
+                }
                 res.json({ 
                     token, 
                     roles: usuario.roles || [],
-                    // Send primary role for backward compatibility
                     rol: getPrimaryRole(usuario.roles)
                 });
             }
         );
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({ error: 'Error del servidor' });
     }
 });
 
@@ -98,14 +98,13 @@ router.get('/activate/:token', async (req, res) => {
             return res.status(400).json({ msg: 'Token de activación inválido o expirado.' });
         }
         
-        // Return user email for login form to pre-fill
         res.json({ 
             msg: 'Token válido. Por favor, inicia sesión para activar tu cuenta.',
             correoElectronico: usuario.correoElectronico
         });
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({ error: 'Error del servidor' });
     }
 });
 
