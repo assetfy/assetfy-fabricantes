@@ -60,28 +60,30 @@ const ProtectedRoutes = () => {
     };
 
     return (
-        <Routes>
-            {/* Redirigir la ruta raíz a la vista adecuada */}
-            <Route path="/" element={
-                isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? (
-                    <Navigate to="/admin" />
-                ) : isAuthenticated && (hasAnyRole(['apoderado']) || rol === 'apoderado') ? (
-                    <Navigate to="/apoderado" />
-                ) : isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? (
-                    <Navigate to="/usuario" />
-                ) : (
-                    <Navigate to="/login" />
-                )
-            } />
+        <>
+            <Routes>
+                {/* Redirigir la ruta raíz a la vista adecuada */}
+                <Route path="/" element={
+                    isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? (
+                        <Navigate to="/admin" />
+                    ) : isAuthenticated && (hasAnyRole(['apoderado']) || rol === 'apoderado') ? (
+                        <Navigate to="/apoderado" />
+                    ) : isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? (
+                        <Navigate to="/usuario" />
+                    ) : (
+                        <Navigate to="/login" />
+                    )
+                } />
 
-            {/* Rutas protegidas por rol */}
-            <Route path="/admin" element={isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? <AdminPanel /> : <Navigate to="/login" />} />
-            <Route path="/apoderado/*" element={<ApoderadoPanel />} />
-            <Route path="/usuario" element={isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? <UsuarioPanel /> : <Navigate to="/login" />} />
+                {/* Rutas protegidas por rol */}
+                <Route path="/admin" element={isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? <AdminPanel /> : <Navigate to="/login" />} />
+                <Route path="/apoderado/*" element={<ApoderadoPanel />} />
+                <Route path="/usuario" element={isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? <UsuarioPanel /> : <Navigate to="/login" />} />
 
-            {/* En caso de que se acceda a una ruta protegida sin login */}
-            <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
+                {/* En caso de que se acceda a una ruta protegida sin login */}
+                <Route path="*" element={<Navigate to="/login" />} />
+            </Routes>
+        </>
     );
 };
 

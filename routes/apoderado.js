@@ -553,29 +553,60 @@ router.get('/productos', auth, async (req, res) => {
         const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado, additionalFilters));
         const fabricanteIds = fabricantes.map(fab => fab._id);
 
-        let query = { fabricante: { $in: fabricanteIds } };
-        
+        // Base access filter: productos owned by user OR productos from accessible fabricantes
+        const accessFilter = {
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        };
+
+        // Build estado filter if specified
+        let estadoFilter = null;
         if (activos_solo === 'true') {
-            query.estado = 'Activo';
+            estadoFilter = { estado: 'Activo' };
         } else if (estado && estado !== '') {
-            query.estado = estado;
+            estadoFilter = { estado };
         }
 
+        let query;
+        
         if (search) {
-            // Buscar marcas que coincidan con el término de búsqueda
+            // Buscar marcas que coincidan con el término de búsqueda (user-owned OR from accessible fabricantes)
             const marcas = await Marca.find({
                 nombre: { $regex: search, $options: 'i' },
-                fabricante: { $in: fabricanteIds }
+                $or: [
+                    { usuarioApoderado },
+                    { fabricante: { $in: fabricanteIds } }
+                ]
             });
             const marcaIds = marcas.map(marca => marca._id);
 
-            // Búsqueda por ID de producto, modelo, descripción o marca
-            query.$or = [
-                { idProducto: { $regex: search, $options: 'i' } },
-                { modelo: { $regex: search, $options: 'i' } },
-                { descripcion: { $regex: search, $options: 'i' } },
-                { marca: { $in: marcaIds } }
+            // Build query with access filter, search criteria, and optional estado filter
+            const filters = [
+                accessFilter,
+                {
+                    $or: [
+                        { idProducto: { $regex: search, $options: 'i' } },
+                        { modelo: { $regex: search, $options: 'i' } },
+                        { descripcion: { $regex: search, $options: 'i' } },
+                        { marca: { $in: marcaIds } }
+                    ]
+                }
             ];
+            
+            if (estadoFilter) {
+                filters.push(estadoFilter);
+            }
+            
+            query = { $and: filters };
+        } else {
+            // No search - combine access filter with optional estado filter
+            if (estadoFilter) {
+                query = { $and: [accessFilter, estadoFilter] };
+            } else {
+                query = accessFilter;
+            }
         }
 
         const productos = await Producto.find(query)
@@ -1809,6 +1840,16 @@ router.get('/metricas', auth, async (req, res) => {
             usuarioApoderado 
         });
 
+        // Contar piezas
+        const piezasCount = await Pieza.countDocuments({ 
+            fabricante: { $in: fabricanteIds } 
+        });
+
+        // Contar representantes
+        const representantesCount = await Representante.countDocuments({ 
+            usuarioApoderado 
+        });
+
         // Estadísticas adicionales
         const productosActivos = await Producto.countDocuments({ 
             fabricante: { $in: fabricanteIds },
@@ -1840,6 +1881,8 @@ router.get('/metricas', auth, async (req, res) => {
             productos: productosCount,
             marcas: marcasCount,
             inventario: inventarioCount,
+            piezas: piezasCount,
+            representantes: representantesCount,
             estadisticas: {
                 productosActivos,
                 marcasActivas,
@@ -2193,7 +2236,17 @@ router.get('/export/:type', auth, async (req, res) => {
         
         switch (type) {
             case 'productos':
-                data = await Producto.find({ usuarioApoderado: userId })
+                // Get fabricantes for this user (as apoderado or administrador)
+                const fabricantes = await Fabricante.find(getFabricantesQuery(userId));
+                const fabricanteIds = fabricantes.map(fab => fab._id);
+                
+                // Query productos owned by user OR from accessible fabricantes
+                data = await Producto.find({
+                    $or: [
+                        { usuarioApoderado: userId },
+                        { fabricante: { $in: fabricanteIds } }
+                    ]
+                })
                     .populate('fabricante', 'razonSocial')
                     .populate('marca', 'nombre')
                     .lean();
@@ -2216,7 +2269,17 @@ router.get('/export/:type', auth, async (req, res) => {
                 break;
                 
             case 'marcas':
-                data = await Marca.find({ usuarioApoderado: userId })
+                // Get fabricantes for this user (as apoderado or administrador)
+                const fabricantesMarcas = await Fabricante.find(getFabricantesQuery(userId));
+                const fabricanteIdsMarcas = fabricantesMarcas.map(fab => fab._id);
+                
+                // Query marcas owned by user OR from accessible fabricantes
+                data = await Marca.find({
+                    $or: [
+                        { usuarioApoderado: userId },
+                        { fabricante: { $in: fabricanteIdsMarcas } }
+                    ]
+                })
                     .populate('fabricante', 'razonSocial')
                     .lean();
                 
@@ -2457,14 +2520,24 @@ router.post('/import/:type', auth, async (req, res) => {
             try {
                 switch (type) {
                     case 'productos':
-                        // Find fabricante and marca
+                        // Get accessible fabricantes
+                        const fabricantesAccesibles = await Fabricante.find(getFabricantesQuery(userId));
+                        const fabricanteIdsImport = fabricantesAccesibles.map(fab => fab._id);
+                        
+                        // Find fabricante and marca from accessible ones
                         const fabricante = await Fabricante.findOne({ 
                             razonSocial: row.fabricante,
-                            usuarioApoderado: userId 
+                            $or: [
+                                { usuarioApoderado: userId },
+                                { administradores: userId }
+                            ]
                         });
                         const marca = await Marca.findOne({ 
                             nombre: row.marca,
-                            usuarioApoderado: userId 
+                            $or: [
+                                { usuarioApoderado: userId },
+                                { fabricante: { $in: fabricanteIdsImport } }
+                            ]
                         });
                         
                         if (!fabricante) {
@@ -2490,9 +2563,15 @@ router.post('/import/:type', auth, async (req, res) => {
                         break;
                         
                     case 'marcas':
+                        // Get accessible fabricantes for marcas
+                        const fabricantesMarcasImport = await Fabricante.find(getFabricantesQuery(userId));
+                        
                         const marcaFabricante = await Fabricante.findOne({ 
                             razonSocial: row.fabricante,
-                            usuarioApoderado: userId 
+                            $or: [
+                                { usuarioApoderado: userId },
+                                { administradores: userId }
+                            ]
                         });
                         
                         if (!marcaFabricante) {
@@ -2511,9 +2590,16 @@ router.post('/import/:type', auth, async (req, res) => {
                         break;
                         
                     case 'inventario':
+                        // Get accessible fabricantes and productos
+                        const fabricantesInventario = await Fabricante.find(getFabricantesQuery(userId));
+                        const fabricanteIdsInventario = fabricantesInventario.map(fab => fab._id);
+                        
                         const producto_inv = await Producto.findOne({ 
                             modelo: row.producto,
-                            usuarioApoderado: userId 
+                            $or: [
+                                { usuarioApoderado: userId },
+                                { fabricante: { $in: fabricanteIdsInventario } }
+                            ]
                         });
                         
                         if (!producto_inv) {

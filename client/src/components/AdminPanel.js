@@ -7,7 +7,7 @@ import FabricanteForm from './FabricanteForm';
 import UserEditForm from './UserEditForm';
 import FabricanteEditForm from './FabricanteEditForm';
 import Modal from './Modal';
-import Tabs from './Tabs';
+import Sidebar from './Sidebar';
 import UserHeader from './UserHeader';
 
 const AdminPanel = () => {
@@ -18,6 +18,7 @@ const AdminPanel = () => {
     const [editingFabricante, setEditingFabricante] = useState(null);
     const [showCreateUserModal, setShowCreateUserModal] = useState(false);
     const [showCreateFabricanteModal, setShowCreateFabricanteModal] = useState(false);
+    const [activeView, setActiveView] = useState('usuarios'); // 'usuarios' or 'fabricantes'
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -81,59 +82,71 @@ const AdminPanel = () => {
             <p>Bienvenido/a {userData?.nombreCompleto}.</p>
             <p>Aquí puedes gestionar los usuarios y fabricantes.</p>
 
-            <div className="content">
-                <Tabs
-                    defaultTab={0}
-                    tabs={[
+            <div className="panel-with-sidebar">
+                <Sidebar
+                    items={[
                         {
-                            label: "Usuarios",
-                            content: (
-                                <>
-                                    <div className="list-container">
-                                        <div className="section-header">
-                                            <h3>Gestión de Usuarios</h3>
-                                            <button 
-                                                className="create-button"
-                                                onClick={() => setShowCreateUserModal(true)}
-                                            >
-                                                Crear Usuario
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <UserList 
-                                        refreshTrigger={refreshKey} 
-                                        onEdit={handleEditUser}
-                                    />
-                                </>
-                            )
+                            label: 'Usuarios',
+                            description: 'Gestión de usuarios',
+                            icon: '◉',
+                            active: activeView === 'usuarios',
+                            onClick: () => setActiveView('usuarios')
                         },
                         {
-                            label: "Fabricantes",
-                            content: (
-                                <>
-                                    <div className="list-container">
-                                        <div className="section-header">
-                                            <h3>Gestión de Fabricantes</h3>
-                                            <button 
-                                                className="create-button"
-                                                onClick={() => setShowCreateFabricanteModal(true)}
-                                            >
-                                                Crear Fabricante
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <FabricanteList 
-                                        refreshTrigger={refreshKey} 
-                                        onEdit={handleEditFabricante}
-                                    />
-                                </>
-                            )
+                            label: 'Fabricantes',
+                            description: 'Gestión de fabricantes',
+                            icon: '◫',
+                            active: activeView === 'fabricantes',
+                            onClick: () => setActiveView('fabricantes')
                         }
                     ]}
                 />
                 
-                {/* Modals */}
-                <Modal 
+                <div className="sidebar-content">
+                    {activeView === 'usuarios' && (
+                        <>
+                            <div className="list-container">
+                                <div className="section-header">
+                                    <h3>Gestión de Usuarios</h3>
+                                    <button 
+                                        className="create-button"
+                                        onClick={() => setShowCreateUserModal(true)}
+                                    >
+                                        Crear Usuario
+                                    </button>
+                                </div>
+                            </div>
+                            <UserList 
+                                refreshTrigger={refreshKey} 
+                                onEdit={handleEditUser}
+                            />
+                        </>
+                    )}
+                    
+                    {activeView === 'fabricantes' && (
+                        <>
+                            <div className="list-container">
+                                <div className="section-header">
+                                    <h3>Gestión de Fabricantes</h3>
+                                    <button 
+                                        className="create-button"
+                                        onClick={() => setShowCreateFabricanteModal(true)}
+                                    >
+                                        Crear Fabricante
+                                    </button>
+                                </div>
+                            </div>
+                            <FabricanteList 
+                                refreshTrigger={refreshKey} 
+                                onEdit={handleEditFabricante}
+                            />
+                        </>
+                    )}
+                </div>
+            </div>
+                
+            {/* Modals */}
+            <Modal 
                     isOpen={showCreateUserModal} 
                     onClose={() => setShowCreateUserModal(false)}
                     title="Crear Nuevo Usuario"
@@ -176,7 +189,6 @@ const AdminPanel = () => {
                         />
                     )}
                 </Modal>
-            </div>
         </div>
     );
 };

@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import logo from '../logo.png';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ProfileEditModal from './ProfileEditModal';
 import PanelMenu from './PanelMenu';
 import getAuthenticatedUrl from '../utils/getAuthenticatedUrl';
 
-const UserHeader = ({ user, onProfileUpdated, userType = 'admin' }) => {
+/**
+ * UserHeader component displays the header with logo, welcome message, and profile controls
+ * @param {Object} user - User data object
+ * @param {Function} onProfileUpdated - Callback function when profile is updated
+ * @param {string} userType - Type of user ('admin', 'apoderado', etc.)
+ * @param {string} welcomeMessage - Optional welcome message to display (e.g., "Bienvenido/a John Doe")
+ * @param {string} pageTitle - Title of the current page/section (e.g., "Dashboard", "Inventario")
+ */
+const UserHeader = ({ user, onProfileUpdated, userType = 'admin', welcomeMessage, pageTitle }) => {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleProfileClick = () => {
         setShowProfileModal(true);
@@ -28,13 +36,7 @@ const UserHeader = ({ user, onProfileUpdated, userType = 'admin' }) => {
         navigate('/login');
     };
 
-    const getDisplayName = () => {
-        if (userType === 'admin') {
-            return user?.nombreCompleto || 'Usuario';
-        } else {
-            return user?.usuario?.nombreCompleto || user?.nombreCompleto || 'Usuario';
-        }
-    };
+
 
     const getProfileImage = () => {
         const imageUrl = userType === 'admin' 
@@ -51,6 +53,51 @@ const UserHeader = ({ user, onProfileUpdated, userType = 'admin' }) => {
         return typeof urlString === 'string' ? getAuthenticatedUrl(urlString) : null;
     };
 
+    const getUserInitials = () => {
+        const userName = userType === 'admin' 
+            ? user?.nombreCompleto || ''
+            : user?.usuario?.nombreCompleto || user?.nombreCompleto || '';
+        
+        const parts = userName.trim().split(' ').filter(part => part.length > 0);
+        if (parts.length >= 2) {
+            return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+        } else if (parts.length === 1 && parts[0].length > 0) {
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+        return 'U';
+    };
+
+    const getUserName = () => {
+        return userType === 'admin' 
+            ? user?.nombreCompleto || 'Usuario'
+            : user?.usuario?.nombreCompleto || user?.nombreCompleto || 'Usuario';
+    };
+
+    const getUserRole = () => {
+        if (userType === 'admin') {
+            return 'Administrador';
+        } else if (userType === 'apoderado') {
+            return 'Apoderado';
+        }
+        return 'Usuario';
+    };
+
+    // Auto-detect page title from URL if not provided
+    const getPageTitle = () => {
+        if (pageTitle) return pageTitle;
+        
+        const path = location.pathname;
+        if (path.includes('/metricas')) return 'Dashboard';
+        if (path.includes('/productos')) return 'Inventario';
+        if (path.includes('/piezas')) return 'Repuestos';
+        if (path.includes('/inventario')) return 'Inventario';
+        if (path.includes('/representantes')) return 'Representantes';
+        if (path.includes('/garantias')) return 'Garantías';
+        if (path.includes('/administracion')) return 'Parametrización';
+        
+        return 'Dashboard';
+    };
+
     // Check if user has fabricante permissions (for admin users)
     const hasFabricantePermissions = () => {
         if (userType === 'admin') {
@@ -63,62 +110,51 @@ const UserHeader = ({ user, onProfileUpdated, userType = 'admin' }) => {
         <>
             <div className="user-header">
                 <div className="header-content">
-                    <div className="logo-section">
-                        <img src={logo} alt="Logo de la aplicación" className="app-logo" />
+                    <div className="header-left">
+                        <h1 className="page-title">{getPageTitle()}</h1>
                     </div>
-                    <div className="profile-section">
-                        <div className="profile-info">
-                            <span className="user-name">{getDisplayName()}</span>
-                        </div>
-                        <div className="profile-actions">
-                            <PanelMenu 
-                                userType={userType} 
-                                hasFabricantePermissions={hasFabricantePermissions()} 
-                            />
-                            <button 
-                                className="logout-button" 
-                                onClick={handleLogout}
-                                title="Cerrar sesión"
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                            </button>
-                            <div className="profile-image-container" onClick={handleProfileClick}>
-                            {getProfileImage() ? (
-                                <img 
-                                    src={getProfileImage()} 
-                                    alt="Perfil del usuario" 
-                                    className="profile-image"
-                                    style={{ display: 'block' }}
-                                    onError={(e) => {
-                                        console.error('Error loading profile image:', getProfileImage());
-                                        e.target.style.display = 'none';
-                                        const icon = e.target.nextSibling;
-                                        if (icon) {
-                                            icon.style.display = 'flex';
-                                        }
-                                    }}
-                                    onLoad={(e) => {
-                                        // Image loaded successfully, hide the icon
-                                        e.target.style.display = 'block';
-                                        const icon = e.target.nextSibling;
-                                        if (icon) {
-                                            icon.style.display = 'none';
-                                        }
-                                    }}
-                                />
-                            ) : null}
-                            <div className="profile-icon" style={{ display: getProfileImage() ? 'none' : 'flex' }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="currentColor"/>
-                                    <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="currentColor"/>
-                                </svg>
+                    <div className="header-right">
+                        <div className="user-info-header">
+                            <div className="user-details">
+                                <div className="user-name-header">{getUserName()}</div>
+                                <div className="user-role-header">{getUserRole()}</div>
                             </div>
+                            <div className="user-avatar" onClick={handleProfileClick}>
+                                {getProfileImage() ? (
+                                    <img 
+                                        src={getProfileImage()} 
+                                        alt="Perfil" 
+                                        style={{ 
+                                            width: '100%', 
+                                            height: '100%', 
+                                            objectFit: 'cover',
+                                            borderRadius: '50%'
+                                        }}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.parentElement.textContent = getUserInitials();
+                                        }}
+                                    />
+                                ) : (
+                                    getUserInitials()
+                                )}
                             </div>
                         </div>
+                        <PanelMenu 
+                            userType={userType} 
+                            hasFabricantePermissions={hasFabricantePermissions()} 
+                        />
+                        <button 
+                            className="logout-button" 
+                            onClick={handleLogout}
+                            title="Cerrar sesión"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>

@@ -81,9 +81,9 @@ const PanelMenu = ({ userType, hasFabricantePermissions }) => {
     
     if (userRoles.includes('usuario_bienes')) {
         panels.push({
-            name: 'Assetfy Bienes',
+            name: 'Assetfy Garantías',
             path: '/usuario',
-            description: 'Panel de gestión de bienes'
+            description: 'Panel de gestión de garantías'
         });
     }
     
@@ -114,9 +114,9 @@ const PanelMenu = ({ userType, hasFabricantePermissions }) => {
             });
         } else if (userType === 'usuario_bienes') {
             panels.push({
-                name: 'Assetfy Bienes',
+                name: 'Assetfy Garantías',
                 path: '/usuario',
-                description: 'Panel de gestión de bienes'
+                description: 'Panel de gestión de garantías'
             });
         }
     }

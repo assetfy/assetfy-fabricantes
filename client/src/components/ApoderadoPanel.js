@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import api from '../api';
 import ProductList from './ProductList';
 import ProductForm from './ProductForm';
@@ -19,6 +19,8 @@ import Modal from './Modal';
 import UserHeader from './UserHeader';
 import AdministracionPanel from './AdministracionPanel';
 import MetricasPanel from './MetricasPanel';
+import Sidebar from './Sidebar';
+import { useNotification } from './NotificationProvider';
 
 const ApoderadoPanel = () => {
     const [userData, setUserData] = useState(null);
@@ -48,6 +50,7 @@ const ApoderadoPanel = () => {
     const [garantias, setGarantias] = useState([]);
     
     const navigate = useNavigate();
+    const { showSuccess, showError } = useNotification();
     
     // Check authentication status
     const token = localStorage.getItem('token');
@@ -155,6 +158,17 @@ const ApoderadoPanel = () => {
         }
     };
 
+    const handleCopyRegistrationLink = async () => {
+        const registrationUrl = `${window.location.origin}/registro`;
+        try {
+            await navigator.clipboard.writeText(registrationUrl);
+            showSuccess('Link a portal público de registro copiado');
+        } catch (err) {
+            console.error('Error al copiar al portapapeles:', err);
+            showError('Error al copiar el link. URL: ' + registrationUrl);
+        }
+    };
+
     const handleEditProduct = (product) => {
         setEditingProduct(product);
     };
@@ -256,83 +270,85 @@ const ApoderadoPanel = () => {
     };
 
     return (
-        <div className="apoderado-panel">
+        <div className="apoderado-panel apoderado-panel-with-sidebar">
             <UserHeader 
                 user={userData}
                 onProfileUpdated={handleProfileUpdated}
                 userType={getUserType()}
+                welcomeMessage={`Bienvenido/a ${userData?.usuario?.nombreCompleto || ''}`}
             />
-            <h2>Panel de Administrador de Productos</h2>
-            <p>Bienvenido/a {userData?.usuario?.nombreCompleto}.</p>
-            <p>Aquí puedes gestionar la información de tus fabricantes y productos.</p>
             
-            <nav>
-                <ul>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/productos">Mis Productos</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Mis Productos</button>
-                        )}
-                    </li>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/piezas">Repuestos / Piezas</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Repuestos / Piezas</button>
-                        )}
-                    </li>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/inventario">Inventario</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Inventario</button>
-                        )}
-                    </li>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/representantes">Representantes</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Representantes</button>
-                        )}
-                    </li>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/garantias">Garantías</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Garantías</button>
-                        )}
-                    </li>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/metricas">Métricas</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Métricas</button>
-                        )}
-                    </li>
-                    <li>
-                        {isAuthenticated ? (
-                            <Link to="/apoderado/administracion">Administración</Link>
-                        ) : (
-                            <button className="nav-link-button" onClick={handleUnauthenticatedClick}>Administración</button>
-                        )}
-                    </li>
-                </ul>
-            </nav>
+            <div className="panel-with-sidebar">
+                {isAuthenticated && (
+                    <Sidebar
+                        basePath="/apoderado"
+                        items={[
+                            {
+                                label: 'Dashboard',
+                                description: 'Métricas del sistema',
+                                path: '/metricas',
+                                icon: '▣'
+                            },
+                            {
+                                label: 'Mis Productos',
+                                description: 'Gestión de productos',
+                                path: '/productos',
+                                icon: '◫'
+                            },
+                            {
+                                label: 'Repuestos / Piezas',
+                                description: 'Gestión de piezas',
+                                path: '/piezas',
+                                icon: '⚙'
+                            },
+                            {
+                                label: 'Inventario',
+                                description: 'Control de stock',
+                                path: '/inventario',
+                                icon: '≡'
+                            },
+                            {
+                                label: 'Representantes',
+                                description: 'Gestión de representantes',
+                                path: '/representantes',
+                                icon: '◉'
+                            },
+                            {
+                                label: 'Garantías',
+                                description: 'Gestión de garantías',
+                                path: '/garantias',
+                                icon: '◈'
+                            },
+                            {
+                                label: 'Portal de Registro',
+                                description: 'Copiar link de registro',
+                                icon: '🔗',
+                                onClick: handleCopyRegistrationLink
+                            },
+                            {
+                                label: 'Administración',
+                                description: 'Configuración y datos',
+                                path: '/administracion',
+                                icon: '⚑'
+                            }
+                        ]}
+                    />
+                )}
 
-            <div className="content">
-                {!isAuthenticated ? (
-                    <div className="unauthenticated-message">
-                        <h3>Acceso Restringido</h3>
-                        <p>Para ver el contenido y gestionar datos, debe iniciar sesión.</p>
-                        <button onClick={handleUnauthenticatedClick} className="login-redirect-button">
-                            Iniciar Sesión
-                        </button>
-                    </div>
-                ) : (
-                <Routes>
-                    <Route index element={<Navigate to="productos" replace />} />
-                    <Route path="productos" element={
+                <div className="sidebar-content">
+                    {!isAuthenticated ? (
+                        <div className="unauthenticated-message">
+                            <h3>Acceso Restringido</h3>
+                            <p>Para ver el contenido y gestionar datos, debe iniciar sesión.</p>
+                            <button onClick={handleUnauthenticatedClick} className="login-redirect-button">
+                                Iniciar Sesión
+                            </button>
+                        </div>
+                    ) : (
+                    <Routes>
+                        <Route index element={<Navigate to="metricas" replace />} />
+                        <Route path="metricas" element={<MetricasPanel />} />
+                        <Route path="productos" element={
                         <>
                             <div className="list-container">
                                 <div className="section-header">
@@ -432,13 +448,14 @@ const ApoderadoPanel = () => {
                             />
                         </>
                     } />
-                    <Route path="metricas" element={<MetricasPanel />} />
                     <Route path="administracion" element={<AdministracionPanel fabricantes={fabricantes} allMarcas={allMarcas} onRefresh={handleRefresh} />} />
                 </Routes>
                 )}
+                </div>
+            </div>
                 
-                {/* Modals */}
-                <Modal 
+            {/* Modals */}
+            <Modal 
                     isOpen={showCreateProductModal} 
                     onClose={() => setShowCreateProductModal(false)}
                     title="Crear Nuevo Producto"
@@ -670,7 +687,6 @@ const ApoderadoPanel = () => {
                         />
                     )}
                 </Modal>
-            </div>
         </div>
     );
 };

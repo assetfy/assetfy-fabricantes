@@ -144,6 +144,6 @@ describe('PanelMenu', () => {
 
         expect(screen.getByText('Assetfy Admin')).toBeInTheDocument();
         expect(screen.getByText('Assetfy Fabricantes')).toBeInTheDocument();
-        expect(screen.getByText('Assetfy Bienes')).toBeInTheDocument();
+        expect(screen.getByText('Assetfy Garantías')).toBeInTheDocument();
     });
 });

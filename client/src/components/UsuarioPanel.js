@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import BienList from './BienList';
-import BienForm from './BienForm';
 import BienRegisterForm from './BienRegisterForm';
 import BienViewForm from './BienViewForm';
 import BienEditForm from './BienEditForm';
@@ -14,7 +13,6 @@ const UsuarioPanel = () => {
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const [bienes, setBienes] = useState([]);
-    const [showCreateBienModal, setShowCreateBienModal] = useState(false);
     const [showRegisterBienModal, setShowRegisterBienModal] = useState(false);
     const [viewingBien, setViewingBien] = useState(null);
     const [editingBien, setEditingBien] = useState(null);
@@ -134,21 +132,15 @@ const UsuarioPanel = () => {
                 onProfileUpdated={handleProfileUpdated}
                 userType={getUserType()}
             />
-            <h2>Panel de Gestión de Bienes</h2>
+            <h2>Lista de bienes Registrados</h2>
             <p>Bienvenido/a {userData?.usuario?.nombreCompleto}.</p>
             <p>Aquí puedes gestionar tus bienes personales.</p>
 
             <div className="content">
                 <div className="list-container">
                     <div className="section-header">
-                        <h3>Mis Bienes</h3>
+                        <h3>Mis bienes registrados</h3>
                         <div className="button-group">
-                            <button 
-                                className="create-button"
-                                onClick={() => setShowCreateBienModal(true)}
-                            >
-                                Crear Bien
-                            </button>
                             <button 
                                 className="create-button register-button"
                                 onClick={() => setShowRegisterBienModal(true)}
@@ -165,20 +157,6 @@ const UsuarioPanel = () => {
                     onEdit={handleEditBien}
                     onDelete={handleDeleteBien}
                 />
-
-                {/* Create Bien Modal */}
-                <Modal 
-                    isOpen={showCreateBienModal} 
-                    onClose={() => setShowCreateBienModal(false)}
-                    title="Crear Nuevo Bien"
-                >
-                    <BienForm 
-                        onBienAdded={() => {
-                            setShowCreateBienModal(false);
-                            handleRefresh();
-                        }}
-                    />
-                </Modal>
 
                 {/* Register Bien Modal */}
                 <Modal 

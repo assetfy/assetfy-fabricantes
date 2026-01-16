@@ -99,4 +99,38 @@ describe('UserHeader', () => {
             render(<UserHeader user={user} userType="admin" />);
         }).not.toThrow();
     });
+
+    test('handles undefined user for admin type without crashing', () => {
+        expect(() => {
+            render(<UserHeader user={undefined} userType="admin" />);
+        }).not.toThrow();
+    });
+
+    test('handles null user for admin type without crashing', () => {
+        expect(() => {
+            render(<UserHeader user={null} userType="admin" />);
+        }).not.toThrow();
+    });
+
+    test('handles user with undefined nombreCompleto for admin type without crashing', () => {
+        const user = {
+            nombreCompleto: undefined
+        };
+
+        expect(() => {
+            render(<UserHeader user={user} userType="admin" />);
+        }).not.toThrow();
+    });
+
+    test('handles undefined user for apoderado type without crashing', () => {
+        expect(() => {
+            render(<UserHeader user={undefined} userType="apoderado" />);
+        }).not.toThrow();
+    });
+
+    test('handles null user for apoderado type without crashing', () => {
+        expect(() => {
+            render(<UserHeader user={null} userType="apoderado" />);
+        }).not.toThrow();
+    });
 });
