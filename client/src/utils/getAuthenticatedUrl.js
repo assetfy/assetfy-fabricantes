@@ -10,7 +10,7 @@ const normaliseBaseUrl = (url) => {
 export const getAuthenticatedUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
 
-    const baseUrl = normaliseBaseUrl(process.env.REACT_APP_API_URL);
+    const baseUrl = normaliseBaseUrl(getDefaultApiBase());
 
     let fullUrl = url;
     if (url.startsWith('/api/')) {
