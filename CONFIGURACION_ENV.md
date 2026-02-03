@@ -34,9 +34,19 @@ const getApiBaseUrl = () => {
     return process.env.REACT_APP_API_URL;
   }
   
-  // En producción (no localhost), usa el mismo dominio
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return window.location.origin;
+  // Detectar si estamos en desarrollo
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // Hostnames de desarrollo: localhost, 127.0.0.1, localhost.localdomain, etc.
+    const isDevelopment = 
+      hostname === 'localhost' || 
+      hostname === '127.0.0.1' || 
+      hostname.startsWith('localhost.');
+    
+    if (!isDevelopment) {
+      // En producción, usa el mismo dominio que el frontend
+      return window.location.origin;
+    }
   }
   
   // En desarrollo, usa localhost
