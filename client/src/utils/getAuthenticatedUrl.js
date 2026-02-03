@@ -1,21 +1,7 @@
-// Use environment variable for API URL, fallback to localhost for development
-const getDefaultApiBase = () => {
-  // If REACT_APP_API_URL is explicitly set, use it
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
-  }
-  
-  // In production (not localhost), use relative URL (same domain)
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return window.location.origin;
-  }
-  
-  // In development, use localhost
-  return 'http://localhost:5000';
-};
+import getApiBaseUrl from './getApiBaseUrl';
 
 const normaliseBaseUrl = (url) => {
-    const defaultBase = getDefaultApiBase();
+    const defaultBase = getApiBaseUrl();
     if (!url) return defaultBase;
     return url.endsWith('/') ? url.slice(0, -1) : url;
 };
@@ -23,7 +9,7 @@ const normaliseBaseUrl = (url) => {
 export const getAuthenticatedUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
 
-    const baseUrl = normaliseBaseUrl(getDefaultApiBase());
+    const baseUrl = normaliseBaseUrl(getApiBaseUrl());
 
     let fullUrl = url;
     if (url.startsWith('/api/')) {

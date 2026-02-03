@@ -1,21 +1,6 @@
 // src/api.js
 import axios from 'axios';
-
-// Determine the API base URL based on environment
-const getApiBaseUrl = () => {
-  // If REACT_APP_API_URL is explicitly set, use it
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
-  }
-  
-  // In production (not localhost), use relative URL (same domain)
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return window.location.origin;
-  }
-  
-  // In development, use localhost
-  return 'http://localhost:5000';
-};
+import getApiBaseUrl from './utils/getApiBaseUrl';
 
 const API_BASE_URL = getApiBaseUrl();
 
