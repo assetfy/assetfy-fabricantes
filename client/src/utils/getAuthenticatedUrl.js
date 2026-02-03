@@ -1,8 +1,7 @@
-// Use environment variable for API URL, fallback to localhost for development
-const getDefaultApiBase = () => process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import getApiBaseUrl from './getApiBaseUrl';
 
 const normaliseBaseUrl = (url) => {
-    const defaultBase = getDefaultApiBase();
+    const defaultBase = getApiBaseUrl();
     if (!url) return defaultBase;
     return url.endsWith('/') ? url.slice(0, -1) : url;
 };
@@ -10,7 +9,7 @@ const normaliseBaseUrl = (url) => {
 export const getAuthenticatedUrl = (url) => {
     if (!url || typeof url !== 'string') return null;
 
-    const baseUrl = normaliseBaseUrl(getDefaultApiBase());
+    const baseUrl = normaliseBaseUrl(getApiBaseUrl());
 
     let fullUrl = url;
     if (url.startsWith('/api/')) {
