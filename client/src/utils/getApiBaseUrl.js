@@ -5,10 +5,17 @@ const getApiBaseUrl = () => {
     return process.env.REACT_APP_API_URL;
   }
   
-  // In production (not localhost/127.0.0.1), use relative URL (same domain)
+  // Check if we're in development environment
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.startsWith('localhost')) {
+    // Development hostnames: localhost, 127.0.0.1, localhost.localdomain, etc.
+    const isDevelopment = 
+      hostname === 'localhost' || 
+      hostname === '127.0.0.1' || 
+      hostname.startsWith('localhost.');
+    
+    if (!isDevelopment) {
+      // In production, use the same domain as the frontend
       return window.location.origin;
     }
   }
