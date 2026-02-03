@@ -4,22 +4,19 @@
 
 La aplicación funcionaba bien de forma local, pero no era accesible desde internet debido a referencias hardcoded a `localhost` en el código del cliente.
 
-## Solución Implementada
+## Solución Implementada (ACTUALIZADA)
 
-Se reemplazaron las referencias hardcoded a `localhost` con variables de entorno, permitiendo que la aplicación funcione tanto en desarrollo local como en producción.
+Se implementó **detección automática del entorno** que funciona sin necesidad de configurar variables de entorno:
+
+- En **desarrollo** (localhost): Usa automáticamente `http://localhost:5000`
+- En **producción** (cualquier otro dominio): Usa automáticamente el mismo dominio donde está alojado el frontend
+
+Esto elimina la necesidad de configurar `REACT_APP_API_URL` en la mayoría de los casos.
 
 ## Archivos Modificados
 
 ### 1. `client/src/api.js`
 **Antes:**
-```javascript
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  // ...
-});
-```
-
-**Después:**
 ```javascript
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -29,43 +26,52 @@ const api = axios.create({
 });
 ```
 
-### 2. `client/src/utils/getAuthenticatedUrl.js`
-**Antes:**
-```javascript
-const DEFAULT_API_BASE = 'http://localhost:5000';
-```
-
 **Después:**
 ```javascript
-const getDefaultApiBase = () => process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const getApiBaseUrl = () => {
+  // Si REACT_APP_API_URL está configurada, úsala
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // En producción (no localhost), usa el mismo dominio
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return window.location.origin;
+  }
+  
+  // En desarrollo, usa localhost
+  return 'http://localhost:5000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+const api = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
+  // ...
+});
 ```
+
+### 2. `client/src/utils/getAuthenticatedUrl.js`
+Se aplicó la misma lógica de detección automática del entorno.
 
 ## Configuración
 
 ### Desarrollo Local
 
-No se requiere configuración adicional. El código usa `http://localhost:5000` por defecto.
-
-Opcionalmente, puedes crear un archivo `.env` en el directorio `client/`:
-
-```bash
-REACT_APP_API_URL=http://localhost:5000
-```
+**No se requiere configuración.** El código detecta automáticamente que está en localhost y usa `http://localhost:5000`.
 
 ### Producción
 
-Crear un archivo `.env` en el directorio `client/` con la URL de producción:
+**No se requiere configuración.** El código detecta automáticamente que NO está en localhost y usa el mismo dominio del frontend.
+
+Por ejemplo, si el frontend está en `https://fabricantes.asset-fy.com`, automáticamente usará `https://fabricantes.asset-fy.com` como base URL para las llamadas al API.
+
+### Configuración Manual (Opcional)
+
+Si por alguna razón necesitas especificar manualmente la URL del API, puedes crear un archivo `.env` en el directorio `client/`:
 
 ```bash
-REACT_APP_API_URL=https://fabricantes.asset-fy.com
-```
-
-**IMPORTANTE:** La URL NO debe incluir `/api` al final, ya que el código lo agrega automáticamente.
-
-### Staging u Otros Entornos
-
-```bash
-REACT_APP_API_URL=https://staging.fabricantes.asset-fy.com
+REACT_APP_API_URL=https://api-personalizada.ejemplo.com
 ```
 
 ## Despliegue
@@ -75,17 +81,14 @@ REACT_APP_API_URL=https://staging.fabricantes.asset-fy.com
 ```bash
 cd client
 
-# Crear archivo .env con la URL de producción
-echo "REACT_APP_API_URL=https://fabricantes.asset-fy.com" > .env
-
 # Instalar dependencias
 npm install
 
-# Compilar
+# Compilar (NO requiere configurar .env)
 npm run build
 ```
 
-El archivo `.env` será leído durante el build y las variables se incluirán en el JavaScript compilado.
+El build resultante detectará automáticamente el dominio en el que se ejecuta y usará ese mismo dominio para las llamadas al API.
 
 ## Verificación
 
@@ -97,16 +100,18 @@ npm start
 ```
 
 ### Verificar configuración en producción
-Después de hacer el build con la variable de entorno configurada, verifica en las DevTools del navegador:
+Después del despliegue, verifica en las DevTools del navegador:
 1. Abre la consola
 2. Verifica que las llamadas API se hagan a la URL correcta (ej: `https://fabricantes.asset-fy.com/api/...`)
+3. NO deberías ver ninguna referencia a `localhost`
 
 ## Archivos de Ejemplo
 
 Se han creado archivos `.env.example` para referencia:
 
 - `/assetfy-fabricantes/.env.example` - Variables del servidor backend
-- `/assetfy-fabricantes/client/.env.example` - Variables del cliente React
+- `/assetfy-fabricantes/client/.env.example` - Variables del cliente React (ahora opcionales)
+- `/assetfy-fabricantes/client/.env.production` - Configuración de producción (usa detección automática)
 
 ## Testing
 
@@ -120,12 +125,14 @@ Resultado: ✅ 9/9 tests passing
 
 ## Beneficios
 
-✅ La aplicación funciona tanto en desarrollo como en producción  
+✅ La aplicación funciona tanto en desarrollo como en producción **sin configuración**  
 ✅ No más hardcoding de URLs  
-✅ Fácil configuración para múltiples entornos  
+✅ No requiere variables de entorno en la mayoría de los casos  
+✅ Detección automática del entorno  
+✅ Fácil configuración para casos especiales (multi-dominio, etc.)  
 ✅ Tests pasan correctamente  
 ✅ Cambio mínimo y quirúrgico  
-✅ Backward compatible (funciona sin .env en desarrollo)  
+✅ Backward compatible  
 
 ## Notas Importantes
 
@@ -141,30 +148,28 @@ Resultado: ✅ 9/9 tests passing
 
 ### La aplicación sigue conectándose a localhost en producción
 
-**Causa:** El build se hizo sin configurar la variable de entorno.
+**Causa posible:** Estás accediendo directamente al puerto 3000 o el build es antiguo.
 
 **Solución:** 
+1. Asegúrate de hacer un nuevo build:
 ```bash
 cd client
-echo "REACT_APP_API_URL=https://fabricantes.asset-fy.com" > .env
 npm run build
 ```
 
+2. Verifica que el servidor web esté sirviendo el build de producción (carpeta `build/`), no el servidor de desarrollo.
+
+3. Si accedes a través del servidor web de producción (Apache/Nginx), las URLs se resolverán correctamente al mismo dominio.
+
 ### Error 404 en las rutas API
 
-**Causa:** La URL tiene `/api` duplicado o el proxy no está configurado correctamente.
+**Causa:** El proxy no está configurado correctamente en el servidor web.
 
-**Verificar:** La variable `REACT_APP_API_URL` NO debe terminar en `/api`
-```bash
-# ✅ Correcto
-REACT_APP_API_URL=https://fabricantes.asset-fy.com
-
-# ❌ Incorrecto
-REACT_APP_API_URL=https://fabricantes.asset-fy.com/api
-```
+**Verificar:** Asegúrate de que Apache/Nginx redirija las peticiones `/api/*` al backend Node.js en `localhost:5000`
 
 ---
 
-**Fecha de implementación:** 2026-01-16  
+**Última actualización:** 2026-02-03  
 **Tests:** ✅ 9/9 pasando  
-**Estado:** ✅ Completado y probado
+**Build:** ✅ Compilación exitosa  
+**Estado:** ✅ Completado y probado con detección automática de entorno
