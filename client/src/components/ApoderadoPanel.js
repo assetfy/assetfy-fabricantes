@@ -159,7 +159,11 @@ const ApoderadoPanel = () => {
     };
 
     const handleCopyRegistrationLink = async () => {
-        const registrationUrl = `${window.location.origin}/registro`;
+        // Use fabricante-specific branded portal if available
+        const fabricante = fabricantes && fabricantes.length > 0 ? fabricantes[0] : null;
+        const registrationUrl = fabricante?.slug
+            ? `${window.location.origin}/${fabricante.slug}`
+            : `${window.location.origin}/registro`;
         try {
             await navigator.clipboard.writeText(registrationUrl);
             showSuccess('Link a portal público de registro copiado');

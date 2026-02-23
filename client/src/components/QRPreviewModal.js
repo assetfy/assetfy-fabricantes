@@ -26,7 +26,9 @@ const QRPreviewModal = ({ isOpen, onClose, item }) => {
             try {
                 // Generate registration URL with pre-populated inventory ID
                 const baseUrl = window.location.origin;
-                const qrContent = `${baseUrl}/registro?idInventario=${item.idInventario}`;
+                const fabricanteSlug = item.producto?.fabricante?.slug;
+                const registroPath = fabricanteSlug ? `/${fabricanteSlug}` : '/registro';
+                const qrContent = `${baseUrl}${registroPath}?idInventario=${item.idInventario}`;
                 const dataURL = await QRCode.toDataURL(qrContent, {
                     width: qrSize,
                     margin: 2

@@ -54,7 +54,9 @@ const BulkQRPreviewModal = ({ isOpen, onClose, items }) => {
             try {
                 const baseUrl = window.location.origin;
                 const qrPromises = items.map(async (item) => {
-                    const qrContent = `${baseUrl}/registro?idInventario=${item.idInventario}`;
+                    const fabricanteSlug = item.producto?.fabricante?.slug;
+                    const registroPath = fabricanteSlug ? `/${fabricanteSlug}` : '/registro';
+                    const qrContent = `${baseUrl}${registroPath}?idInventario=${item.idInventario}`;
                     const dataURL = await QRCode.toDataURL(qrContent, {
                         width: qrSize,
                         margin: 1
