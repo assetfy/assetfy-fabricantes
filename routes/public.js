@@ -8,6 +8,7 @@ const Fabricante = require('../models/fabricante.model');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { sendInvitationEmail } = require('../utils/emailService');
+const { s3 } = require('../middleware/upload');
 
 // @route   GET /api/public/fabricante/:slug
 // @desc    Get fabricante branding info for the branded registration portal
@@ -429,6 +430,51 @@ router.post('/registro-masivo', async (req, res) => {
             success: false,
             message: 'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.'
         });
+// @route   GET /api/public/logo/:s3Key
+// @desc    Serve portal logo files from S3 without authentication (restricted to logoFabricante/ prefix)
+// @access  Public
+router.get('/logo/:s3Key', async (req, res) => {
+    try {
+        let s3Key;
+        try {
+            s3Key = Buffer.from(req.params.s3Key, 'base64').toString('utf8');
+        } catch (decodeError) {
+            return res.status(400).json({ message: 'Clave de archivo inválida' });
+        }
+
+        // Security: only allow serving files from the logoFabricante/ prefix
+        if (!s3Key || s3Key.includes('..') || s3Key.startsWith('/') || !s3Key.startsWith('logoFabricante/')) {
+            return res.status(403).json({ message: 'Acceso denegado' });
+        }
+
+        const params = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: s3Key
+        };
+
+        const headData = await s3.headObject(params).promise();
+
+        res.set({
+            'Content-Type': headData.ContentType || 'image/png',
+            'Content-Length': headData.ContentLength,
+            'Cache-Control': 'public, max-age=86400',
+            'ETag': headData.ETag
+        });
+
+        s3.getObject(params).createReadStream()
+            .on('error', (streamErr) => {
+                console.error('S3 stream error:', streamErr);
+                if (!res.headersSent) {
+                    res.status(500).json({ message: 'Error al servir el logo' });
+                }
+            })
+            .pipe(res);
+    } catch (err) {
+        if (err.code === 'NoSuchKey' || err.code === 'NotFound') {
+            return res.status(404).json({ message: 'Logo no encontrado' });
+        }
+        console.error('Error serving public logo:', err.message);
+        res.status(500).json({ message: 'Error al servir el logo' });
     }
 });
 
