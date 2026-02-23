@@ -20,6 +20,8 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Branding state
+    const [brandingFabricantes, setBrandingFabricantes] = useState([]);
+    const [selectedFabricanteId, setSelectedFabricanteId] = useState(null);
     const [branding, setBranding] = useState({ portalColor: '#1a73e8', portalLogo: null, slug: '', razonSocial: '' });
     const [brandingLoading, setBrandingLoading] = useState(true);
     const [logoFile, setLogoFile] = useState(null);
@@ -32,11 +34,27 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
     useEffect(() => {
         api.get('/apoderado/branding')
             .then(res => {
-                setBranding(res.data);
+                const list = res.data.fabricantes || [];
+                setBrandingFabricantes(list);
+                if (list.length > 0 && list[0]._id) {
+                    setSelectedFabricanteId(list[0]._id);
+                    setBranding(list[0]);
+                }
             })
             .catch(() => {})
             .finally(() => setBrandingLoading(false));
     }, []);
+
+    const handleFabricanteSelect = (e) => {
+        const id = e.target.value;
+        setSelectedFabricanteId(id);
+        const fab = brandingFabricantes.find(f => f._id === id);
+        if (fab) {
+            setBranding(fab);
+            setLogoFile(null);
+            setLogoPreview(null);
+        }
+    };
 
     const handleRefresh = () => {
         setRefreshKey(prev => prev + 1);
@@ -88,8 +106,12 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
     const handleSaveColor = async () => {
         setSavingColor(true);
         try {
-            const res = await api.put('/apoderado/branding', { portalColor: branding.portalColor });
-            setBranding(prev => ({ ...prev, portalColor: res.data.portalColor }));
+            const res = await api.put('/apoderado/branding', { portalColor: branding.portalColor, fabricanteId: selectedFabricanteId });
+            const updatedColor = res.data.portalColor;
+            setBranding(prev => ({ ...prev, portalColor: updatedColor }));
+            setBrandingFabricantes(prev => prev.map(f =>
+                f._id === selectedFabricanteId ? { ...f, portalColor: updatedColor } : f
+            ));
             showSuccess('Color del portal actualizado');
         } catch (err) {
             showError('Error al guardar el color');
@@ -111,10 +133,17 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
         try {
             const formData = new FormData();
             formData.append('logo', logoFile);
-            const res = await api.post('/apoderado/branding/logo', formData, {
+            const url = selectedFabricanteId
+                ? `/apoderado/branding/logo?fabricanteId=${selectedFabricanteId}`
+                : '/apoderado/branding/logo';
+            const res = await api.post(url, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            setBranding(prev => ({ ...prev, portalLogo: res.data.portalLogo }));
+            const updatedLogo = res.data.portalLogo;
+            setBranding(prev => ({ ...prev, portalLogo: updatedLogo }));
+            setBrandingFabricantes(prev => prev.map(f =>
+                f._id === selectedFabricanteId ? { ...f, portalLogo: updatedLogo } : f
+            ));
             setLogoFile(null);
             setLogoPreview(null);
             showSuccess('Logo del portal subido exitosamente');
@@ -128,8 +157,14 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
     const handleDeleteLogo = async () => {
         if (!window.confirm('¿Eliminar el logo del portal?')) return;
         try {
-            await api.delete('/apoderado/branding/logo');
+            const url = selectedFabricanteId
+                ? `/apoderado/branding/logo?fabricanteId=${selectedFabricanteId}`
+                : '/apoderado/branding/logo';
+            await api.delete(url);
             setBranding(prev => ({ ...prev, portalLogo: null }));
+            setBrandingFabricantes(prev => prev.map(f =>
+                f._id === selectedFabricanteId ? { ...f, portalLogo: null } : f
+            ));
             showSuccess('Logo del portal eliminado');
         } catch (err) {
             showError('Error al eliminar el logo');
@@ -157,6 +192,20 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
                 <p>Cargando...</p>
             ) : (
                 <div style={{ maxWidth: '500px' }}>
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label>Fabricante</label>
+                        <select
+                            value={selectedFabricanteId || brandingFabricantes[0]?._id || ''}
+                            onChange={handleFabricanteSelect}
+                            disabled={brandingFabricantes.length <= 1}
+                            style={{ width: '100%', opacity: brandingFabricantes.length <= 1 ? 0.6 : 1 }}
+                        >
+                            {brandingFabricantes.map(f => (
+                                <option key={f._id} value={f._id}>{f.razonSocial}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     {portalUrl && (
                         <div className="form-group" style={{ marginBottom: '24px' }}>
                             <label>URL del portal de registro</label>
