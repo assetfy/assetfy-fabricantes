@@ -214,10 +214,19 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
                                     type="text"
                                     value={portalUrl}
                                     readOnly
-                                    style={{ flex: 1, backgroundColor: '#f5f5f5' }}
+                                    style={{ flex: 1, backgroundColor: '#f5f5f5', cursor: 'pointer' }}
+                                    onClick={handleCopyPortalLink}
+                                    title="Clic para copiar"
                                 />
-                                <button className="create-button" onClick={handleCopyPortalLink}>
+                                <button className="create-button" onClick={handleCopyPortalLink} title="Copiar URL">
                                     Copiar
+                                </button>
+                                <button
+                                    className="create-button"
+                                    onClick={() => window.open(portalUrl, '_blank', 'noopener,noreferrer')}
+                                    title="Abrir portal en nueva pestaña"
+                                >
+                                    Abrir portal
                                 </button>
                             </div>
                         </div>

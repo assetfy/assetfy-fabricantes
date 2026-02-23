@@ -173,6 +173,39 @@ const ApoderadoPanel = () => {
         }
     };
 
+    const handleCopyFabricantePortalLink = async (fabricante) => {
+        const url = fabricante.slug
+            ? `${window.location.origin}/${fabricante.slug}`
+            : `${window.location.origin}/registro`;
+        try {
+            await navigator.clipboard.writeText(url);
+            showSuccess(`Link de ${fabricante.razonSocial} copiado`);
+        } catch (err) {
+            showError('Error al copiar el link. URL: ' + url);
+        }
+    };
+
+    const buildPortalSidebarItem = () => {
+        const fabricantesWithSlug = fabricantes ? fabricantes.filter(f => f.slug) : [];
+        if (fabricantesWithSlug.length > 1) {
+            return {
+                label: 'Portal de Registro',
+                description: 'Copiar link de registro',
+                icon: '🔗',
+                subItems: fabricantesWithSlug.map(f => ({
+                    label: f.razonSocial,
+                    onClick: () => handleCopyFabricantePortalLink(f)
+                }))
+            };
+        }
+        return {
+            label: 'Portal de Registro',
+            description: 'Copiar link de registro',
+            icon: '🔗',
+            onClick: handleCopyRegistrationLink
+        };
+    };
+
     const handleEditProduct = (product) => {
         setEditingProduct(product);
     };
@@ -323,12 +356,7 @@ const ApoderadoPanel = () => {
                                 path: '/garantias',
                                 icon: '◈'
                             },
-                            {
-                                label: 'Portal de Registro',
-                                description: 'Copiar link de registro',
-                                icon: '🔗',
-                                onClick: handleCopyRegistrationLink
-                            },
+                            buildPortalSidebarItem(),
                             {
                                 label: 'Administración',
                                 description: 'Configuración y datos',
