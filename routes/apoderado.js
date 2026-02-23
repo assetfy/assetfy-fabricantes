@@ -2,7 +2,7 @@
 
 const router = require('express').Router();
 const auth = require('../middleware/auth'); // Importa el middleware de autenticación
-const { upload, uploadImagenPrincipal, uploadImagenesAdicionales, uploadVideos, uploadFotoPerfil, uploadLogoMarca, deleteFromS3, checkS3Connection, s3 } = require('../middleware/upload'); // Importa middleware de upload
+const { upload, uploadImagenPrincipal, uploadImagenesAdicionales, uploadVideos, uploadFotoPerfil, uploadLogoMarca, uploadLogoFabricante, deleteFromS3, checkS3Connection, s3 } = require('../middleware/upload'); // Importa middleware de upload
 const { hasAnyRole } = require('../utils/roleHelper'); // Importa helper para verificación de roles
 const Usuario = require('../models/usuario.model');
 const Fabricante = require('../models/fabricante.model');
@@ -3298,6 +3298,153 @@ router.delete('/piezas/:id/imagen', auth, async (req, res) => {
         await pieza.save();
 
         res.json('Imagen eliminada.');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+
+// @route   GET /api/apoderado/branding
+// @desc    Get branding info for the apoderado's fabricante (portal color and logo)
+// @access  Privado (Apoderado)
+router.get('/branding', auth, async (req, res) => {
+    try {
+        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id))
+            .select('razonSocial slug portalLogo portalColor');
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        res.json({
+            slug: fabricante.slug,
+            portalLogo: fabricante.portalLogo || null,
+            portalColor: fabricante.portalColor || '#1a73e8',
+            razonSocial: fabricante.razonSocial
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/branding
+// @desc    Update branding portal color for the apoderado's fabricante
+// @access  Privado (Apoderado)
+router.put('/branding', auth, async (req, res) => {
+    try {
+        const { portalColor } = req.body;
+
+        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id));
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        if (portalColor) {
+            // Validate hex color format
+            if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(portalColor)) {
+                return res.status(400).json({ msg: 'Color inválido. Use formato hexadecimal (ej: #1a73e8).' });
+            }
+            fabricante.portalColor = portalColor;
+        }
+
+        await fabricante.save();
+        res.json({ msg: 'Branding actualizado', portalColor: fabricante.portalColor, slug: fabricante.slug });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/apoderado/branding/logo
+// @desc    Upload portal logo for the apoderado's fabricante
+// @access  Privado (Apoderado)
+router.post('/branding/logo', auth, checkS3Connection, async (req, res) => {
+    try {
+        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id));
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        const fabricanteNombre = fabricante.razonSocial.replace(/[^a-zA-Z0-9]/g, '_');
+        req.s3Path = `logofabricante/${fabricanteNombre}`;
+
+        uploadLogoFabricante.single('logo')(req, res, async function (err) {
+            if (err) {
+                let errorMessage = err.message;
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    errorMessage = 'El archivo es demasiado grande. Máximo 2MB permitido.';
+                }
+                return res.status(400).json(errorMessage);
+            }
+
+            if (!req.file) {
+                return res.status(400).json('No se seleccionó ningún archivo.');
+            }
+
+            try {
+                if (fabricante.portalLogo && fabricante.portalLogo.key) {
+                    try {
+                        await deleteFromS3(fabricante.portalLogo.key);
+                    } catch (deleteError) {
+                        console.error('⚠️ Warning: Could not delete old portal logo:', deleteError);
+                    }
+                }
+
+                fabricante.portalLogo = {
+                    url: `/api/apoderado/files/${Buffer.from(req.file.key).toString('base64')}`,
+                    key: req.file.key,
+                    originalName: req.file.originalname
+                };
+
+                await fabricante.save();
+
+                res.json({
+                    message: 'Logo del portal subido exitosamente',
+                    portalLogo: fabricante.portalLogo
+                });
+            } catch (saveError) {
+                console.error('❌ Error saving fabricante with portal logo:', saveError);
+                if (req.file && req.file.key) {
+                    try { await deleteFromS3(req.file.key); } catch (e) { /* ignore */ }
+                }
+                res.status(500).json('Error al guardar el logo del portal');
+            }
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   DELETE /api/apoderado/branding/logo
+// @desc    Delete portal logo for the apoderado's fabricante
+// @access  Privado (Apoderado)
+router.delete('/branding/logo', auth, async (req, res) => {
+    try {
+        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id));
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        if (!fabricante.portalLogo || !fabricante.portalLogo.key) {
+            return res.status(404).json('El fabricante no tiene logo de portal.');
+        }
+
+        try {
+            await deleteFromS3(fabricante.portalLogo.key);
+        } catch (deleteError) {
+            console.error('⚠️ Warning: Could not delete portal logo from S3:', deleteError);
+        }
+
+        fabricante.portalLogo = undefined;
+        await fabricante.save();
+
+        res.json('Logo del portal eliminado.');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');

@@ -4,9 +4,41 @@ const router = express.Router();
 const Inventario = require('../models/inventario.model');
 const Usuario = require('../models/usuario.model');
 const Bien = require('../models/bien.model');
+const Fabricante = require('../models/fabricante.model');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { sendInvitationEmail } = require('../utils/emailService');
+
+// @route   GET /api/public/fabricante/:slug
+// @desc    Get fabricante branding info for the branded registration portal
+// @access  Public
+router.get('/fabricante/:slug', async (req, res) => {
+    try {
+        const fabricante = await Fabricante.findOne({ slug: req.params.slug.toLowerCase() })
+            .select('razonSocial slug portalLogo portalColor estado');
+
+        if (!fabricante) {
+            return res.status(404).json({ success: false, message: 'Portal no encontrado.' });
+        }
+
+        if (fabricante.estado === 'Deshabilitado') {
+            return res.status(403).json({ success: false, message: 'Este portal está deshabilitado.' });
+        }
+
+        return res.json({
+            success: true,
+            fabricante: {
+                razonSocial: fabricante.razonSocial,
+                slug: fabricante.slug,
+                portalLogo: fabricante.portalLogo || null,
+                portalColor: fabricante.portalColor || '#1a73e8'
+            }
+        });
+    } catch (err) {
+        console.error('Error al obtener datos del fabricante:', err);
+        return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+    }
+});
 
 // @route   POST /api/public/registro
 // @desc    Register a product with user information

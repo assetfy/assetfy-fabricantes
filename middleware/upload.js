@@ -175,6 +175,13 @@ const uploadLogoMarca = createUpload(
     2
 );
 
+const uploadLogoFabricante = createUpload(
+    'logoFabricante',
+    /jpg|jpeg|png|gif/,
+    'Solo se permiten archivos JPG, JPEG, PNG y GIF para logo de fabricante',
+    2
+);
+
 // Function to delete file from S3
 const deleteFromS3 = (s3Key) => {
     return new Promise((resolve, reject) => {
@@ -204,6 +211,7 @@ module.exports = {
     uploadVideos, 
     uploadFotoPerfil,
     uploadLogoMarca,
+    uploadLogoFabricante,
     deleteFromS3, 
     checkS3Connection,
     s3 

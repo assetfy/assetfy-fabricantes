@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ExportacionDatos from './ExportacionDatos';
 import ImportacionDatos from './ImportacionDatos';
 import UbicacionList from './UbicacionList';
@@ -9,6 +9,8 @@ import MarcaForm from './MarcaForm';
 import MarcaEditForm from './MarcaEditForm';
 import Modal from './Modal';
 import Tabs from './Tabs';
+import api from '../api';
+import { useNotification } from './NotificationProvider';
 
 const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) => {
     const [showCreateUbicacionModal, setShowCreateUbicacionModal] = useState(false);
@@ -16,6 +18,25 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
     const [showCreateMarcaModal, setShowCreateMarcaModal] = useState(false);
     const [editingMarca, setEditingMarca] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Branding state
+    const [branding, setBranding] = useState({ portalColor: '#1a73e8', portalLogo: null, slug: '', razonSocial: '' });
+    const [brandingLoading, setBrandingLoading] = useState(true);
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [savingColor, setSavingColor] = useState(false);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+
+    const { showSuccess, showError } = useNotification();
+
+    useEffect(() => {
+        api.get('/apoderado/branding')
+            .then(res => {
+                setBranding(res.data);
+            })
+            .catch(() => {})
+            .finally(() => setBrandingLoading(false));
+    }, []);
 
     const handleRefresh = () => {
         setRefreshKey(prev => prev + 1);
@@ -59,6 +80,190 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
         setEditingMarca(null);
         handleRefresh();
     };
+
+    const handleColorChange = (e) => {
+        setBranding(prev => ({ ...prev, portalColor: e.target.value }));
+    };
+
+    const handleSaveColor = async () => {
+        setSavingColor(true);
+        try {
+            const res = await api.put('/apoderado/branding', { portalColor: branding.portalColor });
+            setBranding(prev => ({ ...prev, portalColor: res.data.portalColor }));
+            showSuccess('Color del portal actualizado');
+        } catch (err) {
+            showError('Error al guardar el color');
+        } finally {
+            setSavingColor(false);
+        }
+    };
+
+    const handleLogoFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setLogoFile(file);
+        setLogoPreview(URL.createObjectURL(file));
+    };
+
+    const handleUploadLogo = async () => {
+        if (!logoFile) return;
+        setUploadingLogo(true);
+        try {
+            const formData = new FormData();
+            formData.append('logo', logoFile);
+            const res = await api.post('/apoderado/branding/logo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setBranding(prev => ({ ...prev, portalLogo: res.data.portalLogo }));
+            setLogoFile(null);
+            setLogoPreview(null);
+            showSuccess('Logo del portal subido exitosamente');
+        } catch (err) {
+            showError('Error al subir el logo: ' + (err.response?.data || err.message));
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
+
+    const handleDeleteLogo = async () => {
+        if (!window.confirm('¿Eliminar el logo del portal?')) return;
+        try {
+            await api.delete('/apoderado/branding/logo');
+            setBranding(prev => ({ ...prev, portalLogo: null }));
+            showSuccess('Logo del portal eliminado');
+        } catch (err) {
+            showError('Error al eliminar el logo');
+        }
+    };
+
+    const portalUrl = branding.slug ? `${window.location.origin}/${branding.slug}` : null;
+
+    const handleCopyPortalLink = async () => {
+        if (!portalUrl) return;
+        try {
+            await navigator.clipboard.writeText(portalUrl);
+            showSuccess('Link del portal copiado: ' + portalUrl);
+        } catch (err) {
+            showError('Error al copiar. URL: ' + portalUrl);
+        }
+    };
+
+    const brandingTab = (
+        <div>
+            <h3>Portal de Registro - Personalización</h3>
+            <p>Configure el logo y el color del portal de registro público de su fabricante.</p>
+
+            {brandingLoading ? (
+                <p>Cargando...</p>
+            ) : (
+                <div style={{ maxWidth: '500px' }}>
+                    {portalUrl && (
+                        <div className="form-group" style={{ marginBottom: '24px' }}>
+                            <label>URL del portal de registro</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input
+                                    type="text"
+                                    value={portalUrl}
+                                    readOnly
+                                    style={{ flex: 1, backgroundColor: '#f5f5f5' }}
+                                />
+                                <button className="create-button" onClick={handleCopyPortalLink}>
+                                    Copiar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label>Color del portal</label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <input
+                                type="color"
+                                value={branding.portalColor}
+                                onChange={handleColorChange}
+                                style={{ width: '48px', height: '36px', cursor: 'pointer', border: 'none', padding: 0 }}
+                            />
+                            <input
+                                type="text"
+                                value={branding.portalColor}
+                                onChange={handleColorChange}
+                                placeholder="#1a73e8"
+                                maxLength="7"
+                                style={{ width: '120px' }}
+                            />
+                            <button
+                                className="create-button"
+                                onClick={handleSaveColor}
+                                disabled={savingColor}
+                            >
+                                {savingColor ? 'Guardando...' : 'Guardar color'}
+                            </button>
+                        </div>
+                        <div style={{
+                            marginTop: '8px',
+                            padding: '12px',
+                            backgroundColor: branding.portalColor,
+                            borderRadius: '4px',
+                            color: '#fff',
+                            textAlign: 'center',
+                            fontSize: '13px'
+                        }}>
+                            Vista previa del color del portal
+                        </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label>Logo del portal</label>
+                        {branding.portalLogo?.url && (
+                            <div style={{ marginBottom: '12px' }}>
+                                <img
+                                    src={branding.portalLogo.url}
+                                    alt="Logo del portal"
+                                    style={{ maxHeight: '80px', maxWidth: '200px', objectFit: 'contain', display: 'block', marginBottom: '8px' }}
+                                />
+                                <button
+                                    className="delete-button"
+                                    onClick={handleDeleteLogo}
+                                    style={{ fontSize: '12px' }}
+                                >
+                                    Eliminar logo
+                                </button>
+                            </div>
+                        )}
+                        {logoPreview && (
+                            <div style={{ marginBottom: '8px' }}>
+                                <img
+                                    src={logoPreview}
+                                    alt="Preview"
+                                    style={{ maxHeight: '60px', maxWidth: '160px', objectFit: 'contain', display: 'block' }}
+                                />
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/gif"
+                                onChange={handleLogoFileChange}
+                                style={{ flex: 1 }}
+                            />
+                            {logoFile && (
+                                <button
+                                    className="create-button"
+                                    onClick={handleUploadLogo}
+                                    disabled={uploadingLogo}
+                                >
+                                    {uploadingLogo ? 'Subiendo...' : 'Subir logo'}
+                                </button>
+                            )}
+                        </div>
+                        <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                            Formatos: JPG, PNG, GIF. Máximo 2MB.
+                        </small>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <div className="administracion-panel">
@@ -119,6 +324,10 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
                                 />
                             </>
                         )
+                    },
+                    {
+                        label: "Portal de Registro",
+                        content: brandingTab
                     }
                 ]}
             />

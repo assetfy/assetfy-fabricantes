@@ -621,7 +621,27 @@ router.route('/fabricantes/:id').delete(auth, async (req, res) => {
   }
 });
 
-// Custom auth middleware for file serving that accepts token from query or header
+// @route   POST /api/admin/fabricantes/migrate-slugs
+// @desc    Generate slugs for fabricantes that do not have one (retroactive migration)
+// @access  Privado (Admin)
+router.post('/fabricantes/migrate-slugs', auth, async (req, res) => {
+  try {
+    const fabricantes = await Fabricante.find({ $or: [{ slug: { $exists: false } }, { slug: null }, { slug: '' }] });
+    let updated = 0;
+    for (const fabricante of fabricantes) {
+      // Trigger pre-save hook by resetting slug to undefined
+      fabricante.slug = undefined;
+      await fabricante.save();
+      updated++;
+    }
+    res.json({ message: `Slugs generados para ${updated} fabricante(s).`, updated });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Error del servidor');
+  }
+});
+
+
 const fileAuth = function(req, res, next) {
     // Get token from header or query parameter
     const token = req.header('x-auth-token') || req.query.token;
