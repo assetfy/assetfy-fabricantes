@@ -3306,22 +3306,25 @@ router.delete('/piezas/:id/imagen', auth, async (req, res) => {
 
 
 // @route   GET /api/apoderado/branding
-// @desc    Get branding info for the apoderado's fabricante (portal color and logo)
+// @desc    Get branding info for all fabricantes the apoderado has access to
 // @access  Privado (Apoderado)
 router.get('/branding', auth, async (req, res) => {
     try {
-        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id))
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id))
             .select('razonSocial slug portalLogo portalColor');
 
-        if (!fabricante) {
+        if (!fabricantes || fabricantes.length === 0) {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
         }
 
         res.json({
-            slug: fabricante.slug,
-            portalLogo: fabricante.portalLogo || null,
-            portalColor: fabricante.portalColor || '#1a73e8',
-            razonSocial: fabricante.razonSocial
+            fabricantes: fabricantes.map(f => ({
+                _id: f._id,
+                slug: f.slug,
+                portalLogo: f.portalLogo || null,
+                portalColor: f.portalColor || '#1a73e8',
+                razonSocial: f.razonSocial
+            }))
         });
     } catch (err) {
         console.error(err.message);
@@ -3330,13 +3333,17 @@ router.get('/branding', auth, async (req, res) => {
 });
 
 // @route   PUT /api/apoderado/branding
-// @desc    Update branding portal color for the apoderado's fabricante
+// @desc    Update branding portal color for the specified fabricante
 // @access  Privado (Apoderado)
 router.put('/branding', auth, async (req, res) => {
     try {
-        const { portalColor } = req.body;
+        const { portalColor, fabricanteId } = req.body;
 
-        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id));
+        const query = fabricanteId
+            ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
+            : getFabricantesQuery(req.usuario.id);
+
+        const fabricante = await Fabricante.findOne(query);
 
         if (!fabricante) {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
@@ -3359,11 +3366,17 @@ router.put('/branding', auth, async (req, res) => {
 });
 
 // @route   POST /api/apoderado/branding/logo
-// @desc    Upload portal logo for the apoderado's fabricante
+// @desc    Upload portal logo for the specified fabricante
 // @access  Privado (Apoderado)
 router.post('/branding/logo', auth, checkS3Connection, async (req, res) => {
     try {
-        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id));
+        const fabricanteId = req.query.fabricanteId;
+
+        const query = fabricanteId
+            ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
+            : getFabricantesQuery(req.usuario.id);
+
+        const fabricante = await Fabricante.findOne(query);
 
         if (!fabricante) {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
@@ -3395,7 +3408,7 @@ router.post('/branding/logo', auth, checkS3Connection, async (req, res) => {
                 }
 
                 fabricante.portalLogo = {
-                    url: `/api/apoderado/files/${Buffer.from(req.file.key).toString('base64')}`,
+                    url: `/api/public/logo/${Buffer.from(req.file.key).toString('base64')}`,
                     key: req.file.key,
                     originalName: req.file.originalname
                 };
@@ -3421,11 +3434,17 @@ router.post('/branding/logo', auth, checkS3Connection, async (req, res) => {
 });
 
 // @route   DELETE /api/apoderado/branding/logo
-// @desc    Delete portal logo for the apoderado's fabricante
+// @desc    Delete portal logo for the specified fabricante
 // @access  Privado (Apoderado)
 router.delete('/branding/logo', auth, async (req, res) => {
     try {
-        const fabricante = await Fabricante.findOne(getFabricantesQuery(req.usuario.id));
+        const fabricanteId = req.query.fabricanteId;
+
+        const query = fabricanteId
+            ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
+            : getFabricantesQuery(req.usuario.id);
+
+        const fabricante = await Fabricante.findOne(query);
 
         if (!fabricante) {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
