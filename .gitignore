@@ -23,4 +23,3 @@ client/build/
 # Test files
 test_*.js
 create_*.js/tmp/*
-client/package-lock.json
