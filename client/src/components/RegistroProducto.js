@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api';
 import logo from '../logo.png';
@@ -17,6 +17,13 @@ const RegistroProducto = () => {
     const [registered, setRegistered] = useState(false);
     const [registrationData, setRegistrationData] = useState(null);
     const { showError, showSuccess } = useNotification();
+
+    // Company registration states
+    const [esEmpresa, setEsEmpresa] = useState(false);
+    const [showBulkModal, setShowBulkModal] = useState(false);
+    const [bulkIds, setBulkIds] = useState([]);
+    const [bulkLoading, setBulkLoading] = useState(false);
+    const fileInputRef = useRef(null);
 
     // Pre-populate inventory ID from URL parameters
     useEffect(() => {
@@ -37,13 +44,21 @@ const RegistroProducto = () => {
         });
     };
 
+    const handleEsEmpresaChange = (e) => {
+        setEsEmpresa(e.target.checked);
+        if (!e.target.checked) {
+            setShowBulkModal(false);
+            setBulkIds([]);
+        }
+    };
+
     const handleSubmit = async (e, createUser = false) => {
         e.preventDefault();
         setLoading(true);
 
-        // Validate CUIL is required when creating user
+        // Validate CUIL/CUIT is required when creating user
         if (createUser && !formData.cuil) {
-            showError('El CUIL es requerido para crear un usuario de bienes.');
+            showError(`El ${esEmpresa ? 'CUIT' : 'CUIL'} es requerido para crear un usuario de bienes.`);
             setLoading(false);
             return;
         }
@@ -78,6 +93,75 @@ const RegistroProducto = () => {
         setRegistered(false);
         setRegistrationData(null);
     };
+
+    const handleDownloadTemplate = () => {
+        const csvContent = 'idInventario\n';
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'plantilla_registro_masivo.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            setBulkIds([]);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+            // Skip header row if present
+            const ids = lines.filter(line => line.toLowerCase() !== 'idinventario');
+            setBulkIds(ids);
+        };
+        reader.readAsText(file);
+    };
+
+    const handleBulkRegister = async () => {
+        if (!bulkIds.length) return;
+
+        if (!formData.nombreCompleto || !formData.correoElectronico || !formData.cuil || !formData.telefono) {
+            showError('Complete todos los campos del formulario antes de hacer un registro masivo.');
+            return;
+        }
+
+        setBulkLoading(true);
+        try {
+            const response = await api.post('/public/registro-masivo', {
+                idsInventario: bulkIds,
+                razonSocial: formData.nombreCompleto,
+                correoElectronico: formData.correoElectronico,
+                cuit: formData.cuil,
+                telefono: formData.telefono
+            });
+
+            if (response.data.success) {
+                const { data } = response.data;
+                let msg = response.data.message;
+                if (data.yaRegistrados.length > 0) msg += ` (${data.yaRegistrados.length} ya estaban registrados)`;
+                if (data.noEncontrados.length > 0) msg += ` (${data.noEncontrados.length} no encontrados)`;
+                showSuccess(msg);
+                setShowBulkModal(false);
+                setBulkIds([]);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || 'Error en el registro masivo.';
+            showError(errorMessage);
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const nombreLabel = esEmpresa ? 'Razón Social' : 'Nombre Completo';
+    const cuilLabel = esEmpresa ? 'CUIT' : 'CUIL';
+    const nombrePlaceholder = esEmpresa ? 'Ingrese la razón social de la empresa' : 'Ingrese su nombre completo';
+    const cuilPlaceholder = esEmpresa ? 'Ingrese el CUIT (11 dígitos)' : 'Ingrese su CUIL (11 dígitos)';
 
     if (registered && registrationData) {
         return (
@@ -116,35 +200,48 @@ const RegistroProducto = () => {
                     'Necesitará el ID de inventario que se encuentra en su producto.'
                 }
             </p>
+
+            <div className="form-group form-group-checkbox">
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={esEmpresa}
+                        onChange={handleEsEmpresaChange}
+                    />
+                    Registrar a nombre de empresa
+                </label>
+            </div>
             
             <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="idInventario">ID de Inventario *</label>
-                    <input
-                        type="text"
-                        id="idInventario"
-                        name="idInventario"
-                        value={formData.idInventario}
-                        onChange={handleChange}
-                        placeholder="Ingrese el ID de inventario de su producto"
-                        required
-                        maxLength="8"
-                        style={{ textTransform: 'uppercase' }}
-                    />
-                    <small className="field-help">
-                        Encuentre este código en la etiqueta de su producto
-                    </small>
-                </div>
+                {!esEmpresa && (
+                    <div className="form-group">
+                        <label htmlFor="idInventario">ID de Inventario *</label>
+                        <input
+                            type="text"
+                            id="idInventario"
+                            name="idInventario"
+                            value={formData.idInventario}
+                            onChange={handleChange}
+                            placeholder="Ingrese el ID de inventario de su producto"
+                            required={!esEmpresa}
+                            maxLength="8"
+                            style={{ textTransform: 'uppercase' }}
+                        />
+                        <small className="field-help">
+                            Encuentre este código en la etiqueta de su producto
+                        </small>
+                    </div>
+                )}
 
                 <div className="form-group">
-                    <label htmlFor="nombreCompleto">Nombre Completo *</label>
+                    <label htmlFor="nombreCompleto">{nombreLabel} *</label>
                     <input
                         type="text"
                         id="nombreCompleto"
                         name="nombreCompleto"
                         value={formData.nombreCompleto}
                         onChange={handleChange}
-                        placeholder="Ingrese su nombre completo"
+                        placeholder={nombrePlaceholder}
                         required
                         maxLength="100"
                     />
@@ -165,18 +262,18 @@ const RegistroProducto = () => {
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="cuil">CUIL</label>
+                    <label htmlFor="cuil">{cuilLabel}</label>
                     <input
                         type="text"
                         id="cuil"
                         name="cuil"
                         value={formData.cuil}
                         onChange={handleChange}
-                        placeholder="Ingrese su CUIL (11 dígitos)"
+                        placeholder={cuilPlaceholder}
                         maxLength="13"
                     />
                     <small className="field-help">
-                        Ingrese su CUIL sin guiones (ej: 20123456789). Requerido para crear usuario de bienes.
+                        Ingrese {esEmpresa ? 'el CUIT' : 'su CUIL'} sin guiones (ej: 20123456789).{!esEmpresa && ' Requerido para crear usuario de bienes.'}
                     </small>
                 </div>
 
@@ -194,15 +291,75 @@ const RegistroProducto = () => {
                     />
                 </div>
 
+                {esEmpresa && (
+                    <div className="form-group">
+                        <button
+                            type="button"
+                            className="bulk-register-btn"
+                            onClick={() => setShowBulkModal(true)}
+                        >
+                            📋 Registro masivo de bienes
+                        </button>
+                    </div>
+                )}
+
                 <div className="button-group">
                     <button type="button" onClick={(e) => handleSubmit(e, false)} disabled={loading} className="secondary-button">
                         {loading ? 'Registrando...' : 'Registrar'}
                     </button>
-                    <button type="button" onClick={(e) => handleSubmit(e, true)} disabled={loading}>
-                        {loading ? 'Registrando...' : 'Registrar y Crear Usuario de Bienes'}
-                    </button>
+                    {!esEmpresa && (
+                        <button type="button" onClick={(e) => handleSubmit(e, true)} disabled={loading}>
+                            {loading ? 'Registrando...' : 'Registrar y Crear Usuario de Bienes'}
+                        </button>
+                    )}
                 </div>
             </form>
+
+            {/* Bulk Registration Modal */}
+            {showBulkModal && (
+                <div className="bulk-modal-overlay" onClick={() => setShowBulkModal(false)}>
+                    <div className="bulk-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="bulk-modal-header">
+                            <h3>Registro masivo de bienes</h3>
+                            <button className="modal-close" onClick={() => setShowBulkModal(false)}>×</button>
+                        </div>
+                        <div className="bulk-modal-body">
+                            <p>Descargue la plantilla de ejemplo, complete los IDs de inventario (uno por fila) y luego súbala aquí para registrar todos los productos a nombre de la empresa.</p>
+                            <button type="button" onClick={handleDownloadTemplate} className="template-button">
+                                ⬇ Descargar plantilla de ejemplo
+                            </button>
+                            <div className="form-group" style={{ marginTop: '1.25rem' }}>
+                                <label>Seleccionar archivo CSV *</label>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".csv,.txt"
+                                    onChange={handleFileChange}
+                                    style={{ display: 'block', marginTop: '0.5rem' }}
+                                />
+                            </div>
+                            {bulkIds.length > 0 && (
+                                <div className="bulk-preview">
+                                    <p>Va a registrar <strong>{bulkIds.length}</strong> producto/s</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="bulk-modal-footer">
+                            <button type="button" onClick={() => setShowBulkModal(false)} className="cancel-btn">
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBulkRegister}
+                                disabled={bulkLoading || bulkIds.length === 0}
+                                className="submit-btn"
+                            >
+                                {bulkLoading ? 'Registrando...' : 'Confirmar registro masivo'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="form-footer">
                 <p>
