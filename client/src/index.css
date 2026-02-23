@@ -2479,6 +2479,58 @@ td .action-buttons button {
     margin-left: auto;
 }
 
+.sidebar-chevron {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--primary-purple);
+    flex-shrink: 0;
+}
+
+.sidebar-item:not(.active):hover .sidebar-chevron {
+    color: white;
+}
+
+.sidebar-sub-items {
+    background: #f9f6fd;
+    border-left: 3px solid var(--primary-purple);
+    margin-left: 0;
+}
+
+.sidebar-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.5rem 0.6rem 2.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    transition: background 0.15s ease, color 0.15s ease;
+    border-bottom: 1px solid #ede7f6;
+}
+
+.sidebar-sub-item:last-child {
+    border-bottom: none;
+}
+
+.sidebar-sub-item:hover {
+    background: var(--primary-purple);
+    color: white;
+}
+
+.sidebar-sub-item-icon {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.sidebar-sub-item-label {
+    font-weight: 500;
+    line-height: 1.2;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .sidebar-content {
     flex: 1;
     min-width: 0;
