@@ -347,6 +347,80 @@ router.post('/registro-con-usuario', async (req, res) => {
     }
 });
 
+// @route   POST /api/public/registro-masivo
+// @desc    Bulk register multiple products for a company
+// @access  Public
+router.post('/registro-masivo', async (req, res) => {
+    const { nombreCompleto, correoElectronico, cuil, telefono, ids } = req.body;
+
+    if (!nombreCompleto || !correoElectronico || !telefono || !ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Todos los campos son obligatorios: Razón Social, correo electrónico, teléfono y al menos un ID de inventario.'
+        });
+    }
+
+    if (ids.length > 500) {
+        return res.status(400).json({
+            success: false,
+            message: 'No se pueden registrar más de 500 productos por solicitud.'
+        });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correoElectronico)) {
+        return res.status(400).json({ success: false, message: 'El formato del correo electrónico no es válido.' });
+    }
+
+    const cleanIds = ids.map(id => String(id).trim().toUpperCase()).filter(Boolean);
+    if (cleanIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'No se encontraron IDs de inventario válidos.' });
+    }
+
+    try {
+        let registrados = 0;
+        const errores = [];
+
+        for (const idInventario of cleanIds) {
+            try {
+                const inventario = await Inventario.findOne({ idInventario });
+                if (!inventario) {
+                    errores.push(`${idInventario}: no encontrado`);
+                    continue;
+                }
+                if (inventario.registrado === 'Si') {
+                    errores.push(`${idInventario}: ya registrado`);
+                    continue;
+                }
+
+                inventario.comprador.nombreCompleto = nombreCompleto.trim();
+                inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
+                inventario.comprador.telefono = telefono.trim();
+                if (cuil) {
+                    inventario.comprador.cuil = cuil.replace(/[-\s]/g, '');
+                }
+                inventario.registrado = 'Si';
+                inventario.estado = 'vendido';
+                inventario.fechaRegistro = new Date();
+
+                await inventario.save();
+                registrados++;
+            } catch (itemErr) {
+                errores.push(`${idInventario}: error al registrar`);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Se registraron ${registrados} producto/s exitosamente.${errores.length > 0 ? ` ${errores.length} no pudieron registrarse.` : ''}`,
+            data: { registrados, errores }
+        });
+    } catch (err) {
+        console.error('Error en registro masivo:', err);
+        return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+    }
+});
+
 // @route   GET /api/public/logo/:s3Key
 // @desc    Serve portal logo files from S3 without authentication (restricted to logoFabricante/ prefix)
 // @access  Public
