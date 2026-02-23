@@ -347,6 +347,89 @@ router.post('/registro-con-usuario', async (req, res) => {
     }
 });
 
+// @route   POST /api/public/registro-masivo
+// @desc    Bulk register products on behalf of a company
+// @access  Public
+router.post('/registro-masivo', async (req, res) => {
+    const { idsInventario, razonSocial, correoElectronico, cuit, telefono } = req.body;
+
+    if (!idsInventario || !Array.isArray(idsInventario) || idsInventario.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Debe proporcionar al menos un ID de inventario.'
+        });
+    }
+
+    if (!razonSocial || !correoElectronico || !cuit || !telefono) {
+        return res.status(400).json({
+            success: false,
+            message: 'Todos los campos son obligatorios: razón social, correo electrónico, CUIT y teléfono.'
+        });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correoElectronico)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El formato del correo electrónico no es válido.'
+        });
+    }
+
+    const cuitClean = cuit.replace(/[-\s]/g, '');
+    if (!/^\d{11}$/.test(cuitClean)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El CUIT debe contener 11 dígitos.'
+        });
+    }
+
+    try {
+        const cleanIds = idsInventario
+            .map(id => String(id).trim().toUpperCase())
+            .filter(id => id.length > 0);
+
+        // Fetch all inventory items in a single query
+        const inventarios = await Inventario.find({ idInventario: { $in: cleanIds } });
+        const inventarioMap = new Map(inventarios.map(inv => [inv.idInventario, inv]));
+
+        const results = { registrados: [], yaRegistrados: [], noEncontrados: [] };
+
+        for (const id of cleanIds) {
+            const inventario = inventarioMap.get(id);
+
+            if (!inventario) {
+                results.noEncontrados.push(id);
+                continue;
+            }
+
+            if (inventario.registrado === 'Si') {
+                results.yaRegistrados.push(id);
+                continue;
+            }
+
+            inventario.comprador.nombreCompleto = razonSocial.trim();
+            inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
+            inventario.comprador.telefono = telefono.trim();
+            inventario.comprador.cuil = cuitClean;
+            inventario.registrado = 'Si';
+            inventario.estado = 'vendido';
+            inventario.fechaRegistro = new Date();
+
+            await inventario.save();
+            results.registrados.push(id);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Se registraron ${results.registrados.length} producto/s exitosamente.`,
+            data: results
+        });
+    } catch (err) {
+        console.error('Error en registro masivo:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.'
+        });
 // @route   GET /api/public/logo/:s3Key
 // @desc    Serve portal logo files from S3 without authentication (restricted to logoFabricante/ prefix)
 // @access  Public
