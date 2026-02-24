@@ -2006,7 +2006,7 @@ td .action-buttons button {
     max-width: 90vw;
     max-height: 90vh;
     overflow-y: auto;
-    width: 600px; /* Increased from 500px */
+    width: 800px; /* Increased to fit all product tabs without horizontal scroll */
 }
 
 @media (max-width: 768px) {
