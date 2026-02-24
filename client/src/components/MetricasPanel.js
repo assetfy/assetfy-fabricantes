@@ -42,11 +42,11 @@ const MetricasPanel = () => {
         );
     }
 
-    // Calculate representantes metrics (placeholder - adjust based on actual API data)
+    // Calculate representantes metrics
     const totalRepresentantes = metricas.representantes || 0;
-    const representantesActivos = totalRepresentantes; // Adjust when API provides this
-    const representantesInactivos = 0; // Adjust when API provides this
-    const nuevosEsteMes = 0; // Adjust when API provides this
+    const representantesActivos = metricas.estadisticas?.representantesActivos || 0;
+    const representantesInactivos = metricas.estadisticas?.representantesInactivos || 0;
+    const nuevosEsteMes = metricas.estadisticas?.representantesNuevosEsteMes || 0;
 
     return (
         <div className="metricas-panel">
