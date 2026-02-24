@@ -351,12 +351,19 @@ router.post('/registro-con-usuario', async (req, res) => {
 // @desc    Bulk register multiple products for a company
 // @access  Public
 router.post('/registro-masivo', async (req, res) => {
-    const { nombreCompleto, correoElectronico, cuil, telefono, ids } = req.body;
+    const { nombreCompleto, correoElectronico, cuil, telefono, ids, createUser } = req.body;
 
     if (!nombreCompleto || !correoElectronico || !telefono || !ids || !Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({
             success: false,
             message: 'Todos los campos son obligatorios: Razón Social, correo electrónico, teléfono y al menos un ID de inventario.'
+        });
+    }
+
+    if (createUser && !cuil) {
+        return res.status(400).json({
+            success: false,
+            message: 'El CUIL es requerido para crear un usuario de bienes.'
         });
     }
 
@@ -377,13 +384,73 @@ router.post('/registro-masivo', async (req, res) => {
         return res.status(400).json({ success: false, message: 'No se encontraron IDs de inventario válidos.' });
     }
 
+    let cuilClean = null;
+    if (cuil) {
+        cuilClean = cuil.replace(/[-\s]/g, '');
+    }
+
+    if (createUser && cuilClean && !/^\d{11}$/.test(cuilClean)) {
+        return res.status(400).json({ success: false, message: 'El CUIL debe contener 11 dígitos.' });
+    }
+
     try {
+        let usuario = null;
+        let tempPassword = null;
+        let emailSent = false;
+        let isNewUser = false;
+
+        if (createUser) {
+            usuario = await Usuario.findOne({
+                $or: [
+                    { correoElectronico: correoElectronico.trim().toLowerCase() },
+                    { cuil: cuilClean }
+                ]
+            });
+
+            if (usuario) {
+                if (!usuario.roles.includes('usuario_bienes')) {
+                    usuario.roles.push('usuario_bienes');
+                    await usuario.save();
+                }
+            } else {
+                tempPassword = crypto.randomBytes(8).toString('hex');
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(tempPassword, salt);
+                const activationToken = crypto.randomBytes(32).toString('hex');
+                const activationTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+                usuario = new Usuario({
+                    nombreCompleto: nombreCompleto.trim(),
+                    cuil: cuilClean,
+                    correoElectronico: correoElectronico.trim().toLowerCase(),
+                    contraseña: hashedPassword,
+                    telefono: telefono.trim(),
+                    roles: ['usuario_bienes'],
+                    estadoApoderado: 'Invitado',
+                    estado: 'Activo',
+                    activationToken,
+                    activationTokenExpires,
+                    permisosFabricantes: []
+                });
+
+                await usuario.save();
+                isNewUser = true;
+            }
+        }
+
         let registrados = 0;
         const errores = [];
 
         for (const idInventario of cleanIds) {
             try {
-                const inventario = await Inventario.findOne({ idInventario });
+                const inventario = await Inventario.findOne({ idInventario }).populate({
+                    path: 'producto',
+                    populate: [
+                        { path: 'fabricante' },
+                        { path: 'marca' },
+                        { path: 'garantia' }
+                    ]
+                });
                 if (!inventario) {
                     errores.push(`${idInventario}: no encontrado`);
                     continue;
@@ -396,23 +463,73 @@ router.post('/registro-masivo', async (req, res) => {
                 inventario.comprador.nombreCompleto = nombreCompleto.trim();
                 inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
                 inventario.comprador.telefono = telefono.trim();
-                if (cuil) {
-                    inventario.comprador.cuil = cuil.replace(/[-\s]/g, '');
+                if (cuilClean) {
+                    inventario.comprador.cuil = cuilClean;
                 }
                 inventario.registrado = 'Si';
                 inventario.estado = 'vendido';
                 inventario.fechaRegistro = new Date();
 
                 await inventario.save();
+
+                if (createUser && usuario) {
+                    const nombreBien = inventario.producto?.modelo || 'Mi Producto';
+                    const nuevoBien = new Bien({
+                        nombre: nombreBien,
+                        tipo: 'registrado',
+                        usuario: usuario._id,
+                        inventario: inventario._id,
+                        datosProducto: {
+                            modelo: inventario.producto?.modelo,
+                            descripcion: inventario.producto?.descripcion,
+                            numeroSerie: inventario.numeroSerie,
+                            garantia: inventario.producto?.garantia?._id,
+                            atributos: inventario.producto?.atributos || [],
+                            imagenPrincipal: inventario.producto?.imagenPrincipal,
+                            fabricante: inventario.producto?.fabricante?._id,
+                            marca: inventario.producto?.marca?._id
+                        },
+                        fechaRegistro: new Date()
+                    });
+                    await nuevoBien.save();
+                }
+
                 registrados++;
             } catch (itemErr) {
                 errores.push(`${idInventario}: error al registrar`);
             }
         }
 
+        if (createUser && isNewUser && usuario && registrados > 0) {
+            try {
+                const emailResult = await sendInvitationEmail(
+                    nombreCompleto.trim(),
+                    correoElectronico.trim().toLowerCase(),
+                    tempPassword,
+                    usuario.activationToken,
+                    [],
+                    'usuario_bienes'
+                );
+                emailSent = emailResult.success;
+            } catch (emailErr) {
+                console.error('Error sending invitation email:', emailErr);
+            }
+        }
+
+        let message = `Se registraron ${registrados} producto/s exitosamente.${errores.length > 0 ? ` ${errores.length} no pudieron registrarse.` : ''}`;
+        if (createUser && registrados > 0) {
+            if (isNewUser) {
+                message += emailSent
+                    ? ' Se ha creado el usuario de bienes y se ha enviado un correo de activación.'
+                    : ' Se ha creado el usuario de bienes.';
+            } else {
+                message += ' El usuario ya existente fue vinculado a los bienes registrados.';
+            }
+        }
+
         return res.status(200).json({
             success: true,
-            message: `Se registraron ${registrados} producto/s exitosamente.${errores.length > 0 ? ` ${errores.length} no pudieron registrarse.` : ''}`,
+            message,
             data: { registrados, errores }
         });
     } catch (err) {

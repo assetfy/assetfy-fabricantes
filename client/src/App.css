@@ -1159,12 +1159,77 @@ table .warranty-expired {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  align-items: center;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .button-group button {
   flex: 1;
   max-width: 300px;
+}
+
+/* Create user toggle switch */
+.create-user-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+  white-space: nowrap;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 24px;
+  transition: background-color 0.3s;
+}
+
+.toggle-slider-track::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider-track {
+  background-color: #667eea;
+}
+
+.toggle-switch input:checked + .toggle-slider-track::before {
+  transform: translateX(20px);
+}
+
+/* Create user mode indicator in bulk modal */
+.create-user-mode-note {
+  color: #667eea;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 1rem;
 }
 
 .button-group .register-button {
