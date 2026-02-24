@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { useLocation } from 'react-router-dom';
 import { useNotification } from './NotificationProvider';
 import ConfirmDialog from './ConfirmDialog';
 import QRPreviewModal from './QRPreviewModal';
@@ -31,9 +32,11 @@ const formatWarrantyExpiration = (item) => {
 
 
 const InventarioList = ({ refreshTrigger, onEdit, onView }) => {
+    const location = useLocation();
+    const initialSearch = new URLSearchParams(location.search).get('search') || '';
     const [inventario, setInventario] = useState([]);
     const [allInventario, setAllInventario] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [estadoFilter, setEstadoFilter] = useState('todos');
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, itemId: null });
     const [qrPreviewModal, setQrPreviewModal] = useState({ isOpen: false, item: null });

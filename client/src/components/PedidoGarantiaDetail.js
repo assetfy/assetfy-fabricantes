@@ -80,6 +80,17 @@ const PedidoGarantiaDetail = ({ pedido, onClose, onUpdated, isFabricante }) => {
                 <div style={{ marginTop: '10px' }}>
                     <strong>Bien:</strong> {pedido.bien?.nombre || 'N/A'}
                 </div>
+                {isFabricante && pedido.bien?.inventario && (
+                    <div style={{ marginTop: '4px' }}>
+                        <strong>ID de Inventario:</strong>{' '}
+                        <a
+                            href={`/apoderado/inventario?search=${encodeURIComponent(pedido.bien.inventario.idInventario)}`}
+                            style={{ fontFamily: 'monospace', fontWeight: 600 }}
+                        >
+                            {pedido.bien.inventario.idInventario}
+                        </a>
+                    </div>
+                )}
                 {isFabricante && (
                     <div style={{ marginTop: '4px' }}>
                         <strong>Usuario:</strong> {pedido.usuario?.nombreCompleto || 'N/A'} ({pedido.usuario?.correoElectronico || ''})
