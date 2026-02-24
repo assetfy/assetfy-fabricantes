@@ -14,6 +14,7 @@ const RegistroProducto = () => {
         telefono: ''
     });
     const [esEmpresa, setEsEmpresa] = useState(false);
+    const [createUser, setCreateUser] = useState(false);
     const [showBulkModal, setShowBulkModal] = useState(false);
     const [bulkIds, setBulkIds] = useState([]);
     const [bulkFile, setBulkFile] = useState(null);
@@ -43,7 +44,7 @@ const RegistroProducto = () => {
         });
     };
 
-    const handleSubmit = async (e, createUser = false) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
@@ -130,7 +131,8 @@ const RegistroProducto = () => {
                 correoElectronico: formData.correoElectronico,
                 cuil: formData.cuil,
                 telefono: formData.telefono,
-                ids: bulkIds
+                ids: bulkIds,
+                createUser
             });
             if (response.data.success) {
                 showSuccess(response.data.message);
@@ -280,14 +282,20 @@ const RegistroProducto = () => {
                 </div>
 
                 <div className="button-group">
-                    <button type="button" onClick={(e) => handleSubmit(e, false)} disabled={loading} className="secondary-button">
+                    <div className="create-user-toggle">
+                        <span>Registrar y Crear usuario</span>
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={createUser}
+                                onChange={(e) => setCreateUser(e.target.checked)}
+                            />
+                            <span className="toggle-slider-track"></span>
+                        </label>
+                    </div>
+                    <button type="button" onClick={handleSubmit} disabled={loading}>
                         {loading ? 'Registrando...' : 'Registrar'}
                     </button>
-                    {!esEmpresa && (
-                        <button type="button" onClick={(e) => handleSubmit(e, true)} disabled={loading}>
-                            {loading ? 'Registrando...' : 'Registrar y Crear Usuario de Bienes'}
-                        </button>
-                    )}
                     {esEmpresa && (
                         <button type="button" onClick={() => setShowBulkModal(true)} className="secondary-button">
                             Registro masivo de bienes
@@ -341,8 +349,13 @@ const RegistroProducto = () => {
                             />
                         </div>
                         {bulkIds.length > 0 && (
-                            <p style={{ color: '#1a73e8', fontWeight: 'bold', margin: '0.5rem 0 1rem' }}>
+                            <p style={{ color: '#1a73e8', fontWeight: 'bold', margin: '0.5rem 0 0.5rem' }}>
                                 Va a registrar {bulkIds.length} producto/s
+                            </p>
+                        )}
+                        {createUser && (
+                            <p className="create-user-mode-note">
+                                ⚡ Se creará un usuario de bienes para los productos registrados.
                             </p>
                         )}
                         {bulkFile && bulkIds.length === 0 && (
