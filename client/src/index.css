@@ -186,6 +186,13 @@ button:hover {
   font-weight: 600;
 }
 
+.pedido-garantia-list {
+  background: var(--card-white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -198,9 +205,9 @@ table th, table td {
 }
 
 table th {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: #ede7f6;
   font-weight: 600;
-  color: #ffffff;
+  color: #5C2D91;
   padding: 1rem 0.75rem;
 }
 
