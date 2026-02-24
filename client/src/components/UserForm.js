@@ -169,14 +169,13 @@ const handleSubmit = (e) => {
             </small>
           </div>
         )}
-        <div className="form-group">
+        <div className="form-group form-group-checkbox">
           <label>
             <input 
               type="checkbox" 
               name="enviarInvitacion" 
               checked={formData.enviarInvitacion} 
               onChange={handleChange}
-              style={{ width: 'auto', marginRight: '8px' }}
             />
             Enviar invitación por correo electrónico
           </label>

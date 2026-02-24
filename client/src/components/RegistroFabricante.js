@@ -271,15 +271,14 @@ const RegistroFabricante = () => {
                 }
             </p>
 
-            <div style={{ marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                    type="checkbox"
-                    id="esEmpresa"
-                    checked={esEmpresa}
-                    onChange={(e) => setEsEmpresa(e.target.checked)}
-                    style={{ width: '16px', height: '16px', margin: 0, flexShrink: 0, cursor: 'pointer' }}
-                />
-                <label htmlFor="esEmpresa" style={{ margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
+            <div className="form-group form-group-checkbox" style={{ marginBottom: '1.2rem' }}>
+                <label>
+                    <input
+                        type="checkbox"
+                        id="esEmpresa"
+                        checked={esEmpresa}
+                        onChange={(e) => setEsEmpresa(e.target.checked)}
+                    />
                     Registrar a nombre de empresa
                 </label>
             </div>
