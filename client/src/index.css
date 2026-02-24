@@ -79,7 +79,7 @@ h2 {
   color: #555;
 }
 
-.form-group input,
+.form-group input:not([type="checkbox"]),
 .form-group select {
   width: 100%;
   padding: 0.75rem;
@@ -90,11 +90,29 @@ h2 {
   transition: all 0.3s ease;
 }
 
-.form-group input:focus,
+.form-group input:not([type="checkbox"]):focus,
 .form-group select:focus {
   outline: none;
   border-color: var(--primary-purple);
   box-shadow: 0 0 0 3px rgba(92, 45, 145, 0.2);
+}
+
+.form-group.form-group-checkbox label,
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.form-group.form-group-checkbox label input[type="checkbox"],
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 button {
