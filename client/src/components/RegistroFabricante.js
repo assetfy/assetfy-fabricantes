@@ -269,20 +269,22 @@ const RegistroFabricante = () => {
                 }
             </p>
 
-            <div className="form-group form-group-checkbox" style={{ marginBottom: '1.2rem' }}>
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={esEmpresa}
-                        onChange={(e) => setEsEmpresa(e.target.checked)}
-                    />
+            <div style={{ marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                    type="checkbox"
+                    id="esEmpresa"
+                    checked={esEmpresa}
+                    onChange={(e) => setEsEmpresa(e.target.checked)}
+                    style={{ width: '16px', height: '16px', margin: 0, flexShrink: 0, cursor: 'pointer' }}
+                />
+                <label htmlFor="esEmpresa" style={{ margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
                     Registrar a nombre de empresa
                 </label>
             </div>
 
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label htmlFor="idInventario">ID de Inventario *</label>
+                    <label htmlFor="idInventario">ID de Inventario{esEmpresa ? '' : ' *'}</label>
                     <input
                         type="text"
                         id="idInventario"
@@ -290,13 +292,19 @@ const RegistroFabricante = () => {
                         value={formData.idInventario}
                         onChange={handleChange}
                         placeholder="Ingrese el ID de inventario de su producto"
-                        required
+                        required={!esEmpresa}
                         maxLength="8"
                         style={{ textTransform: 'uppercase' }}
                     />
-                    <small className="field-help">
-                        Encuentre este código en la etiqueta de su producto
-                    </small>
+                    {esEmpresa ? (
+                        <small className="field-help">
+                            Si quiere hacer un registro masivo, deje este campo en blanco, complete toda la información y luego siga con el botón Registro masivo de bienes.
+                        </small>
+                    ) : (
+                        <small className="field-help">
+                            Encuentre este código en la etiqueta de su producto
+                        </small>
+                    )}
                 </div>
 
                 <div className="form-group">
