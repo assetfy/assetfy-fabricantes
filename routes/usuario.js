@@ -11,6 +11,8 @@ const Producto = require('../models/producto.model');
 const Fabricante = require('../models/fabricante.model');
 const Marca = require('../models/marca.model');
 const Garantia = require('../models/garantia.model');
+const PedidoGarantia = require('../models/pedidoGarantia.model');
+const { sendGarantiaUserReplyEmail } = require('../utils/emailService');
 const { deleteFromS3, checkS3Connection } = require('../middleware/upload');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
@@ -54,6 +56,26 @@ const uploadBienImage = multer({
     },
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
+
+// Create upload middleware for warranty claim attachments
+const uploadGarantiaFile = multer({
+    storage: multerS3({
+        s3: s3,
+        bucket: process.env.S3_BUCKET_NAME,
+        key: function (req, file, cb) {
+            const fileName = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            const s3Key = `pedidos-garantia/${fileName}`;
+            cb(null, s3Key);
+        },
+        metadata: function (req, file, cb) {
+            cb(null, { fieldName: file.fieldname });
+        },
+        contentType: multerS3.AUTO_CONTENT_TYPE
+    }),
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
     }
 });
 
@@ -175,7 +197,7 @@ router.get('/bienes', auth, async (req, res) => {
             })
             .populate({
                 path: 'datosProducto.garantia',
-                select: 'nombre duracion unidad'
+                select: 'nombre duracionNumero duracionUnidad fechaInicio'
             })
             .sort({ createdAt: -1 });
 
@@ -256,7 +278,7 @@ router.post('/bienes/verificar', auth, async (req, res) => {
                 populate: [
                     { path: 'fabricante', select: 'razonSocial' },
                     { path: 'marca', select: 'nombre' },
-                    { path: 'garantia', select: 'nombre duracion unidad' }
+                    { path: 'garantia', select: 'nombre duracionNumero duracionUnidad fechaInicio' }
                 ]
             })
             .populate('comprador');
@@ -398,7 +420,7 @@ router.post('/bienes/registrar', auth, async (req, res) => {
             },
             {
                 path: 'datosProducto.garantia',
-                select: 'nombre duracion unidad'
+                select: 'nombre duracionNumero duracionUnidad fechaInicio'
             }
         ]);
 
@@ -432,7 +454,7 @@ router.get('/bienes/:id', auth, async (req, res) => {
             })
             .populate({
                 path: 'datosProducto.garantia',
-                select: 'nombre duracion unidad'
+                select: 'nombre duracionNumero duracionUnidad fechaInicio'
             });
 
         if (!bien) {
@@ -510,7 +532,7 @@ router.put('/bienes/:id', auth, checkS3Connection, uploadBienImage.single('image
             },
             {
                 path: 'datosProducto.garantia',
-                select: 'nombre duracion unidad'
+                select: 'nombre duracionNumero duracionUnidad fechaInicio'
             }
         ]);
 
@@ -626,6 +648,188 @@ router.get('/files/:s3Key', fileAuth, async (req, res) => {
         if (!res.headersSent) {
             res.status(500).json('Error del servidor');
         }
+    }
+});
+
+// =============================================================================
+// RUTAS DE PEDIDOS DE GARANTÍA (usuario)
+// =============================================================================
+
+// Utility: check if warranty is still active for a bien
+const isWarrantyActive = (bien) => {
+    if (!bien || bien.tipo !== 'registrado') return false;
+    const garantia = bien.datosProducto?.garantia;
+    if (!garantia || !garantia.duracionNumero || !garantia.duracionUnidad) return false;
+    const fechaBase = bien.fechaRegistro;
+    if (!fechaBase) return false;
+    const inicio = new Date(fechaBase);
+    switch (garantia.duracionUnidad) {
+        case 'dias':
+            inicio.setDate(inicio.getDate() + garantia.duracionNumero);
+            break;
+        case 'meses':
+            inicio.setMonth(inicio.getMonth() + garantia.duracionNumero);
+            break;
+        case 'años':
+            inicio.setFullYear(inicio.getFullYear() + garantia.duracionNumero);
+            break;
+        default:
+            return false;
+    }
+    return inicio >= new Date();
+};
+
+// @route   GET /api/usuario/pedidos-garantia
+// @desc    Get all warranty claims for the authenticated user
+// @access  Private (usuario_bienes)
+router.get('/pedidos-garantia', auth, async (req, res) => {
+    try {
+        const usuario = await Usuario.findById(req.usuario.id);
+        if (!usuario || !hasRole(usuario.roles, 'usuario_bienes')) {
+            return res.status(403).json({ msg: 'Acceso denegado' });
+        }
+
+        const pedidos = await PedidoGarantia.find({ usuario: req.usuario.id })
+            .populate('bien', 'nombre datosProducto fechaRegistro')
+            .populate('fabricante', 'razonSocial')
+            .sort({ createdAt: -1 });
+
+        res.json(pedidos);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/usuario/pedidos-garantia
+// @desc    Create a new warranty claim
+// @access  Private (usuario_bienes)
+router.post('/pedidos-garantia', auth, (req, res, next) => {
+    // Only process file upload if S3 is configured
+    uploadGarantiaFile.single('archivo')(req, res, (err) => {
+        if (err) {
+            console.warn('⚠️ File upload failed (continuing without file):', err.message);
+        }
+        next();
+    });
+}, async (req, res) => {
+    try {
+        const usuario = await Usuario.findById(req.usuario.id);
+        if (!usuario || !hasRole(usuario.roles, 'usuario_bienes')) {
+            return res.status(403).json({ msg: 'Acceso denegado' });
+        }
+
+        const { bienId, descripcion, comentario } = req.body;
+
+        if (!bienId || !descripcion) {
+            return res.status(400).json({ msg: 'Se requiere el bien y la descripción' });
+        }
+
+        // Verify bien belongs to user and warranty is active
+        const bien = await Bien.findOne({ _id: bienId, usuario: req.usuario.id })
+            .populate({ path: 'datosProducto.garantia', select: 'duracionNumero duracionUnidad' })
+            .populate({ path: 'datosProducto.fabricante', select: '_id razonSocial' });
+
+        if (!bien) {
+            return res.status(404).json({ msg: 'Bien no encontrado' });
+        }
+
+        if (!isWarrantyActive(bien)) {
+            return res.status(400).json({ msg: 'La garantía del bien no está vigente' });
+        }
+
+        const fabricanteId = bien.datosProducto?.fabricante?._id;
+        if (!fabricanteId) {
+            return res.status(400).json({ msg: 'No se encontró el fabricante del bien' });
+        }
+
+        const pedidoData = {
+            bien: bienId,
+            usuario: req.usuario.id,
+            fabricante: fabricanteId,
+            descripcion,
+            estado: 'Nuevo',
+            mensajes: []
+        };
+
+        if (comentario) {
+            pedidoData.mensajes.push({
+                autor: 'usuario',
+                autorId: req.usuario.id,
+                contenido: comentario
+            });
+        }
+
+        if (req.file) {
+            pedidoData.archivo = {
+                originalName: req.file.originalname,
+                fileName: req.file.key.split('/').pop(),
+                s3Key: req.file.key,
+                url: `/api/usuario/files/${Buffer.from(req.file.key).toString('base64')}`,
+                uploadDate: new Date()
+            };
+        }
+
+        const pedido = new PedidoGarantia(pedidoData);
+        await pedido.save();
+
+        res.json({ msg: 'Pedido de garantía creado', pedido });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/usuario/pedidos-garantia/:id/mensaje
+// @desc    Add a message to a warranty claim (user reply)
+// @access  Private (usuario_bienes)
+router.post('/pedidos-garantia/:id/mensaje', auth, async (req, res) => {
+    try {
+        const usuario = await Usuario.findById(req.usuario.id);
+        if (!usuario || !hasRole(usuario.roles, 'usuario_bienes')) {
+            return res.status(403).json({ msg: 'Acceso denegado' });
+        }
+
+        const { contenido } = req.body;
+        if (!contenido) {
+            return res.status(400).json({ msg: 'El contenido del mensaje es requerido' });
+        }
+
+        const pedido = await PedidoGarantia.findOne({ _id: req.params.id, usuario: req.usuario.id })
+            .populate('fabricante', 'razonSocial usuarioApoderado');
+
+        if (!pedido) {
+            return res.status(404).json({ msg: 'Pedido no encontrado' });
+        }
+
+        if (pedido.estado === 'Cerrado') {
+            return res.status(400).json({ msg: 'No se puede responder a un pedido cerrado' });
+        }
+
+        pedido.mensajes.push({
+            autor: 'usuario',
+            autorId: req.usuario.id,
+            contenido
+        });
+
+        await pedido.save();
+
+        // Send email notification to fabricante's apoderado
+        const fabricante = await Fabricante.findById(pedido.fabricante._id).populate('usuarioApoderado', 'correoElectronico nombreCompleto');
+        if (fabricante && fabricante.usuarioApoderado && fabricante.usuarioApoderado.correoElectronico) {
+            await sendGarantiaUserReplyEmail(
+                fabricante.usuarioApoderado.correoElectronico,
+                fabricante.razonSocial,
+                usuario.nombreCompleto,
+                pedido._id.toString().slice(-6).toUpperCase(),
+                contenido
+            );
+        }
+
+        res.json({ msg: 'Mensaje agregado', pedido });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
     }
 });
 

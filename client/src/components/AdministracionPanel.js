@@ -7,16 +7,23 @@ import UbicacionEditForm from './UbicacionEditForm';
 import MarcaList from './MarcaList';
 import MarcaForm from './MarcaForm';
 import MarcaEditForm from './MarcaEditForm';
+import WarrantyList from './WarrantyList';
+import WarrantyManagerForm from './WarrantyManagerForm';
+import WarrantyDetails from './WarrantyDetails';
 import Modal from './Modal';
 import Tabs from './Tabs';
 import api from '../api';
 import { useNotification } from './NotificationProvider';
 
-const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) => {
+const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [], onRefresh }) => {
     const [showCreateUbicacionModal, setShowCreateUbicacionModal] = useState(false);
     const [editingUbicacion, setEditingUbicacion] = useState(null);
     const [showCreateMarcaModal, setShowCreateMarcaModal] = useState(false);
     const [editingMarca, setEditingMarca] = useState(null);
+    const [showCreateGarantiaModal, setShowCreateGarantiaModal] = useState(false);
+    const [showEditGarantiaModal, setShowEditGarantiaModal] = useState(false);
+    const [showViewGarantiaModal, setShowViewGarantiaModal] = useState(false);
+    const [selectedGarantia, setSelectedGarantia] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Branding state
@@ -97,6 +104,39 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
     const handleMarcaUpdated = () => {
         setEditingMarca(null);
         handleRefresh();
+    };
+
+    // Warranty handlers
+    const handleEditGarantia = (garantia) => {
+        setSelectedGarantia(garantia);
+        setShowEditGarantiaModal(true);
+    };
+
+    const handleViewGarantia = (garantia) => {
+        setSelectedGarantia(garantia);
+        setShowViewGarantiaModal(true);
+    };
+
+    const handleDeleteGarantia = async (garantia) => {
+        if (window.confirm(`¿Está seguro de que desea eliminar la garantía "${garantia.nombre}"?`)) {
+            try {
+                await api.delete(`/apoderado/garantias/${garantia._id}`);
+                handleRefresh();
+            } catch (err) {
+                console.error('Error al eliminar garantía:', err);
+                alert('Error al eliminar la garantía');
+            }
+        }
+    };
+
+    const handleCancelEditGarantia = () => {
+        setShowEditGarantiaModal(false);
+        setSelectedGarantia(null);
+    };
+
+    const handleCancelViewGarantia = () => {
+        setShowViewGarantiaModal(false);
+        setSelectedGarantia(null);
     };
 
     const handleColorChange = (e) => {
@@ -384,6 +424,33 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
                         )
                     },
                     {
+                        label: "Tipos de Garantías",
+                        content: (
+                            <>
+                                <div className="list-container">
+                                    <div className="section-header">
+                                        <h3>Tipos de Garantías</h3>
+                                        <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '13px' }}>
+                                            Configure los tipos de garantías disponibles para asignar a los productos.
+                                        </p>
+                                        <button 
+                                            className="create-button"
+                                            onClick={() => setShowCreateGarantiaModal(true)}
+                                        >
+                                            Crear Tipo de Garantía
+                                        </button>
+                                    </div>
+                                </div>
+                                <WarrantyList 
+                                    garantias={garantias}
+                                    onEdit={handleEditGarantia}
+                                    onDelete={handleDeleteGarantia}
+                                    onView={handleViewGarantia}
+                                />
+                            </>
+                        )
+                    },
+                    {
                         label: "Portal de Registro",
                         content: brandingTab
                     }
@@ -439,6 +506,71 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], onRefresh }) =>
                         fabricantes={fabricantes}
                         onEditFinished={handleMarcaUpdated}
                         onCancelEdit={handleCancelEditMarca}
+                    />
+                )}
+            </Modal>
+
+            {/* Warranty type modals */}
+            <Modal 
+                isOpen={showCreateGarantiaModal} 
+                onClose={() => setShowCreateGarantiaModal(false)}
+                title="Crear Tipo de Garantía"
+            >
+                <WarrantyManagerForm
+                    fabricantes={fabricantes}
+                    marcas={allMarcas}
+                    onSubmit={async (formData) => {
+                        try {
+                            await api.post('/apoderado/garantias/add', formData);
+                            setShowCreateGarantiaModal(false);
+                            handleRefresh();
+                        } catch (err) {
+                            console.error('Error al crear garantía:', err);
+                            alert('Error al crear la garantía');
+                        }
+                    }}
+                    onCancel={() => setShowCreateGarantiaModal(false)}
+                    isEditing={false}
+                />
+            </Modal>
+
+            <Modal 
+                isOpen={showEditGarantiaModal} 
+                onClose={handleCancelEditGarantia}
+                title="Editar Tipo de Garantía"
+            >
+                {selectedGarantia && (
+                    <WarrantyManagerForm
+                        garantia={selectedGarantia}
+                        fabricantes={fabricantes}
+                        marcas={allMarcas}
+                        onSubmit={async (formData) => {
+                            try {
+                                await api.put(`/apoderado/garantias/${selectedGarantia._id}`, formData);
+                                setShowEditGarantiaModal(false);
+                                setSelectedGarantia(null);
+                                handleRefresh();
+                            } catch (err) {
+                                console.error('Error al actualizar garantía:', err);
+                                alert('Error al actualizar la garantía');
+                            }
+                        }}
+                        onCancel={handleCancelEditGarantia}
+                        isEditing={true}
+                    />
+                )}
+            </Modal>
+
+            <Modal 
+                isOpen={showViewGarantiaModal} 
+                onClose={handleCancelViewGarantia}
+                title={selectedGarantia ? `Detalles de Garantía: ${selectedGarantia.nombre}` : "Ver Garantía"}
+                size="large"
+            >
+                {selectedGarantia && (
+                    <WarrantyDetails
+                        garantia={selectedGarantia}
+                        onClose={handleCancelViewGarantia}
                     />
                 )}
             </Modal>

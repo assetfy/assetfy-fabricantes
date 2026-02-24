@@ -12,9 +12,7 @@ import InventarioForm from './InventarioForm';
 import RepresentanteList from './RepresentanteList';
 import RepresentanteForm from './RepresentanteForm';
 import RepresentanteEditForm from './RepresentanteEditForm';
-import WarrantyList from './WarrantyList';
-import WarrantyManagerForm from './WarrantyManagerForm';
-import WarrantyDetails from './WarrantyDetails';
+import PedidoGarantiaList from './PedidoGarantiaList';
 import Modal from './Modal';
 import UserHeader from './UserHeader';
 import AdministracionPanel from './AdministracionPanel';
@@ -42,11 +40,6 @@ const ApoderadoPanel = () => {
     const [showCreatePiezaModal, setShowCreatePiezaModal] = useState(false);
     const [showCreateInventarioModal, setShowCreateInventarioModal] = useState(false);
     const [showCreateRepresentanteModal, setShowCreateRepresentanteModal] = useState(false);
-    // Warranty states
-    const [showCreateGarantiaModal, setShowCreateGarantiaModal] = useState(false);
-    const [showEditGarantiaModal, setShowEditGarantiaModal] = useState(false);
-    const [showViewGarantiaModal, setShowViewGarantiaModal] = useState(false);
-    const [selectedGarantia, setSelectedGarantia] = useState(null);
     const [garantias, setGarantias] = useState([]);
     
     const navigate = useNavigate();
@@ -136,11 +129,6 @@ const ApoderadoPanel = () => {
         setShowCreatePiezaModal(false);
         setShowCreateInventarioModal(false);
         setShowCreateRepresentanteModal(false);
-        // Reset warranty modals
-        setShowCreateGarantiaModal(false);
-        setShowEditGarantiaModal(false);
-        setShowViewGarantiaModal(false);
-        setSelectedGarantia(null);
         
         // Refetch data to ensure forms have updated lists
         try {
@@ -262,39 +250,6 @@ const ApoderadoPanel = () => {
         setEditingRepresentante(null);
     };
 
-    // Warranty handlers
-    const handleEditGarantia = (garantia) => {
-        setSelectedGarantia(garantia);
-        setShowEditGarantiaModal(true);
-    };
-
-    const handleViewGarantia = (garantia) => {
-        setSelectedGarantia(garantia);
-        setShowViewGarantiaModal(true);
-    };
-
-    const handleDeleteGarantia = async (garantia) => {
-        if (window.confirm(`¿Está seguro de que desea eliminar la garantía "${garantia.nombre}"?`)) {
-            try {
-                await api.delete(`/apoderado/garantias/${garantia._id}`);
-                handleRefresh();
-            } catch (err) {
-                console.error('Error al eliminar garantía:', err);
-                alert('Error al eliminar la garantía');
-            }
-        }
-    };
-
-    const handleCancelEditGarantia = () => {
-        setShowEditGarantiaModal(false);
-        setSelectedGarantia(null);
-    };
-
-    const handleCancelViewGarantia = () => {
-        setShowViewGarantiaModal(false);
-        setSelectedGarantia(null);
-    };
-
     if (loading) {
         return <p>Cargando datos del usuario...</p>;
     }
@@ -352,7 +307,7 @@ const ApoderadoPanel = () => {
                             },
                             {
                                 label: 'Garantías',
-                                description: 'Gestión de garantías',
+                                description: 'Pedidos de garantía',
                                 path: '/garantias',
                                 icon: '◈'
                             },
@@ -463,24 +418,16 @@ const ApoderadoPanel = () => {
                         <>
                             <div className="list-container">
                                 <div className="section-header">
-                                    <h3>Gestión de Garantías</h3>
-                                    <button 
-                                        className="create-button"
-                                        onClick={() => setShowCreateGarantiaModal(true)}
-                                    >
-                                        Crear Garantía
-                                    </button>
+                                    <h3>Pedidos de Garantía</h3>
+                                    <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '13px' }}>
+                                        Gestión de pedidos de garantía enviados por los usuarios.
+                                    </p>
                                 </div>
                             </div>
-                            <WarrantyList 
-                                garantias={garantias}
-                                onEdit={handleEditGarantia}
-                                onDelete={handleDeleteGarantia}
-                                onView={handleViewGarantia}
-                            />
+                            <PedidoGarantiaList isFabricante={true} />
                         </>
                     } />
-                    <Route path="administracion" element={<AdministracionPanel fabricantes={fabricantes} allMarcas={allMarcas} onRefresh={handleRefresh} />} />
+                    <Route path="administracion" element={<AdministracionPanel fabricantes={fabricantes} allMarcas={allMarcas} garantias={garantias} onRefresh={handleRefresh} />} />
                 </Routes>
                 )}
                 </div>
@@ -651,71 +598,6 @@ const ApoderadoPanel = () => {
                             onCancelEdit={handleCancelEditRepresentante}
                             fabricantes={fabricantes}
                             marcas={allMarcas}
-                        />
-                    )}
-                </Modal>
-
-                {/* Warranty Modals */}
-                <Modal 
-                    isOpen={showCreateGarantiaModal} 
-                    onClose={() => setShowCreateGarantiaModal(false)}
-                    title="Crear Nueva Garantía"
-                >
-                    <WarrantyManagerForm
-                        fabricantes={fabricantes}
-                        marcas={allMarcas}
-                        onSubmit={async (formData) => {
-                            try {
-                                await api.post('/apoderado/garantias/add', formData);
-                                setShowCreateGarantiaModal(false);
-                                handleRefresh();
-                            } catch (err) {
-                                console.error('Error al crear garantía:', err);
-                                alert('Error al crear la garantía');
-                            }
-                        }}
-                        onCancel={() => setShowCreateGarantiaModal(false)}
-                        isEditing={false}
-                    />
-                </Modal>
-
-                <Modal 
-                    isOpen={showEditGarantiaModal} 
-                    onClose={handleCancelEditGarantia}
-                    title="Editar Garantía"
-                >
-                    {selectedGarantia && (
-                        <WarrantyManagerForm
-                            garantia={selectedGarantia}
-                            fabricantes={fabricantes}
-                            marcas={allMarcas}
-                            onSubmit={async (formData) => {
-                                try {
-                                    await api.put(`/apoderado/garantias/${selectedGarantia._id}`, formData);
-                                    setShowEditGarantiaModal(false);
-                                    setSelectedGarantia(null);
-                                    handleRefresh();
-                                } catch (err) {
-                                    console.error('Error al actualizar garantía:', err);
-                                    alert('Error al actualizar la garantía');
-                                }
-                            }}
-                            onCancel={handleCancelEditGarantia}
-                            isEditing={true}
-                        />
-                    )}
-                </Modal>
-
-                <Modal 
-                    isOpen={showViewGarantiaModal} 
-                    onClose={handleCancelViewGarantia}
-                    title={selectedGarantia ? `Detalles de Garantía: ${selectedGarantia.nombre}` : "Ver Garantía"}
-                    size="large"
-                >
-                    {selectedGarantia && (
-                        <WarrantyDetails
-                            garantia={selectedGarantia}
-                            onClose={handleCancelViewGarantia}
                         />
                     )}
                 </Modal>

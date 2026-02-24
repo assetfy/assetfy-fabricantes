@@ -5,6 +5,7 @@ import BienList from './BienList';
 import BienRegisterForm from './BienRegisterForm';
 import BienViewForm from './BienViewForm';
 import BienEditForm from './BienEditForm';
+import PedidoGarantiaList from './PedidoGarantiaList';
 import Modal from './Modal';
 import UserHeader from './UserHeader';
 
@@ -16,6 +17,7 @@ const UsuarioPanel = () => {
     const [showRegisterBienModal, setShowRegisterBienModal] = useState(false);
     const [viewingBien, setViewingBien] = useState(null);
     const [editingBien, setEditingBien] = useState(null);
+    const [activeView, setActiveView] = useState('bienes'); // 'bienes' or 'garantias'
     
     const navigate = useNavigate();
     
@@ -132,31 +134,82 @@ const UsuarioPanel = () => {
                 onProfileUpdated={handleProfileUpdated}
                 userType={getUserType()}
             />
-            <h2>Lista de bienes Registrados</h2>
+            <h2>Panel de Usuario</h2>
             <p>Bienvenido/a {userData?.usuario?.nombreCompleto}.</p>
-            <p>Aquí puedes gestionar tus bienes personales.</p>
+
+            {/* Tab navigation */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '2px solid #e0e0e0', paddingBottom: '0' }}>
+                <button
+                    onClick={() => setActiveView('bienes')}
+                    style={{
+                        padding: '10px 20px',
+                        border: 'none',
+                        background: 'none',
+                        cursor: 'pointer',
+                        fontWeight: activeView === 'bienes' ? 700 : 400,
+                        borderBottom: activeView === 'bienes' ? '3px solid #007bff' : '3px solid transparent',
+                        color: activeView === 'bienes' ? '#007bff' : '#333',
+                        fontSize: '15px'
+                    }}
+                >
+                    📦 Mis Bienes
+                </button>
+                <button
+                    onClick={() => setActiveView('garantias')}
+                    style={{
+                        padding: '10px 20px',
+                        border: 'none',
+                        background: 'none',
+                        cursor: 'pointer',
+                        fontWeight: activeView === 'garantias' ? 700 : 400,
+                        borderBottom: activeView === 'garantias' ? '3px solid #007bff' : '3px solid transparent',
+                        color: activeView === 'garantias' ? '#007bff' : '#333',
+                        fontSize: '15px'
+                    }}
+                >
+                    🛡️ Mis Garantías
+                </button>
+            </div>
 
             <div className="content">
-                <div className="list-container">
-                    <div className="section-header">
-                        <h3>Mis bienes registrados</h3>
-                        <div className="button-group">
-                            <button 
-                                className="create-button register-button"
-                                onClick={() => setShowRegisterBienModal(true)}
-                            >
-                                Registrar Bien
-                            </button>
+                {activeView === 'bienes' && (
+                    <>
+                        <div className="list-container">
+                            <div className="section-header">
+                                <h3>Mis bienes registrados</h3>
+                                <div className="button-group">
+                                    <button 
+                                        className="create-button register-button"
+                                        onClick={() => setShowRegisterBienModal(true)}
+                                    >
+                                        Registrar Bien
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <BienList 
-                    bienes={bienes}
-                    refreshTrigger={refreshKey}
-                    onView={handleViewBien}
-                    onEdit={handleEditBien}
-                    onDelete={handleDeleteBien}
-                />
+                        <BienList 
+                            bienes={bienes}
+                            refreshTrigger={refreshKey}
+                            onView={handleViewBien}
+                            onEdit={handleEditBien}
+                            onDelete={handleDeleteBien}
+                        />
+                    </>
+                )}
+
+                {activeView === 'garantias' && (
+                    <>
+                        <div className="list-container">
+                            <div className="section-header">
+                                <h3>Mis Pedidos de Garantía</h3>
+                                <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '13px' }}>
+                                    Para gestionar una garantía, regrese a "Mis Bienes" y haz clic en el botón 🛡️ del bien correspondiente.
+                                </p>
+                            </div>
+                        </div>
+                        <PedidoGarantiaList isFabricante={false} />
+                    </>
+                )}
 
                 {/* Register Bien Modal */}
                 <Modal 
