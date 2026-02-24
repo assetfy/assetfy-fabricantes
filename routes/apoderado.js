@@ -1845,10 +1845,23 @@ router.get('/metricas', auth, async (req, res) => {
             fabricante: { $in: fabricanteIds } 
         });
 
-        // Contar representantes
-        const representantesCount = await Representante.countDocuments({ 
-            usuarioApoderado 
+        // Contar representantes (same broader query as GET /representantes)
+        const marcas = await Marca.find({
+            $or: [
+                { fabricante: { $in: fabricanteIds } },
+                { usuarioApoderado: usuarioApoderado }
+            ]
         });
+        const marcaIds = marcas.map(m => m._id);
+
+        const representantesQuery = {
+            $or: [
+                { usuarioApoderado: usuarioApoderado },
+                { marcasRepresentadas: { $in: marcaIds } }
+            ]
+        };
+
+        const representantesCount = await Representante.countDocuments(representantesQuery);
 
         // Estadísticas adicionales
         const productosActivos = await Producto.countDocuments({ 
@@ -1876,6 +1889,24 @@ router.get('/metricas', auth, async (req, res) => {
             registrado: 'Si'
         });
 
+        const representantesActivos = await Representante.countDocuments({ 
+            ...representantesQuery,
+            estado: 'Activo'
+        });
+
+        const representantesInactivos = await Representante.countDocuments({ 
+            ...representantesQuery,
+            estado: 'Inactivo'
+        });
+
+        const inicioMes = new Date();
+        inicioMes.setUTCDate(1);
+        inicioMes.setUTCHours(0, 0, 0, 0);
+        const representantesNuevosEsteMes = await Representante.countDocuments({
+            ...representantesQuery,
+            createdAt: { $gte: inicioMes }
+        });
+
         res.json({
             fabricantes: fabricantes.length,
             productos: productosCount,
@@ -1888,7 +1919,10 @@ router.get('/metricas', auth, async (req, res) => {
                 marcasActivas,
                 inventarioDisponible,
                 inventarioVendido,
-                inventarioRegistrado
+                inventarioRegistrado,
+                representantesActivos,
+                representantesInactivos,
+                representantesNuevosEsteMes
             }
         });
     } catch (err) {
