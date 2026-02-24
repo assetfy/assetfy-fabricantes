@@ -255,6 +255,130 @@ const sendInvitationEmail = async (nombreCompleto, correoElectronico, contraseñ
     }
 };
 
+// Send warranty claim response email to user
+const sendGarantiaResponseEmail = async (usuarioEmail, usuarioNombre, fabricanteNombre, pedidoId, comentario) => {
+    try {
+        const transporter = createTransporter();
+        const logoPath = getLogoPath();
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Respuesta a tu pedido de garantía</title></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#007bff 0%,#0056b3 100%);padding:40px;text-align:center;">
+          <img src="cid:logo" alt="Logo Assetfy" style="max-width:150px;height:auto;margin-bottom:20px;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">Respuesta a tu pedido de garantía</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <h2 style="color:#333;font-size:20px;margin-bottom:20px;">Hola ${usuarioNombre},</h2>
+          <p style="color:#555;font-size:16px;line-height:1.6;margin-bottom:20px;">
+            El fabricante <strong>${fabricanteNombre}</strong> ha respondido a tu pedido de garantía (ID: <strong>${pedidoId}</strong>).
+          </p>
+          <div style="background-color:#f8f9fa;border-left:4px solid #007bff;padding:20px;margin:25px 0;border-radius:4px;">
+            <p style="margin:0;color:#333;font-size:15px;"><strong>Comentario:</strong></p>
+            <p style="margin:10px 0 0 0;color:#555;font-size:15px;">${comentario}</p>
+          </div>
+          <p style="color:#555;font-size:16px;line-height:1.6;">
+            Puedes ingresar a la plataforma para ver el historial completo y responder si lo deseas.
+          </p>
+        </td></tr>
+        <tr><td style="background-color:#f8f9fa;padding:25px;text-align:center;">
+          <p style="color:#999;font-size:13px;margin:0;">© ${new Date().getFullYear()} Assetfy. Todos los derechos reservados.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"Assetfy" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+            to: usuarioEmail,
+            subject: `Respuesta a tu pedido de garantía - ${fabricanteNombre}`,
+            html,
+            attachments: []
+        };
+
+        if (logoPath) {
+            mailOptions.attachments.push({ filename: 'logo.png', path: logoPath, cid: 'logo' });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Garantía response email sent:', info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Error sending garantía response email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send warranty claim user reply email to fabricante
+const sendGarantiaUserReplyEmail = async (fabricanteEmail, fabricanteNombre, usuarioNombre, pedidoId, comentario) => {
+    try {
+        const transporter = createTransporter();
+        const logoPath = getLogoPath();
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Nuevo mensaje en pedido de garantía</title></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#007bff 0%,#0056b3 100%);padding:40px;text-align:center;">
+          <img src="cid:logo" alt="Logo Assetfy" style="max-width:150px;height:auto;margin-bottom:20px;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">Nuevo mensaje en pedido de garantía</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <h2 style="color:#333;font-size:20px;margin-bottom:20px;">Estimado/a ${fabricanteNombre},</h2>
+          <p style="color:#555;font-size:16px;line-height:1.6;margin-bottom:20px;">
+            El usuario <strong>${usuarioNombre}</strong> ha respondido al pedido de garantía (ID: <strong>${pedidoId}</strong>).
+          </p>
+          <div style="background-color:#f8f9fa;border-left:4px solid #28a745;padding:20px;margin:25px 0;border-radius:4px;">
+            <p style="margin:0;color:#333;font-size:15px;"><strong>Mensaje del usuario:</strong></p>
+            <p style="margin:10px 0 0 0;color:#555;font-size:15px;">${comentario}</p>
+          </div>
+          <p style="color:#555;font-size:16px;line-height:1.6;">
+            Ingresa a la plataforma para ver el historial completo y responder.
+          </p>
+        </td></tr>
+        <tr><td style="background-color:#f8f9fa;padding:25px;text-align:center;">
+          <p style="color:#999;font-size:13px;margin:0;">© ${new Date().getFullYear()} Assetfy. Todos los derechos reservados.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"Assetfy" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+            to: fabricanteEmail,
+            subject: `Nuevo mensaje en pedido de garantía de ${usuarioNombre}`,
+            html,
+            attachments: []
+        };
+
+        if (logoPath) {
+            mailOptions.attachments.push({ filename: 'logo.png', path: logoPath, cid: 'logo' });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Garantía user reply email sent:', info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Error sending garantía user reply email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     sendInvitationEmail,
+    sendGarantiaResponseEmail,
+    sendGarantiaUserReplyEmail,
 };

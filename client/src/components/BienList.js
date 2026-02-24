@@ -2,6 +2,32 @@ import React, { useState, useEffect } from 'react';
 import ConfirmDialog from './ConfirmDialog';
 import Pagination from './Pagination';
 import getAuthenticatedUrl from '../utils/getAuthenticatedUrl';
+import Modal from './Modal';
+import PedidoGarantiaForm from './PedidoGarantiaForm';
+
+// Check if warranty is still active for a bien
+const isWarrantyActive = (bien) => {
+    if (!bien || bien.tipo !== 'registrado') return false;
+    const garantia = bien.datosProducto?.garantia;
+    if (!garantia || !garantia.duracionNumero || !garantia.duracionUnidad) return false;
+    const fechaBase = bien.fechaRegistro;
+    if (!fechaBase) return false;
+    const expiracion = new Date(fechaBase);
+    switch (garantia.duracionUnidad) {
+        case 'dias':
+            expiracion.setDate(expiracion.getDate() + garantia.duracionNumero);
+            break;
+        case 'meses':
+            expiracion.setMonth(expiracion.getMonth() + garantia.duracionNumero);
+            break;
+        case 'años':
+            expiracion.setFullYear(expiracion.getFullYear() + garantia.duracionNumero);
+            break;
+        default:
+            return false;
+    }
+    return expiracion >= new Date();
+};
 
 const BienList = ({ bienes: bienesFromProps, refreshTrigger, onView, onEdit, onDelete }) => {
     const [bienes, setBienes] = useState([]);
@@ -12,6 +38,8 @@ const BienList = ({ bienes: bienesFromProps, refreshTrigger, onView, onEdit, onD
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, itemId: null, itemName: '' });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(25);
+    const [garantiaBien, setGarantiaBien] = useState(null); // bien to create warranty claim for
+    const [garantiaSuccess, setGarantiaSuccess] = useState(false);
 
     useEffect(() => {
         if (bienesFromProps) {
@@ -207,6 +235,16 @@ const BienList = ({ bienes: bienesFromProps, refreshTrigger, onView, onEdit, onD
                                         >
                                             🗑️
                                         </button>
+                                        {isWarrantyActive(bien) && (
+                                            <button 
+                                                className="action-btn"
+                                                style={{ backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '13px' }}
+                                                onClick={() => { setGarantiaSuccess(false); setGarantiaBien(bien); }}
+                                                title="Gestionar Garantía"
+                                            >
+                                                🛡️
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -268,6 +306,16 @@ const BienList = ({ bienes: bienesFromProps, refreshTrigger, onView, onEdit, onD
                                     >
                                         🗑️ Eliminar
                                     </button>
+                                    {isWarrantyActive(bien) && (
+                                        <button
+                                            className="action-btn"
+                                            style={{ backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '13px' }}
+                                            onClick={() => { setGarantiaSuccess(false); setGarantiaBien(bien); }}
+                                            title="Gestionar Garantía"
+                                        >
+                                            🛡️ Garantía
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -289,6 +337,29 @@ const BienList = ({ bienes: bienesFromProps, refreshTrigger, onView, onEdit, onD
                 onConfirm={handleConfirmDelete}
                 onCancel={handleCancelDelete}
             />
+
+            <Modal
+                isOpen={!!garantiaBien}
+                onClose={() => setGarantiaBien(null)}
+                title={`Gestionar Garantía - ${garantiaBien?.nombre || ''}`}
+            >
+                {garantiaBien && !garantiaSuccess && (
+                    <PedidoGarantiaForm
+                        bien={garantiaBien}
+                        onSubmit={() => {
+                            setGarantiaSuccess(true);
+                        }}
+                        onCancel={() => setGarantiaBien(null)}
+                    />
+                )}
+                {garantiaBien && garantiaSuccess && (
+                    <div style={{ textAlign: 'center', padding: '24px' }}>
+                        <p style={{ fontSize: '18px', color: '#28a745' }}>✅ Pedido de garantía enviado exitosamente.</p>
+                        <p style={{ color: '#555' }}>El fabricante recibirá su solicitud y se pondrá en contacto con usted.</p>
+                        <button className="create-button" onClick={() => setGarantiaBien(null)}>Cerrar</button>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };

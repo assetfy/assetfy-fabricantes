@@ -11,10 +11,12 @@ const Marca = require('../models/marca.model');
 const Inventario = require('../models/inventario.model'); // Importa el inventario
 const Representante = require('../models/representante.model'); // Importa el modelo de representante
 const Garantia = require('../models/garantia.model'); // Importa el modelo de garantía
+const PedidoGarantia = require('../models/pedidoGarantia.model'); // Importa el modelo de pedido de garantía
 const Pieza = require('../models/pieza.model'); // Importa el modelo de pieza
 const Ubicacion = require('../models/ubicacion.model'); // Importa el modelo de ubicación
 const argentineRegions = require('../data/argentine-regions'); // Importa los datos de regiones argentinas
 const { Parser } = require('json2csv');
+const { sendGarantiaResponseEmail } = require('../utils/emailService');
 
 // Helper function to transform legacy S3 URLs to proxy URLs
 const transformMarcaLegacyUrls = (marca) => {
@@ -3464,6 +3466,145 @@ router.delete('/branding/logo', auth, async (req, res) => {
         await fabricante.save();
 
         res.json('Logo del portal eliminado.');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// =============================================================================
+// RUTAS DE PEDIDOS DE GARANTÍA (fabricante/apoderado)
+// =============================================================================
+
+// @route   GET /api/apoderado/pedidos-garantia
+// @desc    Get all warranty claims for fabricantes managed by this user
+// @access  Private (Apoderado)
+router.get('/pedidos-garantia', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(f => f._id);
+
+        const pedidos = await PedidoGarantia.find({ fabricante: { $in: fabricanteIds } })
+            .populate('bien', 'nombre datosProducto fechaRegistro')
+            .populate('usuario', 'nombreCompleto correoElectronico')
+            .populate('fabricante', 'razonSocial')
+            .sort({ createdAt: -1 });
+
+        res.json(pedidos);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/pedidos-garantia/:id
+// @desc    Get a specific warranty claim
+// @access  Private (Apoderado)
+router.get('/pedidos-garantia/:id', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const pedido = await PedidoGarantia.findById(req.params.id)
+            .populate('bien', 'nombre datosProducto fechaRegistro')
+            .populate('usuario', 'nombreCompleto correoElectronico')
+            .populate('fabricante', 'razonSocial');
+
+        if (!pedido) {
+            return res.status(404).json({ msg: 'Pedido no encontrado' });
+        }
+
+        if (!fabricanteIds.includes(pedido.fabricante._id.toString())) {
+            return res.status(403).json({ msg: 'No autorizado' });
+        }
+
+        res.json(pedido);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/apoderado/pedidos-garantia/:id/responder
+// @desc    Respond to a warranty claim and notify user by email
+// @access  Private (Apoderado)
+router.post('/pedidos-garantia/:id/responder', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const pedido = await PedidoGarantia.findById(req.params.id)
+            .populate('usuario', 'nombreCompleto correoElectronico')
+            .populate('fabricante', 'razonSocial');
+
+        if (!pedido) {
+            return res.status(404).json({ msg: 'Pedido no encontrado' });
+        }
+
+        if (!fabricanteIds.includes(pedido.fabricante._id.toString())) {
+            return res.status(403).json({ msg: 'No autorizado' });
+        }
+
+        const { contenido } = req.body;
+        if (!contenido) {
+            return res.status(400).json({ msg: 'El contenido del mensaje es requerido' });
+        }
+
+        pedido.mensajes.push({
+            autor: 'fabricante',
+            autorId: req.usuario.id,
+            contenido
+        });
+
+        await pedido.save();
+
+        // Send email notification to user
+        const usuarioData = pedido.usuario;
+        if (usuarioData && usuarioData.correoElectronico) {
+            await sendGarantiaResponseEmail(
+                usuarioData.correoElectronico,
+                usuarioData.nombreCompleto,
+                pedido.fabricante.razonSocial,
+                pedido._id.toString().slice(-6).toUpperCase(),
+                contenido
+            );
+        }
+
+        res.json({ msg: 'Respuesta enviada', pedido });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/pedidos-garantia/:id/estado
+// @desc    Change the status of a warranty claim
+// @access  Private (Apoderado)
+router.put('/pedidos-garantia/:id/estado', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const pedido = await PedidoGarantia.findById(req.params.id);
+
+        if (!pedido) {
+            return res.status(404).json({ msg: 'Pedido no encontrado' });
+        }
+
+        if (!fabricanteIds.includes(pedido.fabricante.toString())) {
+            return res.status(403).json({ msg: 'No autorizado' });
+        }
+
+        const { estado } = req.body;
+        const estadosValidos = ['Nuevo', 'En Análisis', 'Cerrado'];
+        if (!estadosValidos.includes(estado)) {
+            return res.status(400).json({ msg: 'Estado inválido' });
+        }
+
+        pedido.estado = estado;
+        await pedido.save();
+
+        res.json({ msg: 'Estado actualizado', pedido });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
