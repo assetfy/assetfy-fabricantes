@@ -3510,6 +3510,12 @@ router.delete('/branding/logo', auth, async (req, res) => {
 // RUTAS DE PEDIDOS DE GARANTÍA (fabricante/apoderado)
 // =============================================================================
 
+const PEDIDO_GARANTIA_POPULATE = [
+    { path: 'bien', select: 'nombre datosProducto fechaRegistro inventario', populate: { path: 'inventario', select: 'idInventario' } },
+    { path: 'usuario', select: 'nombreCompleto correoElectronico' },
+    { path: 'fabricante', select: 'razonSocial' }
+];
+
 // @route   GET /api/apoderado/pedidos-garantia
 // @desc    Get all warranty claims for fabricantes managed by this user
 // @access  Private (Apoderado)
@@ -3519,9 +3525,7 @@ router.get('/pedidos-garantia', auth, async (req, res) => {
         const fabricanteIds = fabricantes.map(f => f._id);
 
         const pedidos = await PedidoGarantia.find({ fabricante: { $in: fabricanteIds } })
-            .populate('bien', 'nombre datosProducto fechaRegistro')
-            .populate('usuario', 'nombreCompleto correoElectronico')
-            .populate('fabricante', 'razonSocial')
+            .populate(PEDIDO_GARANTIA_POPULATE)
             .sort({ createdAt: -1 });
 
         res.json(pedidos);
@@ -3540,9 +3544,7 @@ router.get('/pedidos-garantia/:id', auth, async (req, res) => {
         const fabricanteIds = fabricantes.map(f => f._id.toString());
 
         const pedido = await PedidoGarantia.findById(req.params.id)
-            .populate('bien', 'nombre datosProducto fechaRegistro')
-            .populate('usuario', 'nombreCompleto correoElectronico')
-            .populate('fabricante', 'razonSocial');
+            .populate(PEDIDO_GARANTIA_POPULATE);
 
         if (!pedido) {
             return res.status(404).json({ msg: 'Pedido no encontrado' });
@@ -3604,7 +3606,10 @@ router.post('/pedidos-garantia/:id/responder', auth, async (req, res) => {
             );
         }
 
-        res.json({ msg: 'Respuesta enviada', pedido });
+        const updatedPedido = await PedidoGarantia.findById(pedido._id)
+            .populate(PEDIDO_GARANTIA_POPULATE);
+
+        res.json({ msg: 'Respuesta enviada', pedido: updatedPedido });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
@@ -3638,7 +3643,10 @@ router.put('/pedidos-garantia/:id/estado', auth, async (req, res) => {
         pedido.estado = estado;
         await pedido.save();
 
-        res.json({ msg: 'Estado actualizado', pedido });
+        const updatedPedido = await PedidoGarantia.findById(pedido._id)
+            .populate(PEDIDO_GARANTIA_POPULATE);
+
+        res.json({ msg: 'Estado actualizado', pedido: updatedPedido });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
