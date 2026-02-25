@@ -1909,6 +1909,43 @@ router.get('/metricas', auth, async (req, res) => {
             createdAt: { $gte: inicioMes }
         });
 
+        // Contar pedidos de garantía
+        const garantiasTotalCount = await PedidoGarantia.countDocuments({
+            fabricante: { $in: fabricanteIds }
+        });
+        const garantiasEnCursoCount = await PedidoGarantia.countDocuments({
+            fabricante: { $in: fabricanteIds },
+            estado: { $in: ['Nuevo', 'En Análisis'] }
+        });
+        const garantiasCerradasCount = await PedidoGarantia.countDocuments({
+            fabricante: { $in: fabricanteIds },
+            estado: 'Cerrado'
+        });
+
+        // Top 5 bienes con más pedidos de garantía
+        const top5Bienes = await PedidoGarantia.aggregate([
+            { $match: { fabricante: { $in: fabricanteIds } } },
+            { $group: { _id: '$bien', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+            {
+                $lookup: {
+                    from: 'biens',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'bienData'
+                }
+            },
+            { $unwind: { path: '$bienData', preserveNullAndEmptyArrays: true } },
+            {
+                $project: {
+                    _id: 1,
+                    count: 1,
+                    nombre: { $ifNull: ['$bienData.nombre', 'Bien eliminado'] }
+                }
+            }
+        ]);
+
         res.json({
             fabricantes: fabricantes.length,
             productos: productosCount,
@@ -1916,6 +1953,12 @@ router.get('/metricas', auth, async (req, res) => {
             inventario: inventarioCount,
             piezas: piezasCount,
             representantes: representantesCount,
+            garantias: {
+                total: garantiasTotalCount,
+                enCurso: garantiasEnCursoCount,
+                cerradas: garantiasCerradasCount,
+                top5Bienes
+            },
             estadisticas: {
                 productosActivos,
                 marcasActivas,
