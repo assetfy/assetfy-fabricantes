@@ -499,14 +499,15 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
 
                         {soldRentedItem && searchTerm.trim() && (
                             <div className="sold-rented-notice">
-                                El item <strong>{soldRentedItem.numeroSerie || soldRentedItem.idInventario}</strong> fue{' '}
-                                <strong>{soldRentedItem.estado === 'vendido' ? 'vendido' : 'alquilado'}</strong> el{' '}
-                                <strong>
-                                    {soldRentedItem.estado === 'vendido'
-                                        ? (soldRentedItem.fechaVenta ? new Date(soldRentedItem.fechaVenta).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')
-                                        : (soldRentedItem.fechaInicioAlquiler ? new Date(soldRentedItem.fechaInicioAlquiler).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')}
-                                </strong>
-                                {' · '}
+                                <div>
+                                    El item <strong>{soldRentedItem.numeroSerie || soldRentedItem.idInventario}</strong> fue{' '}
+                                    <strong>{soldRentedItem.estado === 'vendido' ? 'vendido' : 'alquilado'}</strong> el{' '}
+                                    <strong>
+                                        {soldRentedItem.estado === 'vendido'
+                                            ? (soldRentedItem.fechaVenta ? new Date(soldRentedItem.fechaVenta).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')
+                                            : (soldRentedItem.fechaInicioAlquiler ? new Date(soldRentedItem.fechaInicioAlquiler).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')}
+                                    </strong>
+                                </div>
                                 <button
                                     className="sold-rented-notice-link"
                                     onClick={() => setViewItemModal({ isOpen: true, item: soldRentedItem })}
@@ -530,11 +531,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                             </div>
                         )}
 
-                        {allInventario.length === 0 ? (
-                            <p style={{ color: '#666', fontStyle: 'italic' }}>
-                                No hay artículos de inventario para este {itemType === 'producto' ? 'producto' : 'pieza'}.
-                            </p>
-                        ) : (
+                        {allInventario.length > 0 && (
                             <table>
                                 <thead>
                                     <tr>
