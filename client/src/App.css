@@ -1540,3 +1540,111 @@ table .warranty-expired {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+/* Sold/Rented notice banner in StockModal */
+.sold-rented-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: #856404;
+}
+
+.sold-rented-notice-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0d6efd;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.sold-rented-notice-link:hover {
+  color: #0a4fc4;
+}
+
+/* InventarioItemViewModal */
+.inventario-view-modal-content {
+  width: 600px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.inventario-view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.inventario-view-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.inventario-view-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.inventario-view-value {
+  font-size: 0.95rem;
+  color: #212529;
+}
+
+.inventario-view-section {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.inventario-view-section-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.inventario-view-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.estado-vendido {
+  background: #d1e7dd;
+  color: #0a3622;
+}
+
+.estado-alquilado {
+  background: #cff4fc;
+  color: #055160;
+}
+
+.estado-stock {
+  background: #e2e3e5;
+  color: #383d41;
+}

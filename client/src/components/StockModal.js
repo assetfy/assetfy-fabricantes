@@ -6,6 +6,7 @@ import QRPreviewModal from './QRPreviewModal';
 import BulkQRPreviewModal from './BulkQRPreviewModal';
 import Pagination from './Pagination';
 import WarrantyInfoReadOnly from './WarrantyInfoReadOnly';
+import InventarioItemViewModal from './InventarioItemViewModal';
 
 const formatWarrantyExpiration = (item) => {
     if (!item.garantia || item.garantia.tipoGarantia === 'Sin garantia') {
@@ -48,6 +49,8 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, itemId: null });
     const [qrPreviewModal, setQrPreviewModal] = useState({ isOpen: false, item: null });
     const [bulkQRModal, setBulkQRModal] = useState({ isOpen: false, items: [] });
+    const [soldRentedItem, setSoldRentedItem] = useState(null);
+    const [viewItemModal, setViewItemModal] = useState({ isOpen: false, item: null });
 
     // Inline edit state
     const [editingItem, setEditingItem] = useState(null);
@@ -77,6 +80,22 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
         }
     }, [item, itemType, isOpen, ubicacionFilter, searchTerm]);
 
+    const fetchSoldRentedItem = useCallback(async () => {
+        if (!item || !isOpen || !searchTerm.trim()) {
+            setSoldRentedItem(null);
+            return;
+        }
+        try {
+            const param = itemType === 'producto' ? `productoId=${item._id}` : `piezaId=${item._id}`;
+            const searchParam = `&search=${encodeURIComponent(searchTerm)}`;
+            const res = await api.get(`/apoderado/inventario?${param}${searchParam}`);
+            const found = (res.data || []).find(i => i.estado === 'vendido' || i.estado === 'alquilado');
+            setSoldRentedItem(found || null);
+        } catch (err) {
+            console.error('Error al buscar item vendido/alquilado:', err);
+        }
+    }, [item, itemType, isOpen, searchTerm]);
+
     const fetchUbicaciones = useCallback(async () => {
         try {
             const res = await api.get('/apoderado/ubicaciones');
@@ -96,12 +115,17 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
             setUbicacionFilter('');
             setSelectedItems([]);
             setEditingItem(null);
+            setSoldRentedItem(null);
         }
     }, [isOpen, item, itemType]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (isOpen) fetchInventario();
     }, [fetchInventario, isOpen]);
+
+    useEffect(() => {
+        if (isOpen) fetchSoldRentedItem();
+    }, [fetchSoldRentedItem, isOpen]);
 
     useEffect(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -473,6 +497,25 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                             </select>
                         </div>
 
+                        {soldRentedItem && searchTerm.trim() && (
+                            <div className="sold-rented-notice">
+                                El item <strong>{soldRentedItem.numeroSerie || soldRentedItem.idInventario}</strong> fue{' '}
+                                <strong>{soldRentedItem.estado === 'vendido' ? 'vendido' : 'alquilado'}</strong> el{' '}
+                                <strong>
+                                    {soldRentedItem.estado === 'vendido'
+                                        ? (soldRentedItem.fechaVenta ? new Date(soldRentedItem.fechaVenta).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')
+                                        : (soldRentedItem.fechaInicioAlquiler ? new Date(soldRentedItem.fechaInicioAlquiler).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')}
+                                </strong>
+                                {' · '}
+                                <button
+                                    className="sold-rented-notice-link"
+                                    onClick={() => setViewItemModal({ isOpen: true, item: soldRentedItem })}
+                                >
+                                    Ver item
+                                </button>
+                            </div>
+                        )}
+
                         {selectedItems.length > 0 && (
                             <div className="bulk-actions-menu">
                                 <span className="bulk-actions-count">
@@ -667,6 +710,12 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                 isOpen={bulkQRModal.isOpen}
                 onClose={() => setBulkQRModal({ isOpen: false, items: [] })}
                 items={bulkQRModal.items}
+            />
+
+            <InventarioItemViewModal
+                isOpen={viewItemModal.isOpen}
+                onClose={() => setViewItemModal({ isOpen: false, item: null })}
+                item={viewItemModal.item}
             />
         </div>
     );
