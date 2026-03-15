@@ -36,6 +36,13 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
     const [savingColor, setSavingColor] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
 
+    // Configuración general state
+    const [configFabricantes, setConfigFabricantes] = useState([]);
+    const [selectedConfigFabricanteId, setSelectedConfigFabricanteId] = useState(null);
+    const [stockBajoUmbral, setStockBajoUmbral] = useState(3);
+    const [configLoading, setConfigLoading] = useState(true);
+    const [savingConfig, setSavingConfig] = useState(false);
+
     const { showSuccess, showError } = useNotification();
 
     useEffect(() => {
@@ -50,6 +57,20 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
             })
             .catch(() => {})
             .finally(() => setBrandingLoading(false));
+    }, []);
+
+    useEffect(() => {
+        api.get('/apoderado/configuracion')
+            .then(res => {
+                const list = res.data.fabricantes || [];
+                setConfigFabricantes(list);
+                if (list.length > 0) {
+                    setSelectedConfigFabricanteId(list[0]._id);
+                    setStockBajoUmbral(list[0].stockBajoUmbral != null ? list[0].stockBajoUmbral : 3);
+                }
+            })
+            .catch(() => {})
+            .finally(() => setConfigLoading(false));
     }, []);
 
     const handleFabricanteSelect = (e) => {
@@ -211,6 +232,85 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
         }
     };
 
+    const handleConfigFabricanteSelect = (e) => {
+        const id = e.target.value;
+        setSelectedConfigFabricanteId(id);
+        const fab = configFabricantes.find(f => f._id === id);
+        if (fab) {
+            setStockBajoUmbral(fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3);
+        }
+    };
+
+    const handleSaveConfig = async () => {
+        setSavingConfig(true);
+        try {
+            const res = await api.put('/apoderado/configuracion', {
+                fabricanteId: selectedConfigFabricanteId,
+                stockBajoUmbral
+            });
+            const updatedUmbral = res.data.stockBajoUmbral;
+            setConfigFabricantes(prev => prev.map(f =>
+                f._id === selectedConfigFabricanteId ? { ...f, stockBajoUmbral: updatedUmbral } : f
+            ));
+            showSuccess('Configuración guardada');
+        } catch (err) {
+            showError('Error al guardar la configuración');
+        } finally {
+            setSavingConfig(false);
+        }
+    };
+
+    const configuracionTab = (
+        <div>
+            <h3>Configuración general</h3>
+            <p>Configure los parámetros generales de su fabricante.</p>
+
+            {configLoading ? (
+                <p>Cargando...</p>
+            ) : (
+                <div style={{ maxWidth: '500px' }}>
+                    {configFabricantes.length > 1 && (
+                        <div className="form-group" style={{ marginBottom: '24px' }}>
+                            <label>Fabricante</label>
+                            <select
+                                value={selectedConfigFabricanteId || ''}
+                                onChange={handleConfigFabricanteSelect}
+                                style={{ width: '100%' }}
+                            >
+                                {configFabricantes.map(f => (
+                                    <option key={f._id} value={f._id}>{f.razonSocial}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label>Stock bajo — umbral mínimo</label>
+                        <p style={{ color: '#666', fontSize: '13px', margin: '4px 0 8px 0' }}>
+                            Se considera stock bajo cuando la cantidad de unidades en inventario es menor o igual a este número. Los contadores del dashboard mostrarán los productos y repuestos con stock bajo basándose en este valor.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <input
+                                type="number"
+                                min="0"
+                                value={stockBajoUmbral}
+                                onChange={e => setStockBajoUmbral(Number(e.target.value))}
+                                style={{ width: '100px' }}
+                            />
+                            <button
+                                className="create-button"
+                                onClick={handleSaveConfig}
+                                disabled={savingConfig}
+                            >
+                                {savingConfig ? 'Guardando...' : 'Guardar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
     const portalUrl = branding.slug ? `${window.location.origin}/${branding.slug}` : null;
 
     const handleCopyPortalLink = async () => {
@@ -371,6 +471,10 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
             <Tabs
                 defaultTab={0}
                 tabs={[
+                    {
+                        label: "Configuración general",
+                        content: configuracionTab
+                    },
                     {
                         label: "Exportación de Datos",
                         content: <ExportacionDatos />
