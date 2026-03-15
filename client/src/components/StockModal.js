@@ -326,14 +326,6 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                             {slots.length > 1 && (
                                                 <div className="stock-slot-header">
                                                     <strong>Artículo {slotIndex + 1}</strong>
-                                                    <button
-                                                        type="button"
-                                                        className="action-btn delete-btn"
-                                                        onClick={() => handleRemoveSlot(slotIndex)}
-                                                        title="Eliminar este artículo"
-                                                    >
-                                                        🗑️
-                                                    </button>
                                                 </div>
                                             )}
                                             <div className="form-group">
@@ -350,10 +342,20 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                                         type="button"
                                                         onClick={() => handleGenerateSerial(slotIndex)}
                                                         className="generate-serial-btn"
-                                                        title="Autogenerar"
+                                                        title="Autogenerar número de serie"
                                                     >
                                                         +
                                                     </button>
+                                                    {slots.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            className="action-btn delete-btn"
+                                                            onClick={() => handleRemoveSlot(slotIndex)}
+                                                            title="Eliminar este artículo"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             {slot.atributos.map((attr, attrIndex) => {

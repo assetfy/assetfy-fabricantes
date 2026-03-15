@@ -199,6 +199,15 @@ body {
   background-color: #218838;
 }
 
+.input-with-button .action-btn {
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 button {
   width: 100%;
   padding: 0.875rem;

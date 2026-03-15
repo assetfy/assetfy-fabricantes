@@ -1695,15 +1695,15 @@ router.post('/inventario/add', auth, async (req, res) => {
 
         // Verify access to the selected producto or pieza
         if (producto) {
-            const productoAsociado = await Producto.findOne({ _id: producto, usuarioApoderado });
-            if (!productoAsociado) {
+            const productoAsociado = await Producto.findById(producto).populate('fabricante');
+            if (!productoAsociado || !(await hasAccessToProduct(usuarioApoderado, productoAsociado))) {
                 return res.status(403).json('No tienes permiso para agregar inventario a este producto.');
             }
         }
 
         if (pieza) {
-            const piezaAsociada = await Pieza.findOne({ _id: pieza, usuarioApoderado });
-            if (!piezaAsociada) {
+            const piezaAsociada = await Pieza.findById(pieza).populate('fabricante');
+            if (!piezaAsociada || !(await hasAccessToPieza(usuarioApoderado, piezaAsociada))) {
                 return res.status(403).json('No tienes permiso para agregar inventario a esta pieza.');
             }
         }
