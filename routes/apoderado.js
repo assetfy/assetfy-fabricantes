@@ -2005,7 +2005,7 @@ router.get('/metricas', auth, async (req, res) => {
             const fab = fabricantes.find(f => f._id.equals(prod.fabricante));
             const umbral = fab && fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3;
             const stockCount = productStockMap[prod._id.toString()] || 0;
-            if (stockCount <= umbral) productosStockBajo++;
+            if (stockCount > 0 && stockCount <= umbral) productosStockBajo++;
             if (stockCount === 0) productosSinStock++;
         }
 
@@ -2016,7 +2016,7 @@ router.get('/metricas', auth, async (req, res) => {
             const fab = fabricantes.find(f => f._id.equals(pieza.fabricante));
             const umbral = fab && fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3;
             const stockCount = piezaStockMap[pieza._id.toString()] || 0;
-            if (stockCount <= umbral) piezasStockBajo++;
+            if (stockCount > 0 && stockCount <= umbral) piezasStockBajo++;
             if (stockCount === 0) piezasSinStock++;
         }
 
