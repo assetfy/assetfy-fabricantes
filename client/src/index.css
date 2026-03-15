@@ -2634,14 +2634,14 @@ td .action-buttons button {
 .sidebar-sub-items {
     background: #f9f6fd;
     border-left: 3px solid var(--primary-purple);
-    margin-left: 0;
+    margin-left: 1rem;
 }
 
 .sidebar-sub-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.6rem 1.5rem 0.6rem 2.5rem;
+    padding: 0.6rem 1.5rem 0.6rem 1.2rem;
     cursor: pointer;
     font-size: 0.85rem;
     color: var(--text-dark);

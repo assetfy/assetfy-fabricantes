@@ -305,7 +305,7 @@ const ApoderadoPanel = () => {
                                         icon: '⚙'
                                     },
                                     {
-                                        label: 'Historial de transacciones',
+                                        label: 'Historial',
                                         path: '/inventario',
                                         icon: '≡'
                                     }
