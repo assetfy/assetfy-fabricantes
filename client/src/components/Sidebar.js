@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logoImg from '../logo.png';
 
@@ -6,15 +6,32 @@ const Sidebar = ({ items, basePath = '' }) => {
     const location = useLocation();
     const [expandedItems, setExpandedItems] = useState(new Set());
 
-    // Determine which item is active based on current path
+    // Determine if a path is active
     const isActive = (path) => {
-        if (!basePath) {
-            // For non-routed items (like AdminPanel), use active index
-            return false;
-        }
+        if (!basePath || !path) return false;
         const fullPath = basePath + path;
         return location.pathname === fullPath || location.pathname.startsWith(fullPath + '/');
     };
+
+    // Check if any sub-item of a group is active
+    const isGroupActive = (item) => {
+        if (!item.subItems) return false;
+        return item.subItems.some(sub => sub.path && isActive(sub.path));
+    };
+
+    // Auto-expand groups whose sub-items match the current path
+    useEffect(() => {
+        const autoExpanded = new Set();
+        items.forEach((item, index) => {
+            if (item.subItems && isGroupActive(item)) {
+                autoExpanded.add(index);
+            }
+        });
+        if (autoExpanded.size > 0) {
+            setExpandedItems(prev => new Set([...prev, ...autoExpanded]));
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
 
     const toggleExpand = (index) => {
         setExpandedItems(prev => {
@@ -31,17 +48,18 @@ const Sidebar = ({ items, basePath = '' }) => {
     return (
         <div className="sidebar">
             <div className="sidebar-logo">
-                <img 
-                    src={logoImg} 
-                    alt="Logo" 
+                <img
+                    src={logoImg}
+                    alt="Logo"
                 />
             </div>
             <nav className="sidebar-nav">
                 {items.map((item, index) => {
-                    const isItemActive = item.path ? isActive(item.path) : item.active;
                     const hasSubItems = item.subItems && item.subItems.length > 0;
                     const isExpanded = expandedItems.has(index);
-                    
+                    const groupActive = hasSubItems && isGroupActive(item);
+                    const isItemActive = item.path ? isActive(item.path) : (item.active || groupActive);
+
                     return (
                         <div key={index}>
                             <div
@@ -87,16 +105,28 @@ const Sidebar = ({ items, basePath = '' }) => {
                             </div>
                             {hasSubItems && isExpanded && (
                                 <div className="sidebar-sub-items">
-                                    {item.subItems.map((subItem, subIndex) => (
-                                        <div
-                                            key={subIndex}
-                                            className="sidebar-sub-item"
-                                            onClick={subItem.onClick}
-                                        >
-                                            <span className="sidebar-sub-item-icon">{subItem.icon || '🔗'}</span>
-                                            <span className="sidebar-sub-item-label">{subItem.label}</span>
-                                        </div>
-                                    ))}
+                                    {item.subItems.map((subItem, subIndex) => {
+                                        const isSubActive = subItem.path ? isActive(subItem.path) : false;
+                                        return subItem.path ? (
+                                            <Link
+                                                key={subIndex}
+                                                to={basePath + subItem.path}
+                                                className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
+                                            >
+                                                <span className="sidebar-sub-item-icon">{subItem.icon || '·'}</span>
+                                                <span className="sidebar-sub-item-label">{subItem.label}</span>
+                                            </Link>
+                                        ) : (
+                                            <div
+                                                key={subIndex}
+                                                className="sidebar-sub-item"
+                                                onClick={subItem.onClick}
+                                            >
+                                                <span className="sidebar-sub-item-icon">{subItem.icon || '🔗'}</span>
+                                                <span className="sidebar-sub-item-label">{subItem.label}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

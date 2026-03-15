@@ -2658,6 +2658,20 @@ td .action-buttons button {
     color: white;
 }
 
+.sidebar-sub-item.active {
+    background: var(--primary-purple);
+    color: white;
+}
+
+a.sidebar-sub-item {
+    text-decoration: none;
+}
+
+a.sidebar-sub-item:hover,
+a.sidebar-sub-item.active {
+    color: white;
+}
+
 .sidebar-sub-item-icon {
     font-size: 0.85rem;
     flex-shrink: 0;
