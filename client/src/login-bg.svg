@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="ceilLight1" cx="50%" cy="0%" r="60%">
+      <stop offset="0%" stop-color="#d4b8ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1a0d2e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="leftGlow" cx="0%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#9b6fd4" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0f0620" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rightGlow" cx="100%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#9b6fd4" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0f0620" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientL" cx="20%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#7b4db4" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#0f0620" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientR" cx="80%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#6a3aa8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#0f0620" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="floorGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1550"/>
+      <stop offset="100%" stop-color="#0a0415"/>
+    </linearGradient>
+    <linearGradient id="shelfGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4a2880"/>
+      <stop offset="100%" stop-color="#3a1f66"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base background -->
+  <rect width="1920" height="1080" fill="#0f0620"/>
+
+  <!-- Ambient light fills -->
+  <rect width="1920" height="1080" fill="url(#ambientL)"/>
+  <rect width="1920" height="1080" fill="url(#ambientR)"/>
+  <rect width="1920" height="1080" fill="url(#ceilLight1)"/>
+
+  <!-- Ceiling -->
+  <rect x="0" y="0" width="1920" height="70" fill="#08031a"/>
+
+  <!-- Ceiling structural beams (horizontal) -->
+  <rect x="0" y="60" width="1920" height="8" fill="#2a1550"/>
+  <rect x="0" y="130" width="1920" height="5" fill="#221240"/>
+  <rect x="0" y="200" width="1920" height="4" fill="#1c0e36"/>
+
+  <!-- Ceiling lights strip (left zone) -->
+  <rect x="50" y="65" width="300" height="12" fill="#c8a0ff" opacity="0.4"/>
+  <rect x="55" y="67" width="290" height="8" fill="#e0d0ff" opacity="0.5"/>
+  <!-- Light glow below left ceiling light -->
+  <ellipse cx="200" cy="110" rx="200" ry="80" fill="#b090e8" opacity="0.18"/>
+
+  <!-- Ceiling lights strip (right zone) -->
+  <rect x="1570" y="65" width="300" height="12" fill="#c8a0ff" opacity="0.4"/>
+  <rect x="1575" y="67" width="290" height="8" fill="#e0d0ff" opacity="0.5"/>
+  <!-- Light glow below right ceiling light -->
+  <ellipse cx="1720" cy="110" rx="200" ry="80" fill="#b090e8" opacity="0.18"/>
+
+  <!-- Ceiling lights center -->
+  <rect x="800" y="65" width="320" height="10" fill="#c8a0ff" opacity="0.25"/>
+
+  <!-- ===================== LEFT SIDE WAREHOUSE ===================== -->
+
+  <!-- Left wall -->
+  <rect x="0" y="70" width="30" height="1010" fill="#120830"/>
+
+  <!-- LEFT SHELVING UNIT 1 (back) -->
+  <!-- Vertical uprights -->
+  <rect x="30" y="75" width="12" height="680" fill="#3d2070" opacity="0.9"/>
+  <rect x="162" y="75" width="12" height="680" fill="#3d2070" opacity="0.9"/>
+  <rect x="294" y="75" width="12" height="680" fill="#3d2070" opacity="0.9"/>
+
+  <!-- Horizontal shelves -->
+  <rect x="30" y="160" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="30" y="285" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="30" y="410" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="30" y="535" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="30" y="660" width="276" height="10" fill="url(#shelfGrad)"/>
+
+  <!-- Diagonal braces back shelf -->
+  <line x1="42" y1="160" x2="162" y2="285" stroke="#2d1860" stroke-width="4" opacity="0.7"/>
+  <line x1="162" y1="160" x2="294" y2="285" stroke="#2d1860" stroke-width="4" opacity="0.7"/>
+
+  <!-- Boxes / inventory on shelves -->
+  <!-- Shelf 1 (top) -->
+  <rect x="42" y="90" width="55" height="65" fill="#5c2d91" opacity="0.85"/>
+  <rect x="42" y="90" width="55" height="8" fill="#7b4db4" opacity="0.5"/>
+  <rect x="105" y="98" width="48" height="57" fill="#7b4db4" opacity="0.75"/>
+  <rect x="105" y="98" width="48" height="7" fill="#9b6fd4" opacity="0.4"/>
+  <rect x="160" y="85" width="60" height="70" fill="#4a2278" opacity="0.9"/>
+  <rect x="160" y="85" width="60" height="9" fill="#6b3ca8" opacity="0.5"/>
+  <rect x="228" y="92" width="52" height="63" fill="#6b40a8" opacity="0.8"/>
+  <rect x="228" y="92" width="52" height="8" fill="#8b60c8" opacity="0.4"/>
+
+  <!-- Shelf 2 -->
+  <rect x="42" y="175" width="52" height="105" fill="#7b4db4" opacity="0.7"/>
+  <rect x="100" y="185" width="58" height="95" fill="#5c2d91" opacity="0.8"/>
+  <rect x="100" y="185" width="58" height="10" fill="#7b4db4" opacity="0.5"/>
+  <rect x="165" y="172" width="50" height="108" fill="#9b6fd4" opacity="0.6"/>
+  <rect x="222" y="180" width="55" height="100" fill="#4a2278" opacity="0.9"/>
+  <rect x="222" y="180" width="55" height="10" fill="#6a3aa8" opacity="0.5"/>
+
+  <!-- Shelf 3 -->
+  <rect x="42" y="300" width="60" height="105" fill="#6b40a8" opacity="0.75"/>
+  <rect x="110" y="296" width="45" height="109" fill="#5c2d91" opacity="0.85"/>
+  <rect x="162" y="300" width="55" height="105" fill="#7b4db4" opacity="0.7"/>
+  <rect x="224" y="295" width="58" height="110" fill="#4a2278" opacity="0.9"/>
+
+  <!-- Shelf 4 -->
+  <rect x="42" y="425" width="50" height="105" fill="#5c2d91" opacity="0.8"/>
+  <rect x="99" y="418" width="58" height="112" fill="#7b4db4" opacity="0.7"/>
+  <rect x="164" y="425" width="52" height="105" fill="#6b40a8" opacity="0.8"/>
+  <rect x="223" y="420" width="58" height="110" fill="#9b6fd4" opacity="0.6"/>
+
+  <!-- Shelf 5 -->
+  <rect x="42" y="548" width="55" height="107" fill="#4a2278" opacity="0.9"/>
+  <rect x="104" y="545" width="50" height="110" fill="#5c2d91" opacity="0.85"/>
+  <rect x="161" y="550" width="58" height="105" fill="#7b4db4" opacity="0.7"/>
+  <rect x="226" y="545" width="55" height="110" fill="#6b40a8" opacity="0.8"/>
+
+  <!-- LEFT SHELVING UNIT 2 (front, overlapping slightly) -->
+  <rect x="30" y="755" width="276" height="8" fill="#3d2070" opacity="0.7"/>
+  <!-- Some items on bottom (partially hidden by floor) -->
+  <rect x="45" y="672" width="65" height="80" fill="#3d2070" opacity="0.9"/>
+  <rect x="118" y="668" width="58" height="84" fill="#2d1860" opacity="0.9"/>
+  <rect x="184" y="675" width="62" height="77" fill="#3d2070" opacity="0.9"/>
+
+  <!-- Industrial equipment left side - forklift silhouette suggestion -->
+  <rect x="310" y="700" width="80" height="120" fill="#1f1040" opacity="0.8"/>
+  <rect x="340" y="650" width="20" height="55" fill="#251348" opacity="0.7"/>
+  <rect x="318" y="795" width="15" height="60" fill="#1a0d30" opacity="0.9"/>
+  <rect x="358" y="795" width="15" height="60" fill="#1a0d30" opacity="0.9"/>
+  <ellipse cx="326" cy="858" rx="16" ry="10" fill="#2d1860" opacity="0.8"/>
+  <ellipse cx="366" cy="858" rx="16" ry="10" fill="#2d1860" opacity="0.8"/>
+
+  <!-- Left glow overlay -->
+  <rect x="0" y="0" width="500" height="1080" fill="url(#leftGlow)"/>
+
+  <!-- ===================== RIGHT SIDE WAREHOUSE ===================== -->
+
+  <!-- Right wall -->
+  <rect x="1890" y="70" width="30" height="1010" fill="#120830"/>
+
+  <!-- RIGHT SHELVING UNIT (back) -->
+  <rect x="1614" y="75" width="12" height="680" fill="#3d2070" opacity="0.9"/>
+  <rect x="1746" y="75" width="12" height="680" fill="#3d2070" opacity="0.9"/>
+  <rect x="1878" y="75" width="12" height="680" fill="#3d2070" opacity="0.9"/>
+
+  <!-- Horizontal shelves right -->
+  <rect x="1614" y="160" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="1614" y="285" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="1614" y="410" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="1614" y="535" width="276" height="10" fill="url(#shelfGrad)"/>
+  <rect x="1614" y="660" width="276" height="10" fill="url(#shelfGrad)"/>
+
+  <!-- Diagonal braces right -->
+  <line x1="1626" y1="160" x2="1746" y2="285" stroke="#2d1860" stroke-width="4" opacity="0.7"/>
+  <line x1="1746" y1="160" x2="1878" y2="285" stroke="#2d1860" stroke-width="4" opacity="0.7"/>
+
+  <!-- Boxes right - shelf 1 -->
+  <rect x="1626" y="90" width="55" height="65" fill="#7b4db4" opacity="0.75"/>
+  <rect x="1626" y="90" width="55" height="8" fill="#9b6fd4" opacity="0.45"/>
+  <rect x="1688" y="98" width="48" height="57" fill="#5c2d91" opacity="0.85"/>
+  <rect x="1688" y="98" width="48" height="7" fill="#7b4db4" opacity="0.5"/>
+  <rect x="1742" y="85" width="60" height="70" fill="#6b40a8" opacity="0.8"/>
+  <rect x="1742" y="85" width="60" height="9" fill="#8b60c8" opacity="0.4"/>
+  <rect x="1810" y="92" width="52" height="63" fill="#4a2278" opacity="0.9"/>
+  <rect x="1810" y="92" width="52" height="8" fill="#6a3aa8" opacity="0.5"/>
+
+  <!-- Shelf 2 right -->
+  <rect x="1626" y="175" width="52" height="105" fill="#5c2d91" opacity="0.8"/>
+  <rect x="1684" y="185" width="58" height="95" fill="#7b4db4" opacity="0.7"/>
+  <rect x="1748" y="172" width="50" height="108" fill="#4a2278" opacity="0.9"/>
+  <rect x="1748" y="172" width="50" height="10" fill="#6a3aa8" opacity="0.5"/>
+  <rect x="1805" y="180" width="55" height="100" fill="#9b6fd4" opacity="0.6"/>
+
+  <!-- Shelf 3 right -->
+  <rect x="1626" y="300" width="60" height="105" fill="#4a2278" opacity="0.9"/>
+  <rect x="1693" y="296" width="45" height="109" fill="#7b4db4" opacity="0.7"/>
+  <rect x="1744" y="300" width="55" height="105" fill="#5c2d91" opacity="0.85"/>
+  <rect x="1806" y="295" width="58" height="110" fill="#6b40a8" opacity="0.8"/>
+
+  <!-- Shelf 4 right -->
+  <rect x="1626" y="425" width="50" height="105" fill="#6b40a8" opacity="0.8"/>
+  <rect x="1683" y="418" width="58" height="112" fill="#5c2d91" opacity="0.85"/>
+  <rect x="1748" y="425" width="52" height="105" fill="#9b6fd4" opacity="0.6"/>
+  <rect x="1807" y="420" width="58" height="110" fill="#4a2278" opacity="0.9"/>
+
+  <!-- Shelf 5 right -->
+  <rect x="1626" y="548" width="55" height="107" fill="#7b4db4" opacity="0.7"/>
+  <rect x="1687" y="545" width="50" height="110" fill="#4a2278" opacity="0.9"/>
+  <rect x="1744" y="550" width="58" height="105" fill="#5c2d91" opacity="0.85"/>
+  <rect x="1809" y="545" width="55" height="110" fill="#6b40a8" opacity="0.8"/>
+
+  <!-- Floor items right -->
+  <rect x="1626" y="672" width="65" height="80" fill="#3d2070" opacity="0.9"/>
+  <rect x="1699" y="668" width="58" height="84" fill="#2d1860" opacity="0.9"/>
+  <rect x="1764" y="675" width="62" height="77" fill="#3d2070" opacity="0.9"/>
+
+  <!-- Right glow overlay -->
+  <rect x="1420" y="0" width="500" height="1080" fill="url(#rightGlow)"/>
+
+  <!-- ===================== CENTER BACKGROUND ===================== -->
+
+  <!-- Deep center background machinery -->
+  <rect x="480" y="480" width="130" height="270" fill="#1a0d30" opacity="0.75"/>
+  <rect x="500" y="430" width="90" height="55" fill="#221240" opacity="0.7"/>
+  <rect x="520" y="390" width="50" height="45" fill="#2a1550" opacity="0.65"/>
+  <rect x="490" y="740" width="145" height="30" fill="#120828" opacity="0.9"/>
+
+  <rect x="1310" y="480" width="130" height="270" fill="#1a0d30" opacity="0.75"/>
+  <rect x="1330" y="430" width="90" height="55" fill="#221240" opacity="0.7"/>
+  <rect x="1350" y="390" width="50" height="45" fill="#2a1550" opacity="0.65"/>
+  <rect x="1285" y="740" width="145" height="30" fill="#120828" opacity="0.9"/>
+
+  <!-- Conveyor belt suggestion center -->
+  <rect x="620" y="750" width="680" height="40" fill="#18092c" opacity="0.7"/>
+  <rect x="620" y="750" width="680" height="6" fill="#3d2070" opacity="0.5"/>
+  <!-- Belt segments -->
+  <rect x="640" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="690" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="740" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="790" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="840" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="890" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="940" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="990" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="1040" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="1090" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="1140" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="1190" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+  <rect x="1240" y="756" width="30" height="28" fill="#1f1040" opacity="0.6"/>
+
+  <!-- Floor -->
+  <rect x="0" y="790" width="1920" height="290" fill="url(#floorGrad)"/>
+  <!-- Floor lines (perspective) -->
+  <line x1="0" y1="800" x2="1920" y2="800" stroke="#2a1550" stroke-width="2" opacity="0.4"/>
+  <line x1="0" y1="860" x2="1920" y2="860" stroke="#2a1550" stroke-width="1.5" opacity="0.3"/>
+  <line x1="0" y1="920" x2="1920" y2="920" stroke="#2a1550" stroke-width="1" opacity="0.25"/>
+  <line x1="0" y1="980" x2="1920" y2="980" stroke="#2a1550" stroke-width="1" opacity="0.2"/>
+  <!-- Vertical floor lines (perspective) -->
+  <line x1="400" y1="800" x2="200" y2="1080" stroke="#2a1550" stroke-width="1" opacity="0.2"/>
+  <line x1="640" y1="800" x2="500" y2="1080" stroke="#2a1550" stroke-width="1" opacity="0.2"/>
+  <line x1="960" y1="800" x2="960" y2="1080" stroke="#2a1550" stroke-width="1" opacity="0.2"/>
+  <line x1="1280" y1="800" x2="1420" y2="1080" stroke="#2a1550" stroke-width="1" opacity="0.2"/>
+  <line x1="1520" y1="800" x2="1720" y2="1080" stroke="#2a1550" stroke-width="1" opacity="0.2"/>
+</svg>
