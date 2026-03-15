@@ -69,34 +69,47 @@ const Login = () => {
     };
 
     return (
-        <div className="container">
-            <div className="logo-container">
-                <img src={logo} alt="Logo de la aplicación" className="app-logo" />
+        <div className="login-page">
+            <div className="login-card">
+                <div className="login-logo-container">
+                    <img src={logo} alt="Logo de la aplicación" className="login-logo" />
+                </div>
+                <h2 className="login-title">Iniciar Sesión</h2>
+                <p className="login-subtitle">
+                    Coloca tu usuario y contraseña para entrar a tu panel de <span className="login-brand">AssetFy</span>.
+                </p>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Correo electrónico</label>
+                        <div className="login-input-wrapper">
+                            <span className="login-input-icon">&#9993;</span>
+                            <input
+                                type="email"
+                                name="correoElectronico"
+                                value={formData.correoElectronico}
+                                onChange={handleChange}
+                                placeholder="correo@ejemplo.com"
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Contraseña</label>
+                        <div className="login-input-wrapper">
+                            <span className="login-input-icon">&#128274;</span>
+                            <input
+                                type="password"
+                                name="contrasena"
+                                value={formData.contrasena}
+                                onChange={handleChange}
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                    </div>
+                    <button type="submit" className="login-submit-btn">INICIAR SESIÓN →</button>
+                </form>
             </div>
-            <h2>Iniciar Sesión</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Correo Electrónico</label>
-                    <input
-                        type="email"
-                        name="correoElectronico"
-                        value={formData.correoElectronico}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Contraseña</label>
-                    <input
-                        type="password"
-                        name="contrasena"
-                        value={formData.contrasena}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-                <button type="submit">Iniciar Sesión</button>
-            </form>
         </div>
     );
 };

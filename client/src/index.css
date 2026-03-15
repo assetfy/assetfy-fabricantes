@@ -2375,13 +2375,8 @@ td .action-buttons button {
 /* Sidebar Styles */
 .panel-with-sidebar {
     display: flex;
-    gap: 2rem;
-    width: 100%;
-}
-
-/* No gap for ApoderadoPanel with sidebar */
-.apoderado-panel-with-sidebar .panel-with-sidebar {
     gap: 0;
+    width: 100%;
 }
 
 .sidebar {
@@ -2560,11 +2555,6 @@ td .action-buttons button {
     flex: 1;
     min-width: 0;
     margin-left: var(--sidebar-width);
-    padding: var(--content-padding);
-}
-
-/* No padding for ApoderadoPanel sidebar content */
-.apoderado-panel-with-sidebar .sidebar-content {
     padding: 0;
 }
 
@@ -2711,18 +2701,11 @@ td .action-buttons button {
 .apoderado-panel,
 .usuario-panel {
     margin-left: var(--sidebar-width);
-    padding-top: calc(var(--header-height) + var(--content-padding));
-    padding-left: var(--content-padding);
-    padding-right: var(--content-padding);
-    background: var(--bg-gray);
-    min-height: 100vh;
-}
-
-/* Specific overrides for ApoderadoPanel with sidebar */
-.apoderado-panel.apoderado-panel-with-sidebar {
     padding-top: var(--header-height);
     padding-left: 0;
     padding-right: 0;
+    background: var(--bg-gray);
+    min-height: 100vh;
 }
 
 /* Responsive adjustments for sidebar layout */
@@ -2749,6 +2732,6 @@ td .action-buttons button {
     .apoderado-panel,
     .usuario-panel {
         margin-left: 0;
-        padding-top: calc(var(--mobile-sidebar-height) + var(--header-height) + var(--content-padding));
+        padding-top: calc(var(--mobile-sidebar-height) + var(--header-height));
     }
 }
