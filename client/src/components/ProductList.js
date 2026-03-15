@@ -5,7 +5,7 @@ import ConfirmDialog from './ConfirmDialog';
 import Pagination from './Pagination';
 import getAuthenticatedUrl from '../utils/getAuthenticatedUrl';
 
-const ProductList = ({ refreshTrigger, onEdit, onView }) => {
+const ProductList = ({ refreshTrigger, onEdit, onView, onEditStock }) => {
     const [productos, setProductos] = useState([]);
     const [allProductos, setAllProductos] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -151,12 +151,10 @@ const ProductList = ({ refreshTrigger, onEdit, onView }) => {
                             <th>Imagen</th>
                             <th>ID Producto</th>
                             <th>Modelo</th>
-                       
-                         
                             <th>Fabricante</th>
                             <th>Marca</th>
                             <th>Estado</th>
-                            <th>Manuales</th>
+                            <th>Stock</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -165,8 +163,8 @@ const ProductList = ({ refreshTrigger, onEdit, onView }) => {
                             <tr key={producto._id}>
                                 <td>
                                     {producto.imagenPrincipal && producto.imagenPrincipal.url ? (
-                                        <img 
-                                            src={getAuthenticatedUrl(producto.imagenPrincipal.url)} 
+                                        <img
+                                            src={getAuthenticatedUrl(producto.imagenPrincipal.url)}
                                             alt={producto.modelo}
                                             style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                                         />
@@ -176,44 +174,37 @@ const ProductList = ({ refreshTrigger, onEdit, onView }) => {
                                 </td>
                                 <td>{producto.idProducto || 'N/A'}</td>
                                 <td>{producto.modelo}</td>
-                          
-                              
                                 <td>{producto.fabricante ? producto.fabricante.razonSocial : 'N/A'}</td>
                                 <td>{producto.marca ? producto.marca.nombre : 'N/A'}</td>
                                 <td>{producto.estado || 'Activo'}</td>
                                 <td>
-                                    {producto.manuales && producto.manuales.length > 0 ? (
-                                        <div>
-                                            {producto.manuales.map((manual, index) => (
-                                                <div key={index}>
-                                                    <a href={getAuthenticatedUrl(manual.url)} target="_blank" rel="noopener noreferrer">
-                                                        {manual.originalName}
-                                                    </a>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        'Sin manuales'
-                                    )}
+                                    <span className="stock-badge">{producto.stockCount ?? 0}</span>
                                 </td>
                                 <td>
                                     <div className="action-buttons">
-                                        <button 
-                                            className="action-btn view-btn" 
+                                        <button
+                                            className="action-btn view-btn"
                                             onClick={() => handleViewClick(producto)}
                                             title="Ver detalles"
                                         >
                                             👁️
                                         </button>
-                                        <button 
-                                            className="action-btn edit-btn" 
+                                        <button
+                                            className="action-btn edit-btn"
                                             onClick={() => handleEditClick(producto)}
                                             title="Editar"
                                         >
                                             ✏️
                                         </button>
-                                        <button 
-                                            className="action-btn delete-btn" 
+                                        <button
+                                            className="action-btn stock-btn"
+                                            onClick={() => onEditStock && onEditStock(producto)}
+                                            title="Editar Stock"
+                                        >
+                                            📦
+                                        </button>
+                                        <button
+                                            className="action-btn delete-btn"
                                             onClick={() => handleDeleteClick(producto)}
                                             title="Eliminar"
                                         >
@@ -265,23 +256,31 @@ const ProductList = ({ refreshTrigger, onEdit, onView }) => {
                             <div className="product-info">
                                 <h4>{producto.modelo}</h4>
                                 <p>{producto.marca ? producto.marca.nombre : 'N/A'}</p>
+                                <p><strong>Stock:</strong> {producto.stockCount ?? 0}</p>
                                 <div className="product-actions">
-                                    <button 
-                                        className="action-btn view-btn" 
+                                    <button
+                                        className="action-btn view-btn"
                                         onClick={() => handleViewClick(producto)}
                                         title="Ver detalles"
                                     >
                                         👁️
                                     </button>
-                                    <button 
-                                        className="action-btn edit-btn" 
+                                    <button
+                                        className="action-btn edit-btn"
                                         onClick={() => handleEditClick(producto)}
                                         title="Editar"
                                     >
                                         ✏️
                                     </button>
-                                    <button 
-                                        className="action-btn delete-btn" 
+                                    <button
+                                        className="action-btn stock-btn"
+                                        onClick={() => onEditStock && onEditStock(producto)}
+                                        title="Editar Stock"
+                                    >
+                                        📦
+                                    </button>
+                                    <button
+                                        className="action-btn delete-btn"
                                         onClick={() => handleDeleteClick(producto)}
                                         title="Eliminar"
                                     >

@@ -615,8 +615,22 @@ router.get('/productos', auth, async (req, res) => {
             .populate('fabricante')
             .populate('marca')
             .populate('garantia');
-            
-        res.json(productos);
+
+        // Agregar conteo de stock (estado='stock') para cada producto
+        const productoIds = productos.map(p => p._id);
+        const stockCounts = await Inventario.aggregate([
+            { $match: { producto: { $in: productoIds }, estado: 'stock' } },
+            { $group: { _id: '$producto', count: { $sum: 1 } } }
+        ]);
+        const stockCountMap = {};
+        stockCounts.forEach(sc => { stockCountMap[sc._id.toString()] = sc.count; });
+
+        const productosWithStock = productos.map(p => ({
+            ...p.toObject(),
+            stockCount: stockCountMap[p._id.toString()] || 0
+        }));
+
+        res.json(productosWithStock);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
@@ -1517,7 +1531,7 @@ router.delete('/ubicaciones/:id', auth, async (req, res) => {
 // @desc    Obtener todos los artículos del inventario del apoderado, con opción de búsqueda y filtro
 // @access  Privado (Apoderado)
 router.get('/inventario', auth, async (req, res) => {
-    const { search, estado } = req.query; // Obtener los parámetros de búsqueda y filtro
+    const { search, estado, productoId, piezaId } = req.query; // Obtener los parámetros de búsqueda y filtro
     const usuarioApoderado = req.usuario.id;
     
     try {
@@ -1605,6 +1619,44 @@ router.get('/inventario', auth, async (req, res) => {
                 query.$and.push({ estado });
             } else {
                 query.estado = estado;
+            }
+        }
+
+        // Filtro por producto específico
+        if (productoId) {
+            if (query.$and) {
+                query.$and.push({ producto: productoId });
+            } else {
+                query.$and = [
+                    {
+                        $or: [
+                            { usuarioApoderado },
+                            { producto: { $in: productoIdsAccesibles } },
+                            { pieza: { $in: piezaIdsAccesibles } }
+                        ]
+                    },
+                    { producto: productoId }
+                ];
+                delete query.$or;
+            }
+        }
+
+        // Filtro por pieza específica
+        if (piezaId) {
+            if (query.$and) {
+                query.$and.push({ pieza: piezaId });
+            } else {
+                query.$and = [
+                    {
+                        $or: [
+                            { usuarioApoderado },
+                            { producto: { $in: productoIdsAccesibles } },
+                            { pieza: { $in: piezaIdsAccesibles } }
+                        ]
+                    },
+                    { pieza: piezaId }
+                ];
+                delete query.$or;
             }
         }
 
@@ -3034,7 +3086,21 @@ router.get('/piezas', auth, async (req, res) => {
             })
             .populate('garantia');
 
-        res.json(piezas);
+        // Agregar conteo de stock (estado='stock') para cada pieza
+        const piezaIds = piezas.map(p => p._id);
+        const stockCountsPiezas = await Inventario.aggregate([
+            { $match: { pieza: { $in: piezaIds }, estado: 'stock' } },
+            { $group: { _id: '$pieza', count: { $sum: 1 } } }
+        ]);
+        const stockCountMapPiezas = {};
+        stockCountsPiezas.forEach(sc => { stockCountMapPiezas[sc._id.toString()] = sc.count; });
+
+        const piezasWithStock = piezas.map(p => ({
+            ...p.toObject(),
+            stockCount: stockCountMapPiezas[p._id.toString()] || 0
+        }));
+
+        res.json(piezasWithStock);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
