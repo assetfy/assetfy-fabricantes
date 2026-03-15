@@ -2000,20 +2000,24 @@ router.get('/metricas', auth, async (req, res) => {
 
         const allProductos = await Producto.find({ fabricante: { $in: fabricanteIds } }).select('_id fabricante');
         let productosStockBajo = 0;
+        let productosSinStock = 0;
         for (const prod of allProductos) {
             const fab = fabricantes.find(f => f._id.equals(prod.fabricante));
             const umbral = fab && fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3;
             const stockCount = productStockMap[prod._id.toString()] || 0;
             if (stockCount <= umbral) productosStockBajo++;
+            if (stockCount === 0) productosSinStock++;
         }
 
         const allPiezas = await Pieza.find({ fabricante: { $in: fabricanteIds } }).select('_id fabricante');
         let piezasStockBajo = 0;
+        let piezasSinStock = 0;
         for (const pieza of allPiezas) {
             const fab = fabricantes.find(f => f._id.equals(pieza.fabricante));
             const umbral = fab && fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3;
             const stockCount = piezaStockMap[pieza._id.toString()] || 0;
             if (stockCount <= umbral) piezasStockBajo++;
+            if (stockCount === 0) piezasSinStock++;
         }
 
         // Top 5 bienes con más pedidos de garantía
@@ -2056,6 +2060,10 @@ router.get('/metricas', auth, async (req, res) => {
             stockBajo: {
                 productos: productosStockBajo,
                 piezas: piezasStockBajo
+            },
+            sinStock: {
+                productos: productosSinStock,
+                piezas: piezasSinStock
             },
             estadisticas: {
                 productosActivos,
