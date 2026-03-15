@@ -151,8 +151,6 @@ button:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 .apoderado-panel nav ul {
@@ -2402,7 +2400,7 @@ td .action-buttons button {
 }
 
 .sidebar-logo img {
-    max-width: 140px;
+    max-width: 90px;
     height: auto;
 }
 
@@ -2554,7 +2552,6 @@ td .action-buttons button {
 .sidebar-content {
     flex: 1;
     min-width: 0;
-    margin-left: var(--sidebar-width);
     padding: 0;
 }
 
