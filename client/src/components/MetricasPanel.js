@@ -138,7 +138,7 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color active"></div>
                             <span className="legend-label">Activos</span>
-                            <span className="legend-value">{metricas.productos || 0}</span>
+                            <span className="legend-value">{metricas.estadisticas?.productosActivos || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
