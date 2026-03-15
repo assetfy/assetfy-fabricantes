@@ -88,7 +88,7 @@ const UserHeader = ({ user, onProfileUpdated, userType = 'admin', welcomeMessage
         
         const path = location.pathname;
         if (path.includes('/metricas')) return 'Dashboard';
-        if (path.includes('/productos')) return 'Inventario';
+        if (path.includes('/productos')) return 'Mis Productos';
         if (path.includes('/piezas')) return 'Repuestos';
         if (path.includes('/inventario')) return 'Inventario';
         if (path.includes('/representantes')) return 'Representantes';
