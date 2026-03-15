@@ -1998,7 +1998,7 @@ router.get('/metricas', auth, async (req, res) => {
         const piezaStockMap = {};
         inventarioPorPieza.forEach(item => { piezaStockMap[item._id.toString()] = item.count; });
 
-        const allProductos = await Producto.find({ fabricante: { $in: fabricanteIds }, estado: 'Activo' }).select('_id fabricante');
+        const allProductos = await Producto.find({ fabricante: { $in: fabricanteIds } }).select('_id fabricante');
         let productosStockBajo = 0;
         let productosSinStock = 0;
         for (const prod of allProductos) {
