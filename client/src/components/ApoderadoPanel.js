@@ -14,6 +14,7 @@ import RepresentanteForm from './RepresentanteForm';
 import RepresentanteEditForm from './RepresentanteEditForm';
 import PedidoGarantiaList from './PedidoGarantiaList';
 import Modal from './Modal';
+import StockModal from './StockModal';
 import UserHeader from './UserHeader';
 import AdministracionPanel from './AdministracionPanel';
 import MetricasPanel from './MetricasPanel';
@@ -36,6 +37,8 @@ const ApoderadoPanel = () => {
     const [editingInventario, setEditingInventario] = useState(null);
     const [viewingInventario, setViewingInventario] = useState(null);
     const [editingRepresentante, setEditingRepresentante] = useState(null);
+    const [stockModalItem, setStockModalItem] = useState(null);
+    const [stockModalType, setStockModalType] = useState('producto');
     const [showCreateProductModal, setShowCreateProductModal] = useState(false);
     const [showCreatePiezaModal, setShowCreatePiezaModal] = useState(false);
     const [showCreateInventarioModal, setShowCreateInventarioModal] = useState(false);
@@ -242,6 +245,11 @@ const ApoderadoPanel = () => {
         setViewingInventario(null);
     };
 
+    const handleEditStock = (item, type) => {
+        setStockModalType(type);
+        setStockModalItem(item);
+    };
+
     const handleEditRepresentante = (representante) => {
         setEditingRepresentante(representante);
     };
@@ -348,10 +356,11 @@ const ApoderadoPanel = () => {
                                     </button>
                                 </div>
                             </div>
-                            <ProductList 
-                                refreshTrigger={refreshKey} 
+                            <ProductList
+                                refreshTrigger={refreshKey}
                                 onEdit={handleEditProduct}
                                 onView={handleViewProduct}
+                                onEditStock={(producto) => handleEditStock(producto, 'producto')}
                             />
                         </>
                     } />
@@ -368,10 +377,11 @@ const ApoderadoPanel = () => {
                                     </button>
                                 </div>
                             </div>
-                            <PiezaList 
-                                refreshTrigger={refreshKey} 
+                            <PiezaList
+                                refreshTrigger={refreshKey}
                                 onEdit={handleEditPieza}
                                 onView={handleViewPieza}
+                                onEditStock={(pieza) => handleEditStock(pieza, 'pieza')}
                             />
                         </>
                     } />
@@ -586,8 +596,8 @@ const ApoderadoPanel = () => {
                     />
                 </Modal>
 
-                <Modal 
-                    isOpen={!!editingRepresentante} 
+                <Modal
+                    isOpen={!!editingRepresentante}
                     onClose={handleCancelEditRepresentante}
                     title="Editar Representante"
                 >
@@ -601,6 +611,15 @@ const ApoderadoPanel = () => {
                         />
                     )}
                 </Modal>
+
+                <StockModal
+                    isOpen={!!stockModalItem}
+                    onClose={() => { setStockModalItem(null); setRefreshKey(k => k + 1); }}
+                    item={stockModalItem}
+                    itemType={stockModalType}
+                    productos={productos}
+                    piezas={piezas}
+                />
         </div>
     );
 };

@@ -5,7 +5,7 @@ import ConfirmDialog from './ConfirmDialog';
 import Pagination from './Pagination';
 import getAuthenticatedUrl from '../utils/getAuthenticatedUrl';
 
-const PiezaList = ({ refreshTrigger, onEdit, onView }) => {
+const PiezaList = ({ refreshTrigger, onEdit, onView, onEditStock }) => {
     const [piezas, setPiezas] = useState([]);
     const [allPiezas, setAllPiezas] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -143,6 +143,7 @@ const PiezaList = ({ refreshTrigger, onEdit, onView }) => {
                             <th>ID Pieza</th>
                             <th>Nombre</th>
                             <th>Productos Asociados</th>
+                            <th>Stock</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -151,8 +152,8 @@ const PiezaList = ({ refreshTrigger, onEdit, onView }) => {
                             <tr key={pieza._id}>
                                 <td>
                                     {pieza.imagen && pieza.imagen.url ? (
-                                        <img 
-                                            src={getAuthenticatedUrl(pieza.imagen.url)} 
+                                        <img
+                                            src={getAuthenticatedUrl(pieza.imagen.url)}
                                             alt={pieza.nombre}
                                             style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                                         />
@@ -176,23 +177,33 @@ const PiezaList = ({ refreshTrigger, onEdit, onView }) => {
                                     )}
                                 </td>
                                 <td>
+                                    <span className="stock-badge">{pieza.stockCount ?? 0}</span>
+                                </td>
+                                <td>
                                     <div className="action-buttons">
-                                        <button 
-                                            className="action-btn view-btn" 
+                                        <button
+                                            className="action-btn view-btn"
                                             onClick={() => handleViewClick(pieza)}
                                             title="Ver detalles"
                                         >
                                             👁️
                                         </button>
-                                        <button 
-                                            className="action-btn edit-btn" 
+                                        <button
+                                            className="action-btn edit-btn"
                                             onClick={() => handleEditClick(pieza)}
                                             title="Editar"
                                         >
                                             ✏️
                                         </button>
-                                        <button 
-                                            className="action-btn delete-btn" 
+                                        <button
+                                            className="action-btn stock-btn"
+                                            onClick={() => onEditStock && onEditStock(pieza)}
+                                            title="Editar Stock"
+                                        >
+                                            📦
+                                        </button>
+                                        <button
+                                            className="action-btn delete-btn"
                                             onClick={() => handleDeleteClick(pieza)}
                                             title="Eliminar"
                                         >
@@ -245,23 +256,31 @@ const PiezaList = ({ refreshTrigger, onEdit, onView }) => {
                                 <h4>{pieza.nombre}</h4>
                                 <p><strong>ID:</strong> {pieza.idPieza || 'N/A'}</p>
                                 <p><strong>Productos:</strong> {pieza.productos?.length || 0}</p>
+                                <p><strong>Stock:</strong> {pieza.stockCount ?? 0}</p>
                                 <div className="product-actions">
-                                    <button 
-                                        className="action-btn view-btn" 
+                                    <button
+                                        className="action-btn view-btn"
                                         onClick={() => handleViewClick(pieza)}
                                         title="Ver detalles"
                                     >
                                         👁️
                                     </button>
-                                    <button 
-                                        className="action-btn edit-btn" 
+                                    <button
+                                        className="action-btn edit-btn"
                                         onClick={() => handleEditClick(pieza)}
                                         title="Editar"
                                     >
                                         ✏️
                                     </button>
-                                    <button 
-                                        className="action-btn delete-btn" 
+                                    <button
+                                        className="action-btn stock-btn"
+                                        onClick={() => onEditStock && onEditStock(pieza)}
+                                        title="Editar Stock"
+                                    >
+                                        📦
+                                    </button>
+                                    <button
+                                        className="action-btn delete-btn"
                                         onClick={() => handleDeleteClick(pieza)}
                                         title="Eliminar"
                                     >
