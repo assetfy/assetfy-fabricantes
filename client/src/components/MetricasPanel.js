@@ -143,7 +143,7 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
                             <span className="legend-label">Stock bajo</span>
-                            <span className="legend-value">0</span>
+                            <span className="legend-value">{metricas.stockBajo?.productos || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color no-stock"></div>
@@ -187,7 +187,7 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
                             <span className="legend-label">Stock bajo</span>
-                            <span className="legend-value">0</span>
+                            <span className="legend-value">{metricas.stockBajo?.piezas || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color no-stock"></div>
