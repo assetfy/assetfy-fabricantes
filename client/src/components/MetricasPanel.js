@@ -138,7 +138,7 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color active"></div>
                             <span className="legend-label">Activos</span>
-                            <span className="legend-value">{Math.max(0, (metricas.estadisticas?.productosActivos || 0) - (metricas.stockBajo?.productos || 0) - (metricas.sinStock?.productos || 0))}</span>
+                            <span className="legend-value">{metricas.estadisticas?.productosActivos || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
@@ -182,7 +182,7 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color active"></div>
                             <span className="legend-label">Activos</span>
-                            <span className="legend-value">{Math.max(0, (metricas.piezas || 0) - (metricas.stockBajo?.piezas || 0) - (metricas.sinStock?.piezas || 0))}</span>
+                            <span className="legend-value">{metricas.piezas || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
