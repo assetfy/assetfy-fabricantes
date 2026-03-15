@@ -587,7 +587,7 @@ table th:nth-child(8), table td:nth-child(8) {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/login-bg.svg');
+  background-image: url('./login-bg.svg');
   background-size: cover;
   background-position: center;
   filter: blur(14px);
