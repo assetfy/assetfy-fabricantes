@@ -1998,14 +1998,17 @@ router.get('/metricas', auth, async (req, res) => {
         const piezaStockMap = {};
         inventarioPorPieza.forEach(item => { piezaStockMap[item._id.toString()] = item.count; });
 
-        const allProductos = await Producto.find({ fabricante: { $in: fabricanteIds } }).select('_id fabricante');
+        const allProductos = await Producto.find({
+            fabricante: { $in: fabricanteIds },
+            estado: 'Activo'
+        }).select('_id fabricante');
         let productosStockBajo = 0;
         let productosSinStock = 0;
         for (const prod of allProductos) {
             const fab = fabricantes.find(f => f._id.equals(prod.fabricante));
             const umbral = fab && fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3;
             const stockCount = productStockMap[prod._id.toString()] || 0;
-            if (stockCount > 0 && stockCount < umbral) productosStockBajo++;
+            if (stockCount > 0 && stockCount <= umbral) productosStockBajo++;
             if (stockCount === 0) productosSinStock++;
         }
 
@@ -2016,7 +2019,7 @@ router.get('/metricas', auth, async (req, res) => {
             const fab = fabricantes.find(f => f._id.equals(pieza.fabricante));
             const umbral = fab && fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3;
             const stockCount = piezaStockMap[pieza._id.toString()] || 0;
-            if (stockCount > 0 && stockCount < umbral) piezasStockBajo++;
+            if (stockCount > 0 && stockCount <= umbral) piezasStockBajo++;
             if (stockCount === 0) piezasSinStock++;
         }
 
@@ -3875,5 +3878,4 @@ router.put('/pedidos-garantia/:id/estado', auth, async (req, res) => {
 });
 
 module.exports = router;
-
 
