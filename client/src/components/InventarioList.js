@@ -31,7 +31,7 @@ const formatWarrantyExpiration = (item) => {
 };
 
 
-const InventarioList = ({ refreshTrigger, onEdit, onView }) => {
+const InventarioList = ({ refreshTrigger, onEdit, onView, excludeStock = false }) => {
     const location = useLocation();
     const initialSearch = new URLSearchParams(location.search).get('search') || '';
     const [inventario, setInventario] = useState([]);
@@ -86,7 +86,10 @@ const InventarioList = ({ refreshTrigger, onEdit, onView }) => {
             try {
                 const res = await api.get(`/apoderado/inventario?search=${searchTerm}&estado=${estadoFilter}`);
                 if (res && res.data) {
-                    setAllInventario(res.data);
+                    const data = excludeStock
+                        ? res.data.filter(item => item.estado !== 'stock')
+                        : res.data;
+                    setAllInventario(data);
                 } else {
                     console.error('Respuesta del servidor inválida para inventario');
                     setAllInventario([]);
@@ -96,7 +99,7 @@ const InventarioList = ({ refreshTrigger, onEdit, onView }) => {
             }
         };
         fetchInventario();
-    }, [refreshTrigger, searchTerm, estadoFilter]);
+    }, [refreshTrigger, searchTerm, estadoFilter, excludeStock]);
 
     // Update inventario when allInventario, page, or page size changes
     useEffect(() => {

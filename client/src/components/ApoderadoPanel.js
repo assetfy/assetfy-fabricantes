@@ -290,22 +290,26 @@ const ApoderadoPanel = () => {
                                 icon: '▣'
                             },
                             {
-                                label: 'Mis Productos',
-                                description: 'Gestión de productos',
-                                path: '/productos',
-                                icon: '◫'
-                            },
-                            {
-                                label: 'Repuestos / Piezas',
-                                description: 'Gestión de piezas',
-                                path: '/piezas',
-                                icon: '⚙'
-                            },
-                            {
-                                label: 'Inventario',
-                                description: 'Control de stock',
-                                path: '/inventario',
-                                icon: '≡'
+                                label: 'Mis productos',
+                                description: 'Productos, piezas e historial',
+                                icon: '◫',
+                                subItems: [
+                                    {
+                                        label: 'Productos',
+                                        path: '/productos',
+                                        icon: '◫'
+                                    },
+                                    {
+                                        label: 'Repuestos & Piezas',
+                                        path: '/piezas',
+                                        icon: '⚙'
+                                    },
+                                    {
+                                        label: 'Historial de transacciones',
+                                        path: '/inventario',
+                                        icon: '≡'
+                                    }
+                                ]
                             },
                             {
                                 label: 'Representantes',
@@ -347,7 +351,7 @@ const ApoderadoPanel = () => {
                         <>
                             <div className="list-container">
                                 <div className="section-header">
-                                    <h3>Gestión de Productos</h3>
+                                    <h3>Productos</h3>
                                     <button 
                                         className="create-button"
                                         onClick={() => setShowCreateProductModal(true)}
@@ -389,8 +393,8 @@ const ApoderadoPanel = () => {
                         <>
                             <div className="list-container">
                                 <div className="section-header">
-                                    <h3>Gestión de Inventario</h3>
-                                    <button 
+                                    <h3>Historial de transacciones</h3>
+                                    <button
                                         className="create-button"
                                         onClick={() => setShowCreateInventarioModal(true)}
                                     >
@@ -402,6 +406,7 @@ const ApoderadoPanel = () => {
                                 refreshTrigger={refreshKey}
                                 onEdit={handleEditInventario}
                                 onView={handleViewInventario}
+                                excludeStock={true}
                             />
                         </>
                     } />
