@@ -27,6 +27,7 @@ const formatWarrantyExpiration = (item) => {
 
 const emptySlot = (atributos = []) => ({
     numeroSerie: '',
+    ubicacion: '',
     atributos: atributos.map(attr => ({
         nombre: attr.nombre,
         valor: attr.tipo === 'predefinido' ? (attr.valor || '') : ''
@@ -117,6 +118,10 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
         setSlots(prev => prev.map((s, i) => i === index ? { ...s, numeroSerie: value } : s));
     };
 
+    const handleSlotUbicacionChange = (index, value) => {
+        setSlots(prev => prev.map((s, i) => i === index ? { ...s, ubicacion: value } : s));
+    };
+
     const handleSlotAtributoChange = (slotIndex, attrIndex, value) => {
         setSlots(prev => prev.map((s, i) => {
             if (i !== slotIndex) return s;
@@ -159,6 +164,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                     numeroSerie: slot.numeroSerie,
                     estado: 'stock',
                     atributos: slot.atributos,
+                    ...(slot.ubicacion ? { ubicacion: slot.ubicacion } : {}),
                     ...(itemType === 'producto' ? { producto: item._id, pieza: undefined } : { pieza: item._id, producto: undefined })
                 };
                 await api.post('/apoderado/inventario/add', payload);
@@ -358,6 +364,20 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                                     )}
                                                 </div>
                                             </div>
+                                            {filteredUbicaciones.length > 0 && (
+                                                <div className="form-group">
+                                                    <label>Ubicación / Depósito</label>
+                                                    <select
+                                                        value={slot.ubicacion}
+                                                        onChange={(e) => handleSlotUbicacionChange(slotIndex, e.target.value)}
+                                                    >
+                                                        <option value="">Sin ubicación</option>
+                                                        {filteredUbicaciones.map(u => (
+                                                            <option key={u._id} value={u._id}>{u.nombre}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
                                             {slot.atributos.map((attr, attrIndex) => {
                                                 const itemAttr = itemAttrs.find(a => a.nombre === attr.nombre);
                                                 if (itemAttr?.tipo === 'predefinido') {
