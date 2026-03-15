@@ -1976,14 +1976,14 @@ router.get('/metricas', auth, async (req, res) => {
 
         // Stock bajo: productos y piezas con stock en inventario <= umbral por fabricante
         const inventarioPorProducto = await Inventario.aggregate([
-            { $match: { producto: { $exists: true, $ne: null }, usuarioApoderado: require('mongoose').Types.ObjectId(usuarioApoderado), estado: 'stock' } },
+            { $match: { producto: { $exists: true, $ne: null }, usuarioApoderado: new (require('mongoose').Types.ObjectId)(usuarioApoderado), estado: 'stock' } },
             { $group: { _id: '$producto', count: { $sum: 1 } } }
         ]);
         const productStockMap = {};
         inventarioPorProducto.forEach(item => { productStockMap[item._id.toString()] = item.count; });
 
         const inventarioPorPieza = await Inventario.aggregate([
-            { $match: { pieza: { $exists: true, $ne: null }, usuarioApoderado: require('mongoose').Types.ObjectId(usuarioApoderado), estado: 'stock' } },
+            { $match: { pieza: { $exists: true, $ne: null }, usuarioApoderado: new (require('mongoose').Types.ObjectId)(usuarioApoderado), estado: 'stock' } },
             { $group: { _id: '$pieza', count: { $sum: 1 } } }
         ]);
         const piezaStockMap = {};
