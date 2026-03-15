@@ -1531,7 +1531,7 @@ router.delete('/ubicaciones/:id', auth, async (req, res) => {
 // @desc    Obtener todos los artículos del inventario del apoderado, con opción de búsqueda y filtro
 // @access  Privado (Apoderado)
 router.get('/inventario', auth, async (req, res) => {
-    const { search, estado, productoId, piezaId } = req.query; // Obtener los parámetros de búsqueda y filtro
+    const { search, estado, productoId, piezaId, ubicacion } = req.query; // Obtener los parámetros de búsqueda y filtro
     const usuarioApoderado = req.usuario.id;
     
     try {
@@ -1619,6 +1619,15 @@ router.get('/inventario', auth, async (req, res) => {
                 query.$and.push({ estado });
             } else {
                 query.estado = estado;
+            }
+        }
+
+        if (ubicacion) {
+            // Filtro por ubicación/depósito
+            if (query.$and) {
+                query.$and.push({ ubicacion });
+            } else {
+                query.ubicacion = ubicacion;
             }
         }
 

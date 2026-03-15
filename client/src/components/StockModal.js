@@ -40,7 +40,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
     const [allInventario, setAllInventario] = useState([]);
     const [inventario, setInventario] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [estadoFilter, setEstadoFilter] = useState('todos');
+    const [ubicacionFilter, setUbicacionFilter] = useState('');
     const [selectedItems, setSelectedItems] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -67,14 +67,14 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
         if (!item || !isOpen) return;
         try {
             const param = itemType === 'producto' ? `productoId=${item._id}` : `piezaId=${item._id}`;
-            const estadoParam = estadoFilter !== 'todos' ? `&estado=${estadoFilter}` : '';
             const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
-            const res = await api.get(`/apoderado/inventario?${param}${estadoParam}${searchParam}`);
+            const ubicacionParam = ubicacionFilter ? `&ubicacion=${ubicacionFilter}` : '';
+            const res = await api.get(`/apoderado/inventario?${param}&estado=stock${searchParam}${ubicacionParam}`);
             setAllInventario(res.data || []);
         } catch (err) {
             console.error('Error al obtener inventario:', err);
         }
-    }, [item, itemType, isOpen, estadoFilter, searchTerm]);
+    }, [item, itemType, isOpen, ubicacionFilter, searchTerm]);
 
     const fetchUbicaciones = useCallback(async () => {
         try {
@@ -92,7 +92,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
             setShowAddForm(false);
             setSlots([emptySlot(getItemAtributos())]);
             setSearchTerm('');
-            setEstadoFilter('todos');
+            setUbicacionFilter('');
             setSelectedItems([]);
             setEditingItem(null);
         }
@@ -109,7 +109,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, estadoFilter]);
+    }, [searchTerm, ubicacionFilter]);
 
     // ── Add stock form handlers ──────────────────────────────────────────────
 
@@ -438,18 +438,18 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                         <div className="search-filter-container">
                             <input
                                 type="text"
-                                placeholder="Buscar por serie, ID o estado..."
+                                placeholder="Buscar por serie o ID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                             <select
-                                value={estadoFilter}
-                                onChange={(e) => setEstadoFilter(e.target.value)}
+                                value={ubicacionFilter}
+                                onChange={(e) => setUbicacionFilter(e.target.value)}
                             >
-                                <option value="todos">Todos los estados</option>
-                                <option value="stock">En Stock</option>
-                                <option value="vendido">Vendido</option>
-                                <option value="alquilado">Alquilado</option>
+                                <option value="">Todos los depósitos</option>
+                                {filteredUbicaciones.map(u => (
+                                    <option key={u._id} value={u._id}>{u.nombre}</option>
+                                ))}
                             </select>
                         </div>
 
