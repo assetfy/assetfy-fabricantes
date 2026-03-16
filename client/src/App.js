@@ -47,11 +47,14 @@ function App() {
                 higher (static > dynamic) than the /:slug branded portal route below.
                 IMPORTANT: any new protected top-level route must be added here to avoid
                 being captured by the /:slug route. */}
+            {/* Default redirect: apoderado (Fabricantes) has priority for multi-panel users.
+                Any user with the apoderado role lands on /apoderado regardless of also
+                having admin. Only pure-admin users (no apoderado) go to /admin. */}
             <Route path="/" element={
-              isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? (
-                <Navigate to="/admin" />
-              ) : isAuthenticated && (hasAnyRole(['apoderado']) || rol === 'apoderado') ? (
+              isAuthenticated && (hasAnyRole(['apoderado']) || rol === 'apoderado') ? (
                 <Navigate to="/apoderado" />
+              ) : isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? (
+                <Navigate to="/admin" />
               ) : isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? (
                 <Navigate to="/usuario" />
               ) : (
