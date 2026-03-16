@@ -2,6 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import logo from '../logo.png';
+// login-bg.svg is imported as a JS module so webpack resolves and hashes the asset
+// path correctly in every environment (dev, production build, Express-served build).
+// This is more reliable than the CSS url('./login-bg.svg') approach which depends on
+// the CSS loader configuration.  If you want to switch to an alternative image format
+// (e.g. PNG or WebP for better browser compatibility) replace this import with the
+// new file and update the filename accordingly (e.g. '../login-bg.png').
+// Key parameters to check if the image fails to load:
+//   - File: client/src/login-bg.svg  (source asset processed by webpack)
+//   - CSS rule: .login-page::before { background-image: var(--login-bg-image) } in index.css
+//   - Inline style: style={{ '--login-bg-image': `url(${loginBg})` }} on .login-page div
+//   - Alternative: if SVG rendering is broken, swap to login-bg.png (convert with any
+//     image editor) and change the import below.
+import loginBg from '../login-bg.svg';
 import { useNotification } from './NotificationProvider';
 
 const Login = () => {
@@ -39,16 +52,25 @@ const Login = () => {
                 localStorage.setItem('rol', res.data.rol);
             }
             
-            // Determine which panel to navigate to based on roles priority
-            // Priority: admin (1) > apoderado (2) > usuario_bienes (3)
+            // Determine which panel to navigate to based on roles.
+            // If the user has access to multiple panels and 'apoderado' is one of them,
+            // default to the Fabricantes panel (apoderado). This covers users who have
+            // both admin+apoderado or apoderado+other roles.
+            // Only go to /admin when the user has admin but NOT apoderado.
             const roles = res.data.roles || [];
             const primaryRole = res.data.rol;
-            
-            if (roles.includes('admin') || primaryRole === 'admin') {
-                navigate('/admin');
-            } else if (roles.includes('apoderado') || primaryRole === 'apoderado') {
+
+            const hasApoderado = roles.includes('apoderado') || primaryRole === 'apoderado';
+            const hasAdmin = roles.includes('admin') || primaryRole === 'admin';
+            const hasUsuario = roles.includes('usuario_bienes') || primaryRole === 'usuario_bienes';
+
+            if (hasApoderado) {
+                // Apoderado (Fabricantes) is the default panel for any user who has it,
+                // including users who also have admin access.
                 navigate('/apoderado');
-            } else if (roles.includes('usuario_bienes') || primaryRole === 'usuario_bienes') {
+            } else if (hasAdmin) {
+                navigate('/admin');
+            } else if (hasUsuario) {
                 navigate('/usuario');
             } else {
                 navigate('/apoderado'); // Default fallback
@@ -69,7 +91,7 @@ const Login = () => {
     };
 
     return (
-        <div className="login-page">
+        <div className="login-page" style={{ '--login-bg-image': `url(${loginBg})` }}>
             <div className="login-card">
                 <div className="login-logo-container">
                     <img src={logo} alt="Logo de la aplicación" className="login-logo" />

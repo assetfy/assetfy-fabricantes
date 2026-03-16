@@ -587,7 +587,12 @@ table th:nth-child(8), table td:nth-child(8) {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('./login-bg.svg');
+  /* --login-bg-image is injected from Login.js via a JS module import.
+     Webpack resolves and hashes the asset, guaranteeing the path is valid
+     in both development and production builds.
+     Source file: client/src/login-bg.svg
+     To use an alternative format (PNG/WebP) update the import in Login.js. */
+  background-image: var(--login-bg-image);
   background-size: cover;
   background-position: center;
   filter: blur(14px);
