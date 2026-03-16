@@ -4,6 +4,7 @@ dotenv.config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 
 // Conexión a la base de datos
 mongoose.connect(process.env.MONGODB_URI)
@@ -32,11 +33,20 @@ app.use('/api/usuario', usuarioRouter);
 
 // Simple health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'ok', 
+    res.json({
+        status: 'ok',
         timestamp: new Date().toISOString(),
         upload_system: process.env.S3_BUCKET_NAME ? 'configured' : 'not_configured'
     });
+});
+
+// Serve React build static files in production
+const buildPath = path.join(__dirname, 'client', 'build');
+app.use(express.static(buildPath));
+
+// SPA fallback: any non-API route serves index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(buildPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
