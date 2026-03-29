@@ -2353,6 +2353,133 @@ td .action-buttons button {
     font-size: 0.8rem;
 }
 
+/* Dashboard Boxes Grid */
+.dashboard-boxes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.dashboard-box {
+    background: var(--card-white);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    border-top: 3px solid var(--primary-purple);
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-box-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.dashboard-box-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-purple);
+    text-align: center;
+    line-height: 1;
+}
+
+.dashboard-box-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.dashboard-box-detail-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-box-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+}
+
+.dashboard-box-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.detail-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.detail-label {
+    flex: 1;
+    color: var(--text-dark);
+}
+
+.detail-value {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.dashboard-box-link {
+    color: var(--primary-purple);
+    font-size: 0.8rem;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 0.75rem;
+}
+
+.dashboard-box-link:hover {
+    text-decoration: underline;
+}
+
+.dashboard-box-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.dashboard-box-notif-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.notif-link {
+    font-size: 0.85rem;
+    color: var(--primary-purple);
+    cursor: pointer;
+}
+
+.notif-link.placeholder-text {
+    color: var(--text-gray);
+    cursor: default;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-boxes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-boxes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .metricas-resumen {
     margin-top: 2rem;
     padding: 1.5rem;

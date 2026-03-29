@@ -14,6 +14,7 @@ const Garantia = require('../models/garantia.model'); // Importa el modelo de ga
 const PedidoGarantia = require('../models/pedidoGarantia.model'); // Importa el modelo de pedido de garantía
 const Pieza = require('../models/pieza.model'); // Importa el modelo de pieza
 const Ubicacion = require('../models/ubicacion.model'); // Importa el modelo de ubicación
+const Bien = require('../models/bien.model'); // Importa el modelo de bien
 const argentineRegions = require('../data/argentine-regions'); // Importa los datos de regiones argentinas
 const { Parser } = require('json2csv');
 const { sendGarantiaResponseEmail } = require('../utils/emailService');
@@ -1886,8 +1887,22 @@ router.get('/metricas', auth, async (req, res) => {
                 { usuarioApoderado },
                 { administradores: usuarioApoderado }
             ]
-        }).select('_id stockBajoUmbral');
+        }).select('_id stockBajoUmbral rangoNuevos');
         const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        // Determine rangoNuevos date threshold
+        const rangoNuevos = fabricantes[0]?.rangoNuevos || 'ultimo_mes';
+        const rangoMap = {
+            'ultima_semana': 7,
+            'ultimas_2_semanas': 14,
+            'ultimo_mes': 30,
+            'ultimos_2_meses': 60,
+            'ultimos_3_meses': 90,
+            'ultimos_6_meses': 180
+        };
+        const rangoDias = rangoMap[rangoNuevos] || 30;
+        const rangoFecha = new Date();
+        rangoFecha.setDate(rangoFecha.getDate() - rangoDias);
 
         // Contar productos
         const productosCount = await Producto.countDocuments({ 
@@ -2048,6 +2063,57 @@ router.get('/metricas', auth, async (req, res) => {
             }
         ]);
 
+        // --- Client metrics ---
+        // Total clients: distinct usuarios with registered bienes for these fabricantes
+        const clientesDistintos = await Bien.aggregate([
+            { $match: { tipo: 'registrado', 'datosProducto.fabricante': { $in: fabricanteIds } } },
+            { $group: { _id: '$usuario' } }
+        ]);
+        const clientesTotal = clientesDistintos.length;
+
+        // Clients with active warranties (bienes that have a warranty assigned)
+        const clientesConGarantia = await Bien.aggregate([
+            { $match: { tipo: 'registrado', 'datosProducto.fabricante': { $in: fabricanteIds }, 'datosProducto.garantia': { $exists: true, $ne: null } } },
+            { $group: { _id: '$usuario' } }
+        ]);
+        const clientesConGarantiasActivas = clientesConGarantia.length;
+
+        // New clients: usuarios whose FIRST registered bien for these fabricantes was within rangoFecha
+        const clientesPrimeros = await Bien.aggregate([
+            { $match: { tipo: 'registrado', 'datosProducto.fabricante': { $in: fabricanteIds } } },
+            { $group: { _id: '$usuario', primeraFecha: { $min: '$createdAt' } } },
+            { $match: { primeraFecha: { $gte: rangoFecha } } }
+        ]);
+        const clientesNuevos = clientesPrimeros.length;
+
+        // New registered products within range
+        const nuevosProductosRegistrados = await Bien.countDocuments({
+            tipo: 'registrado',
+            'datosProducto.fabricante': { $in: fabricanteIds },
+            createdAt: { $gte: rangoFecha }
+        });
+
+        // Clients that require attention: have open warranty claims
+        const clientesConReclamosAbiertos = await PedidoGarantia.aggregate([
+            { $match: { fabricante: { $in: fabricanteIds }, estado: { $in: ['Nuevo', 'En Análisis'] } } },
+            { $lookup: { from: 'biens', localField: 'bien', foreignField: '_id', as: 'bienData' } },
+            { $unwind: { path: '$bienData', preserveNullAndEmptyArrays: true } },
+            { $group: { _id: '$bienData.usuario' } },
+            { $match: { _id: { $ne: null } } }
+        ]);
+        const clientesRequierenAtencion = clientesConReclamosAbiertos.length;
+
+        // Products descontinuados count
+        const productosDescontinuados = await Producto.countDocuments({
+            fabricante: { $in: fabricanteIds },
+            estado: 'Descontinuado'
+        });
+
+        // Piezas activas count (piezas have no estado field, all are considered active)
+        const piezasActivas = await Pieza.countDocuments({
+            fabricante: { $in: fabricanteIds }
+        });
+
         res.json({
             fabricantes: fabricantes.length,
             productos: productosCount,
@@ -2069,6 +2135,16 @@ router.get('/metricas', auth, async (req, res) => {
                 productos: productosSinStock,
                 piezas: piezasSinStock
             },
+            clientes: {
+                total: clientesTotal,
+                conGarantiasActivas: clientesConGarantiasActivas,
+                nuevos: clientesNuevos,
+                nuevosProductosRegistrados,
+                requierenAtencion: clientesRequierenAtencion
+            },
+            productosDescontinuados,
+            piezasActivas,
+            rangoNuevos,
             estadisticas: {
                 productosActivos,
                 marcasActivas,
@@ -3607,7 +3683,7 @@ router.delete('/piezas/:id/imagen', auth, async (req, res) => {
 router.get('/configuracion', auth, async (req, res) => {
     try {
         const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id))
-            .select('razonSocial stockBajoUmbral');
+            .select('razonSocial stockBajoUmbral rangoNuevos');
 
         if (!fabricantes || fabricantes.length === 0) {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
@@ -3617,7 +3693,8 @@ router.get('/configuracion', auth, async (req, res) => {
             fabricantes: fabricantes.map(f => ({
                 _id: f._id,
                 razonSocial: f.razonSocial,
-                stockBajoUmbral: f.stockBajoUmbral != null ? f.stockBajoUmbral : 3
+                stockBajoUmbral: f.stockBajoUmbral != null ? f.stockBajoUmbral : 3,
+                rangoNuevos: f.rangoNuevos || 'ultimo_mes'
             }))
         });
     } catch (err) {
@@ -3631,7 +3708,7 @@ router.get('/configuracion', auth, async (req, res) => {
 // @access  Privado (Apoderado)
 router.put('/configuracion', auth, async (req, res) => {
     try {
-        const { fabricanteId, stockBajoUmbral } = req.body;
+        const { fabricanteId, stockBajoUmbral, rangoNuevos } = req.body;
 
         const query = fabricanteId
             ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
@@ -3651,8 +3728,16 @@ router.put('/configuracion', auth, async (req, res) => {
             fabricante.stockBajoUmbral = umbral;
         }
 
+        if (rangoNuevos !== undefined) {
+            const rangosValidos = ['ultima_semana', 'ultimas_2_semanas', 'ultimo_mes', 'ultimos_2_meses', 'ultimos_3_meses', 'ultimos_6_meses'];
+            if (!rangosValidos.includes(rangoNuevos)) {
+                return res.status(400).json({ msg: 'Rango de nuevos inválido.' });
+            }
+            fabricante.rangoNuevos = rangoNuevos;
+        }
+
         await fabricante.save();
-        res.json({ msg: 'Configuración actualizada', stockBajoUmbral: fabricante.stockBajoUmbral });
+        res.json({ msg: 'Configuración actualizada', stockBajoUmbral: fabricante.stockBajoUmbral, rangoNuevos: fabricante.rangoNuevos });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');

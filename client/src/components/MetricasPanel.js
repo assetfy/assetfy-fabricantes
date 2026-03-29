@@ -3,6 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import MapaGeolocalizacion from './MapaGeolocalizacion';
 
+const RANGO_LABELS = {
+    'ultima_semana': 'Última semana',
+    'ultimas_2_semanas': 'Últimas 2 semanas',
+    'ultimo_mes': 'Último mes',
+    'ultimos_2_meses': 'Últimos 2 meses',
+    'ultimos_3_meses': 'Últimos 3 meses',
+    'ultimos_6_meses': 'Últimos 6 meses'
+};
+
 const MetricasPanel = () => {
     const [metricas, setMetricas] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -43,62 +52,112 @@ const MetricasPanel = () => {
         );
     }
 
-    // Calculate representantes metrics
-    const totalRepresentantes = metricas.representantes || 0;
-    const representantesActivos = metricas.estadisticas?.representantesActivos || 0;
-    const representantesInactivos = metricas.estadisticas?.representantesInactivos || 0;
-    const nuevosEsteMes = metricas.estadisticas?.representantesNuevosEsteMes || 0;
+    const rangoLabel = RANGO_LABELS[metricas.rangoNuevos] || 'Último mes';
 
     return (
         <div className="metricas-panel">
             <div className="section-header">
                 <h3>Resumen General</h3>
             </div>
-            
-            {/* Representantes Stats Row */}
-            <div className="metricas-grid">
-                <div className="metrica-card">
-                    <div className="metrica-card-header">
-                        <div className="metrica-content">
-                            <h4>Total Representantes</h4>
-                            <div className="metrica-numero">{totalRepresentantes}</div>
-                            <Link to="/apoderado/representantes" className="metrica-link">Ver detalle →</Link>
+
+            {/* New 4 Dashboard Boxes */}
+            <div className="dashboard-boxes-grid">
+                {/* Box 1: Clientes */}
+                <div className="dashboard-box">
+                    <div className="dashboard-box-title">Clientes</div>
+                    <div className="dashboard-box-number">{metricas.clientes?.total || 0}</div>
+                    <div className="dashboard-box-subtitle">Registrados</div>
+                    <div className="dashboard-box-detail-label">Con Garantías Activas</div>
+                    <div className="dashboard-box-details">
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Nuevos Clientes</span>
+                            <span className="detail-value">{metricas.clientes?.nuevos || 0}</span>
                         </div>
-                        <div className="metrica-icon">👥</div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Nuevos Productos Registrados</span>
+                            <span className="detail-value">{metricas.clientes?.nuevosProductosRegistrados || 0}</span>
+                        </div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#ef4444' }}></span>
+                            <span className="detail-label">Requieren Atención</span>
+                            <span className="detail-value">{metricas.clientes?.requierenAtencion || 0}</span>
+                        </div>
+                    </div>
+                    <Link to="/apoderado/garantias" className="dashboard-box-link">
+                        Ver todos los productos →
+                    </Link>
+                </div>
+
+                {/* Box 2: Alertas & Notificaciones */}
+                <div className="dashboard-box">
+                    <div className="dashboard-box-title">Alertas &amp; Notificaciones</div>
+                    <div className="dashboard-box-placeholder">
+                        <div className="dashboard-box-notif-links">
+                            <span className="notif-link placeholder-text">Mensajes Nuevos</span>
+                            <span className="notif-link placeholder-text">Mensajes Pendientes</span>
+                            <span className="notif-link placeholder-text">Reclamos por Garantías</span>
+                            <span className="notif-link placeholder-text">Garantías por Vencer</span>
+                        </div>
+                        <div style={{ textAlign: 'center', color: 'var(--text-gray)', fontSize: '12px', marginTop: '12px', fontStyle: 'italic' }}>
+                            Próximamente
+                        </div>
                     </div>
                 </div>
 
-                <div className="metrica-card">
-                    <div className="metrica-card-header">
-                        <div className="metrica-content">
-                            <h4>Representantes Activos</h4>
-                            <div className="metrica-numero">{representantesActivos}</div>
-                            <Link to="/apoderado/representantes" className="metrica-link">Ver detalle →</Link>
+                {/* Box 3: Productos */}
+                <div className="dashboard-box">
+                    <div className="dashboard-box-title">Productos</div>
+                    <div className="dashboard-box-number">{metricas.productos || 0}</div>
+                    <div className="dashboard-box-subtitle">Total de productos</div>
+                    <div className="dashboard-box-details">
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Discontinuados</span>
+                            <span className="detail-value">{metricas.productosDescontinuados || 0}</span>
                         </div>
-                        <div className="metrica-icon">✅</div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#f59e0b' }}></span>
+                            <span className="detail-label">Bajo Stock</span>
+                            <span className="detail-value">{metricas.stockBajo?.productos || 0}</span>
+                        </div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#8b5cf6' }}></span>
+                            <span className="detail-label">Sin Stock</span>
+                            <span className="detail-value">{metricas.sinStock?.productos || 0}</span>
+                        </div>
                     </div>
+                    <Link to="/apoderado/productos" className="dashboard-box-link">
+                        Ver todos los productos →
+                    </Link>
                 </div>
 
-                <div className="metrica-card">
-                    <div className="metrica-card-header">
-                        <div className="metrica-content">
-                            <h4>Representantes Inactivos</h4>
-                            <div className="metrica-numero">{representantesInactivos}</div>
-                            <Link to="/apoderado/representantes" className="metrica-link">Ver detalle →</Link>
+                {/* Box 4: Repuestos */}
+                <div className="dashboard-box">
+                    <div className="dashboard-box-title">Repuestos</div>
+                    <div className="dashboard-box-number">{metricas.piezas || 0}</div>
+                    <div className="dashboard-box-subtitle">Total de productos</div>
+                    <div className="dashboard-box-details">
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Activos</span>
+                            <span className="detail-value">{metricas.piezasActivas || 0}</span>
                         </div>
-                        <div className="metrica-icon">❌</div>
-                    </div>
-                </div>
-
-                <div className="metrica-card">
-                    <div className="metrica-card-header">
-                        <div className="metrica-content">
-                            <h4>Nuevos Este Mes</h4>
-                            <div className="metrica-numero">{nuevosEsteMes}</div>
-                            <Link to="/apoderado/representantes" className="metrica-link">Ver detalle →</Link>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#f59e0b' }}></span>
+                            <span className="detail-label">Stock bajo</span>
+                            <span className="detail-value">{metricas.stockBajo?.piezas || 0}</span>
                         </div>
-                        <div className="metrica-icon">🆕</div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#8b5cf6' }}></span>
+                            <span className="detail-label">Sin stock</span>
+                            <span className="detail-value">{metricas.sinStock?.piezas || 0}</span>
+                        </div>
                     </div>
+                    <Link to="/apoderado/piezas" className="dashboard-box-link">
+                        Ver todos los productos →
+                    </Link>
                 </div>
             </div>
 
@@ -110,107 +169,7 @@ const MetricasPanel = () => {
                 <MapaGeolocalizacion />
             </div>
 
-            {/* Inventory Status Section */}
-            <div className="section-header" style={{ marginTop: '2rem' }}>
-                <h3>Estado de Inventario</h3>
-            </div>
-
-            <div className="inventory-grid" style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
-                gap: '1.5rem',
-                marginTop: '1.5rem'
-            }}>
-                {/* Products Inventory Card */}
-                <div className="inventory-card">
-                    <div className="inventory-card-header">
-                        <div className="inventory-card-title">
-                            <span className="inventory-card-icon">📦</span>
-                            Estado de inventario - Productos
-                        </div>
-                        <button 
-                            className="inventory-create-btn"
-                            onClick={() => navigate('/apoderado/productos')}
-                        >
-                            + Crear
-                        </button>
-                    </div>
-                    <div className="inventory-chart-container">
-                        <div style={{ textAlign: 'center', fontSize: '3rem', fontWeight: 'bold', color: 'var(--text-dark)' }}>
-                            {metricas.productos || 0}
-                        </div>
-                        <div style={{ textAlign: 'center', color: 'var(--text-gray)', marginTop: '0.5rem' }}>
-                            Total de productos
-                        </div>
-                    </div>
-                    <div className="inventory-legend">
-                        <div className="legend-item">
-                            <div className="legend-color active"></div>
-                            <span className="legend-label">Activos</span>
-                            <span className="legend-value">{metricas.estadisticas?.productosActivos || 0}</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="legend-color low-stock"></div>
-                            <span className="legend-label">Stock bajo</span>
-                            <span className="legend-value">{metricas.stockBajo?.productos || 0}</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="legend-color no-stock"></div>
-                            <span className="legend-label">Sin stock</span>
-                            <span className="legend-value">{metricas.sinStock?.productos || 0}</span>
-                        </div>
-                    </div>
-                    <Link to="/apoderado/productos" className="inventory-link">
-                        Ver todos los productos →
-                    </Link>
-                </div>
-
-                {/* Parts Inventory Card */}
-                <div className="inventory-card">
-                    <div className="inventory-card-header">
-                        <div className="inventory-card-title">
-                            <span className="inventory-card-icon">🔧</span>
-                            Estado de inventario - Repuestos
-                        </div>
-                        <button 
-                            className="inventory-create-btn"
-                            onClick={() => navigate('/apoderado/piezas')}
-                        >
-                            + Crear
-                        </button>
-                    </div>
-                    <div className="inventory-chart-container">
-                        <div style={{ textAlign: 'center', fontSize: '3rem', fontWeight: 'bold', color: 'var(--text-dark)' }}>
-                            {metricas.piezas || 0}
-                        </div>
-                        <div style={{ textAlign: 'center', color: 'var(--text-gray)', marginTop: '0.5rem' }}>
-                            Total de repuestos
-                        </div>
-                    </div>
-                    <div className="inventory-legend">
-                        <div className="legend-item">
-                            <div className="legend-color active"></div>
-                            <span className="legend-label">Activos</span>
-                            <span className="legend-value">{metricas.piezas || 0}</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="legend-color low-stock"></div>
-                            <span className="legend-label">Stock bajo</span>
-                            <span className="legend-value">{metricas.stockBajo?.piezas || 0}</span>
-                        </div>
-                        <div className="legend-item">
-                            <div className="legend-color no-stock"></div>
-                            <span className="legend-label">Sin stock</span>
-                            <span className="legend-value">{metricas.sinStock?.piezas || 0}</span>
-                        </div>
-                    </div>
-                    <Link to="/apoderado/piezas" className="inventory-link">
-                        Ver todos los repuestos →
-                    </Link>
-                </div>
-            </div>
-
-            {/* Garantías Section */}
+            {/* Gestión de Garantías Section */}
             <div className="section-header" style={{ marginTop: '2rem' }}>
                 <h3>Gestión de Garantías</h3>
             </div>
@@ -297,34 +256,34 @@ const MetricasPanel = () => {
                         <span className="resumen-label">Productos Activos:</span>
                         <span className="resumen-valor">{metricas.estadisticas.productosActivos} de {metricas.productos}</span>
                         <div className="resumen-barra">
-                            <div 
-                                className="resumen-progreso productos" 
+                            <div
+                                className="resumen-progreso productos"
                                 style={{
                                     width: `${metricas.productos > 0 ? (metricas.estadisticas.productosActivos / metricas.productos) * 100 : 0}%`
                                 }}
                             ></div>
                         </div>
                     </div>
-                    
+
                     <div className="resumen-item">
                         <span className="resumen-label">Marcas Activas:</span>
                         <span className="resumen-valor">{metricas.estadisticas.marcasActivas} de {metricas.marcas}</span>
                         <div className="resumen-barra">
-                            <div 
-                                className="resumen-progreso marcas" 
+                            <div
+                                className="resumen-progreso marcas"
                                 style={{
                                     width: `${metricas.marcas > 0 ? (metricas.estadisticas.marcasActivas / metricas.marcas) * 100 : 0}%`
                                 }}
                             ></div>
                         </div>
                     </div>
-                    
+
                     <div className="resumen-item">
                         <span className="resumen-label">Inventario Disponible:</span>
                         <span className="resumen-valor">{metricas.estadisticas.inventarioDisponible} de {metricas.inventario}</span>
                         <div className="resumen-barra">
-                            <div 
-                                className="resumen-progreso inventario" 
+                            <div
+                                className="resumen-progreso inventario"
                                 style={{
                                     width: `${metricas.inventario > 0 ? (metricas.estadisticas.inventarioDisponible / metricas.inventario) * 100 : 0}%`
                                 }}

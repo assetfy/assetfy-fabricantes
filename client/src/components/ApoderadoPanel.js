@@ -18,6 +18,7 @@ import StockModal from './StockModal';
 import UserHeader from './UserHeader';
 import AdministracionPanel from './AdministracionPanel';
 import MetricasPanel from './MetricasPanel';
+import ReportesPanel from './ReportesPanel';
 import Sidebar from './Sidebar';
 import { useNotification } from './NotificationProvider';
 
@@ -313,17 +314,28 @@ const ApoderadoPanel = () => {
                             },
                             {
                                 label: 'Representantes',
-                                description: 'Gestión de representantes',
+                                description: 'Representantes Oficiales y Canales Comerciales',
                                 path: '/representantes',
                                 icon: '◉'
                             },
                             {
-                                label: 'Garantías',
-                                description: 'Pedidos de garantía',
+                                label: 'Clientes',
+                                description: 'Gestión de Activación de Productos y Garantías',
                                 path: '/garantias',
                                 icon: '◈'
                             },
-                            buildPortalSidebarItem(),
+                            {
+                                label: 'Reportes',
+                                description: 'Reportes y exportación de datos',
+                                icon: '📊',
+                                subItems: [
+                                    {
+                                        label: 'Exportación',
+                                        path: '/reportes',
+                                        icon: '↗'
+                                    }
+                                ]
+                            },
                             {
                                 label: 'Administración',
                                 description: 'Configuración y datos',
@@ -442,6 +454,7 @@ const ApoderadoPanel = () => {
                             <PedidoGarantiaList isFabricante={true} />
                         </>
                     } />
+                    <Route path="reportes" element={<ReportesPanel />} />
                     <Route path="administracion" element={<AdministracionPanel fabricantes={fabricantes} allMarcas={allMarcas} garantias={garantias} onRefresh={handleRefresh} />} />
                 </Routes>
                 )}
