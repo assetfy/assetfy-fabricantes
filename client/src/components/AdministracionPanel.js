@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ExportacionDatos from './ExportacionDatos';
 import ImportacionDatos from './ImportacionDatos';
 import UbicacionList from './UbicacionList';
 import UbicacionForm from './UbicacionForm';
@@ -40,6 +39,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
     const [configFabricantes, setConfigFabricantes] = useState([]);
     const [selectedConfigFabricanteId, setSelectedConfigFabricanteId] = useState(null);
     const [stockBajoUmbral, setStockBajoUmbral] = useState(3);
+    const [rangoNuevos, setRangoNuevos] = useState('ultimo_mes');
     const [configLoading, setConfigLoading] = useState(true);
     const [savingConfig, setSavingConfig] = useState(false);
 
@@ -67,6 +67,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                 if (list.length > 0) {
                     setSelectedConfigFabricanteId(list[0]._id);
                     setStockBajoUmbral(list[0].stockBajoUmbral != null ? list[0].stockBajoUmbral : 3);
+                    setRangoNuevos(list[0].rangoNuevos || 'ultimo_mes');
                 }
             })
             .catch(() => {})
@@ -238,6 +239,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
         const fab = configFabricantes.find(f => f._id === id);
         if (fab) {
             setStockBajoUmbral(fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3);
+            setRangoNuevos(fab.rangoNuevos || 'ultimo_mes');
         }
     };
 
@@ -246,11 +248,13 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
         try {
             const res = await api.put('/apoderado/configuracion', {
                 fabricanteId: selectedConfigFabricanteId,
-                stockBajoUmbral
+                stockBajoUmbral,
+                rangoNuevos
             });
             const updatedUmbral = res.data.stockBajoUmbral;
+            const updatedRango = res.data.rangoNuevos;
             setConfigFabricantes(prev => prev.map(f =>
-                f._id === selectedConfigFabricanteId ? { ...f, stockBajoUmbral: updatedUmbral } : f
+                f._id === selectedConfigFabricanteId ? { ...f, stockBajoUmbral: updatedUmbral, rangoNuevos: updatedRango } : f
             ));
             showSuccess('Configuración guardada');
         } catch (err) {
@@ -297,15 +301,37 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                 onChange={e => setStockBajoUmbral(Number(e.target.value))}
                                 style={{ width: '100px' }}
                             />
-                            <button
-                                className="create-button"
-                                onClick={handleSaveConfig}
-                                disabled={savingConfig}
-                            >
-                                {savingConfig ? 'Guardando...' : 'Guardar'}
-                            </button>
                         </div>
                     </div>
+
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label>Rango de nuevos clientes / productos registrados</label>
+                        <p style={{ color: '#666', fontSize: '13px', margin: '4px 0 8px 0' }}>
+                            Se considera "nuevo" a un cliente o producto registrado dentro del período seleccionado. El dashboard mostrará los contadores de nuevos clientes y nuevos productos registrados en base a este rango.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <select
+                                value={rangoNuevos}
+                                onChange={e => setRangoNuevos(e.target.value)}
+                                style={{ width: '250px' }}
+                            >
+                                <option value="ultima_semana">Última semana</option>
+                                <option value="ultimas_2_semanas">Últimas 2 semanas</option>
+                                <option value="ultimo_mes">Último mes</option>
+                                <option value="ultimos_2_meses">Últimos 2 meses</option>
+                                <option value="ultimos_3_meses">Últimos 3 meses</option>
+                                <option value="ultimos_6_meses">Últimos 6 meses</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button
+                        className="create-button"
+                        onClick={handleSaveConfig}
+                        disabled={savingConfig}
+                    >
+                        {savingConfig ? 'Guardando...' : 'Guardar configuración'}
+                    </button>
                 </div>
             )}
         </div>
@@ -476,11 +502,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                         content: configuracionTab
                     },
                     {
-                        label: "Exportación de Datos",
-                        content: <ExportacionDatos />
-                    },
-                    {
-                        label: "Importación de Datos", 
+                        label: "Importación de Datos",
                         content: <ImportacionDatos />
                     },
                     {
