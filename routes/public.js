@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { sendInvitationEmail } = require('../utils/emailService');
 const { s3 } = require('../middleware/upload');
+const { geocodeAddress } = require('../utils/geocoding');
 
 // @route   GET /api/public/fabricante/:slug
 // @desc    Get fabricante branding info for the branded registration portal
@@ -45,13 +46,13 @@ router.get('/fabricante/:slug', async (req, res) => {
 // @desc    Register a product with user information
 // @access  Public
 router.post('/registro', async (req, res) => {
-    const { idInventario, nombreCompleto, correoElectronico, cuil, telefono } = req.body;
+    const { idInventario, nombreCompleto, correoElectronico, cuil, telefono, direccion, provincia } = req.body;
 
     // Validate required fields
-    if (!idInventario || !nombreCompleto || !correoElectronico || !telefono) {
-        return res.status(400).json({ 
+    if (!idInventario || !nombreCompleto || !correoElectronico || !telefono || !direccion || !provincia) {
+        return res.status(400).json({
             success: false,
-            message: 'Todos los campos son obligatorios: ID de inventario, nombre completo, correo electrónico y teléfono.' 
+            message: 'Todos los campos son obligatorios: ID de inventario, nombre completo, correo electrónico, teléfono, dirección y provincia.'
         });
     }
 
@@ -83,10 +84,18 @@ router.post('/registro', async (req, res) => {
             });
         }
 
+        // Geocode the address
+        const coordenadas = await geocodeAddress(direccion, provincia);
+
         // Update the inventory item with user data, mark as registered and set as sold
         inventario.comprador.nombreCompleto = nombreCompleto.trim();
         inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
         inventario.comprador.telefono = telefono.trim();
+        inventario.comprador.direccion = direccion.trim();
+        inventario.comprador.provincia = provincia.trim();
+        if (coordenadas) {
+            inventario.comprador.coordenadas = coordenadas;
+        }
         if (cuil) {
             inventario.comprador.cuil = cuil.trim();
         }
@@ -97,7 +106,7 @@ router.post('/registro', async (req, res) => {
 
         await inventario.save();
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             success: true,
             message: 'Producto registrado exitosamente. ¡Gracias por registrar su producto!',
             data: {
@@ -120,13 +129,13 @@ router.post('/registro', async (req, res) => {
 // @desc    Register a product and create a usuario_bienes user
 // @access  Public
 router.post('/registro-con-usuario', async (req, res) => {
-    const { idInventario, nombreCompleto, correoElectronico, cuil, telefono } = req.body;
+    const { idInventario, nombreCompleto, correoElectronico, cuil, telefono, direccion, provincia } = req.body;
 
     // Validate required fields (CUIL is required for user creation)
-    if (!idInventario || !nombreCompleto || !correoElectronico || !cuil || !telefono) {
-        return res.status(400).json({ 
+    if (!idInventario || !nombreCompleto || !correoElectronico || !cuil || !telefono || !direccion || !provincia) {
+        return res.status(400).json({
             success: false,
-            message: 'Todos los campos son obligatorios: ID de inventario, nombre completo, correo electrónico, CUIL y teléfono.' 
+            message: 'Todos los campos son obligatorios: ID de inventario, nombre completo, correo electrónico, CUIL, teléfono, dirección y provincia.'
         });
     }
 
@@ -214,18 +223,26 @@ router.post('/registro-con-usuario', async (req, res) => {
 
             await nuevoBien.save();
 
+            // Geocode the address
+            const coordenadas = await geocodeAddress(direccion, provincia);
+
             // Update inventory
             inventario.comprador.nombreCompleto = nombreCompleto.trim();
             inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
             inventario.comprador.telefono = telefono.trim();
             inventario.comprador.cuil = cuilClean;
+            inventario.comprador.direccion = direccion ? direccion.trim() : '';
+            inventario.comprador.provincia = provincia ? provincia.trim() : '';
+            if (coordenadas) {
+                inventario.comprador.coordenadas = coordenadas;
+            }
             inventario.registrado = 'Si';
             inventario.estado = 'vendido';
             inventario.fechaRegistro = new Date();
 
             await inventario.save();
 
-            return res.status(200).json({ 
+            return res.status(200).json({
                 success: true,
                 message: 'Producto registrado exitosamente. El usuario ya existe y el bien ha sido agregado a su cuenta.',
                 data: {
@@ -288,11 +305,19 @@ router.post('/registro-con-usuario', async (req, res) => {
 
         await nuevoBien.save();
 
+        // Geocode the address
+        const coordenadas = await geocodeAddress(direccion, provincia);
+
         // Update inventory with user data
         inventario.comprador.nombreCompleto = nombreCompleto.trim();
         inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
         inventario.comprador.telefono = telefono.trim();
         inventario.comprador.cuil = cuilClean;
+        inventario.comprador.direccion = direccion ? direccion.trim() : '';
+        inventario.comprador.provincia = provincia ? provincia.trim() : '';
+        if (coordenadas) {
+            inventario.comprador.coordenadas = coordenadas;
+        }
         inventario.registrado = 'Si';
         inventario.estado = 'vendido';
         inventario.fechaRegistro = new Date();
@@ -351,12 +376,12 @@ router.post('/registro-con-usuario', async (req, res) => {
 // @desc    Bulk register multiple products for a company
 // @access  Public
 router.post('/registro-masivo', async (req, res) => {
-    const { nombreCompleto, correoElectronico, cuil, telefono, ids, createUser } = req.body;
+    const { nombreCompleto, correoElectronico, cuil, telefono, direccion, provincia, ids, createUser } = req.body;
 
-    if (!nombreCompleto || !correoElectronico || !telefono || !ids || !Array.isArray(ids) || ids.length === 0) {
+    if (!nombreCompleto || !correoElectronico || !telefono || !direccion || !provincia || !ids || !Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({
             success: false,
-            message: 'Todos los campos son obligatorios: Razón Social, correo electrónico, teléfono y al menos un ID de inventario.'
+            message: 'Todos los campos son obligatorios: Razón Social, correo electrónico, teléfono, dirección, provincia y al menos un ID de inventario.'
         });
     }
 
@@ -438,6 +463,9 @@ router.post('/registro-masivo', async (req, res) => {
             }
         }
 
+        // Geocode once for all items (same address)
+        const coordenadas = await geocodeAddress(direccion, provincia);
+
         let registrados = 0;
         const errores = [];
 
@@ -463,6 +491,11 @@ router.post('/registro-masivo', async (req, res) => {
                 inventario.comprador.nombreCompleto = nombreCompleto.trim();
                 inventario.comprador.correoElectronico = correoElectronico.trim().toLowerCase();
                 inventario.comprador.telefono = telefono.trim();
+                inventario.comprador.direccion = direccion ? direccion.trim() : '';
+                inventario.comprador.provincia = provincia ? provincia.trim() : '';
+                if (coordenadas) {
+                    inventario.comprador.coordenadas = coordenadas;
+                }
                 if (cuilClean) {
                     inventario.comprador.cuil = cuilClean;
                 }

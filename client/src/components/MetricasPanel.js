@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
+import MapaGeolocalizacion from './MapaGeolocalizacion';
 
 const MetricasPanel = () => {
     const [metricas, setMetricas] = useState(null);
@@ -99,6 +100,14 @@ const MetricasPanel = () => {
                         <div className="metrica-icon">🆕</div>
                     </div>
                 </div>
+            </div>
+
+            {/* Geolocation Map Section */}
+            <div className="section-header" style={{ marginTop: '2rem' }}>
+                <h3>Mapa de Geolocalización</h3>
+            </div>
+            <div style={{ marginTop: '1.5rem' }}>
+                <MapaGeolocalizacion />
             </div>
 
             {/* Inventory Status Section */}

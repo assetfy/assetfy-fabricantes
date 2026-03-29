@@ -17,6 +17,7 @@ const Ubicacion = require('../models/ubicacion.model'); // Importa el modelo de 
 const argentineRegions = require('../data/argentine-regions'); // Importa los datos de regiones argentinas
 const { Parser } = require('json2csv');
 const { sendGarantiaResponseEmail } = require('../utils/emailService');
+const { geocodeAddress, geocodeProvince, PROVINCE_COORDS } = require('../utils/geocoding');
 
 // Helper function to transform legacy S3 URLs to proxy URLs
 const transformMarcaLegacyUrls = (marca) => {
@@ -1976,6 +1977,87 @@ router.get('/metricas', auth, async (req, res) => {
     }
 });
 
+// @route   GET /api/apoderado/mapa
+// @desc    Obtener datos de geolocalización para el mapa del dashboard
+// @access  Privado (Apoderado)
+router.get('/mapa', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+
+        // Get fabricantes where user is apoderado or administrador
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        // Get marcas for these fabricantes
+        const marcas = await Marca.find({
+            $or: [
+                { fabricante: { $in: fabricanteIds } },
+                { usuarioApoderado: usuarioApoderado }
+            ]
+        });
+        const marcaIds = marcas.map(m => m._id);
+
+        // Get representantes with coordinates
+        const representantes = await Representante.find({
+            $or: [
+                { usuarioApoderado: usuarioApoderado },
+                { marcasRepresentadas: { $in: marcaIds } }
+            ],
+            estado: 'Activo'
+        }).select('razonSocial nombre direccion coordenadas cobertura');
+
+        // Build representantes map data
+        const representantesData = representantes
+            .filter(rep => rep.coordenadas && rep.coordenadas.lat && rep.coordenadas.lng)
+            .map(rep => {
+                // Build coverage pins from provinces
+                const coberturaPins = (rep.cobertura?.provincias || [])
+                    .map(provincia => {
+                        const coords = geocodeProvince(provincia);
+                        if (!coords) return null;
+                        return { provincia, lat: coords.lat, lng: coords.lng };
+                    })
+                    .filter(Boolean);
+
+                return {
+                    _id: rep._id,
+                    nombre: rep.nombre,
+                    razonSocial: rep.razonSocial,
+                    direccion: rep.direccion,
+                    coordenadas: rep.coordenadas,
+                    cobertura: coberturaPins
+                };
+            });
+
+        // Get registered products with buyer coordinates
+        const productosRegistrados = await Inventario.find({
+            usuarioApoderado: usuarioApoderado,
+            registrado: 'Si',
+            'comprador.coordenadas.lat': { $ne: null },
+            'comprador.coordenadas.lng': { $ne: null }
+        })
+        .populate('producto', 'modelo')
+        .select('comprador producto numeroSerie idInventario');
+
+        const productosData = productosRegistrados.map(inv => ({
+            _id: inv._id,
+            nombreProducto: inv.producto?.modelo || `Serie: ${inv.numeroSerie}`,
+            comprador: inv.comprador?.nombreCompleto || '',
+            direccion: inv.comprador?.direccion || '',
+            provincia: inv.comprador?.provincia || '',
+            coordenadas: inv.comprador?.coordenadas
+        }));
+
+        res.json({
+            representantes: representantesData,
+            productosRegistrados: productosData
+        });
+    } catch (err) {
+        console.error('Error al obtener datos del mapa:', err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // @route   GET /api/apoderado/representantes
 // @desc    Obtener todos los representantes del apoderado
 // @access  Privado (Apoderado)
@@ -2066,6 +2148,9 @@ router.post('/representantes/add', auth, async (req, res) => {
     const usuarioApoderado = req.usuario.id;
 
     try {
+        // Geocode the address
+        const coordenadas = await geocodeAddress(direccion);
+
         const nuevoRepresentante = new Representante({
             razonSocial,
             nombre,
@@ -2079,7 +2164,8 @@ router.post('/representantes/add', auth, async (req, res) => {
             sitioWeb,
             estado,
             usuarioApoderado,
-            marcasRepresentadas: marcasRepresentadas || []
+            marcasRepresentadas: marcasRepresentadas || [],
+            coordenadas: coordenadas || { lat: null, lng: null }
         });
 
         await nuevoRepresentante.save();
@@ -2122,6 +2208,14 @@ router.put('/representantes/:id', auth, async (req, res) => {
             estado,
             marcasRepresentadas
         } = req.body;
+
+        // Re-geocode if address changed
+        if (direccion && direccion !== representante.direccion) {
+            const coordenadas = await geocodeAddress(direccion);
+            if (coordenadas) {
+                representante.coordenadas = coordenadas;
+            }
+        }
 
         representante.razonSocial = razonSocial;
         representante.nombre = nombre;

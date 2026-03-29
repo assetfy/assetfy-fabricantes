@@ -67,6 +67,10 @@ const representanteSchema = new Schema({
         ref: 'Usuario',
         required: true
     },
+    coordenadas: {
+        lat: { type: Number, default: null },
+        lng: { type: Number, default: null }
+    },
     marcasRepresentadas: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Marca'

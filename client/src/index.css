@@ -2752,3 +2752,105 @@ td .action-buttons button {
         padding-top: calc(var(--mobile-sidebar-height) + var(--header-height) + var(--content-padding));
     }
 }
+
+/* ==================== MAPA GEOLOCALIZACION ==================== */
+
+.mapa-container {
+    background: var(--card-white);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: var(--shadow-card);
+}
+
+.mapa-container .leaflet-container {
+    border-radius: 8px;
+    z-index: 1;
+}
+
+.custom-map-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.mapa-popup {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    min-width: 150px;
+}
+
+.mapa-popup strong {
+    color: var(--text-dark);
+    font-size: 0.9rem;
+}
+
+.mapa-popup-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.mapa-popup-badge.central {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.mapa-popup-badge.cobertura {
+    background: #FECACA;
+    color: #991B1B;
+}
+
+.mapa-popup-badge.producto {
+    background: #DBEAFE;
+    color: #2563EB;
+}
+
+.mapa-leyenda {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0;
+    flex-wrap: wrap;
+}
+
+.mapa-leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-gray);
+}
+
+.mapa-leyenda-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+}
+
+.mapa-leyenda-dot.central-star {
+    background: #DC2626;
+    position: relative;
+}
+
+.mapa-leyenda-dot.central-star::after {
+    content: '\2605';
+    position: absolute;
+    top: -1px;
+    left: 1px;
+    font-size: 8px;
+    color: #FFD700;
+}
+
+.mapa-leyenda-dot.cobertura {
+    background: #DC2626;
+}
+
+.mapa-leyenda-dot.producto {
+    background: #2563EB;
+}
