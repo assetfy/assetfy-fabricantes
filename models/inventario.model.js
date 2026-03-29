@@ -66,11 +66,25 @@ const inventarioSchema = new Schema({
         },
         telefono: {
             type: String,
-            required: function() { 
+            required: function() {
                 // Only required if estado is 'vendido' and registrado is 'Si', or if estado is 'alquilado'
-                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado'; 
+                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado';
             },
             default: ''
+        },
+        direccion: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        provincia: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        coordenadas: {
+            lat: { type: Number, default: null },
+            lng: { type: Number, default: null }
         }
     },
     fechaVenta: {
