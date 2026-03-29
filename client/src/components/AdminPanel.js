@@ -73,14 +73,11 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-panel">
-            <UserHeader 
+            <UserHeader
                 user={userData}
                 onProfileUpdated={handleProfileUpdated}
                 userType="admin"
             />
-            <h2>Panel del Administrador</h2>
-            <p>Bienvenido/a {userData?.nombreCompleto}.</p>
-            <p>Aquí puedes gestionar los usuarios y fabricantes.</p>
 
             <div className="panel-with-sidebar">
                 <Sidebar

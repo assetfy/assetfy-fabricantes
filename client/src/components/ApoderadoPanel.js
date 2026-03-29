@@ -14,6 +14,7 @@ import RepresentanteForm from './RepresentanteForm';
 import RepresentanteEditForm from './RepresentanteEditForm';
 import PedidoGarantiaList from './PedidoGarantiaList';
 import Modal from './Modal';
+import StockModal from './StockModal';
 import UserHeader from './UserHeader';
 import AdministracionPanel from './AdministracionPanel';
 import MetricasPanel from './MetricasPanel';
@@ -36,6 +37,8 @@ const ApoderadoPanel = () => {
     const [editingInventario, setEditingInventario] = useState(null);
     const [viewingInventario, setViewingInventario] = useState(null);
     const [editingRepresentante, setEditingRepresentante] = useState(null);
+    const [stockModalItem, setStockModalItem] = useState(null);
+    const [stockModalType, setStockModalType] = useState('producto');
     const [showCreateProductModal, setShowCreateProductModal] = useState(false);
     const [showCreatePiezaModal, setShowCreatePiezaModal] = useState(false);
     const [showCreateInventarioModal, setShowCreateInventarioModal] = useState(false);
@@ -242,6 +245,11 @@ const ApoderadoPanel = () => {
         setViewingInventario(null);
     };
 
+    const handleEditStock = (item, type) => {
+        setStockModalType(type);
+        setStockModalItem(item);
+    };
+
     const handleEditRepresentante = (representante) => {
         setEditingRepresentante(representante);
     };
@@ -282,22 +290,26 @@ const ApoderadoPanel = () => {
                                 icon: '▣'
                             },
                             {
-                                label: 'Mis Productos',
-                                description: 'Gestión de productos',
-                                path: '/productos',
-                                icon: '◫'
-                            },
-                            {
-                                label: 'Repuestos / Piezas',
-                                description: 'Gestión de piezas',
-                                path: '/piezas',
-                                icon: '⚙'
-                            },
-                            {
-                                label: 'Inventario',
-                                description: 'Control de stock',
-                                path: '/inventario',
-                                icon: '≡'
+                                label: 'Mis productos',
+                                description: 'Productos, piezas e historial',
+                                icon: '◫',
+                                subItems: [
+                                    {
+                                        label: 'Productos',
+                                        path: '/productos',
+                                        icon: '◫'
+                                    },
+                                    {
+                                        label: 'Repuestos & Piezas',
+                                        path: '/piezas',
+                                        icon: '⚙'
+                                    },
+                                    {
+                                        label: 'Historial',
+                                        path: '/inventario',
+                                        icon: '≡'
+                                    }
+                                ]
                             },
                             {
                                 label: 'Representantes',
@@ -339,7 +351,7 @@ const ApoderadoPanel = () => {
                         <>
                             <div className="list-container">
                                 <div className="section-header">
-                                    <h3>Gestión de Productos</h3>
+                                    <h3>Productos</h3>
                                     <button 
                                         className="create-button"
                                         onClick={() => setShowCreateProductModal(true)}
@@ -348,10 +360,11 @@ const ApoderadoPanel = () => {
                                     </button>
                                 </div>
                             </div>
-                            <ProductList 
-                                refreshTrigger={refreshKey} 
+                            <ProductList
+                                refreshTrigger={refreshKey}
                                 onEdit={handleEditProduct}
                                 onView={handleViewProduct}
+                                onEditStock={(producto) => handleEditStock(producto, 'producto')}
                             />
                         </>
                     } />
@@ -368,10 +381,11 @@ const ApoderadoPanel = () => {
                                     </button>
                                 </div>
                             </div>
-                            <PiezaList 
-                                refreshTrigger={refreshKey} 
+                            <PiezaList
+                                refreshTrigger={refreshKey}
                                 onEdit={handleEditPieza}
                                 onView={handleViewPieza}
+                                onEditStock={(pieza) => handleEditStock(pieza, 'pieza')}
                             />
                         </>
                     } />
@@ -379,8 +393,8 @@ const ApoderadoPanel = () => {
                         <>
                             <div className="list-container">
                                 <div className="section-header">
-                                    <h3>Gestión de Inventario</h3>
-                                    <button 
+                                    <h3>Historial de transacciones</h3>
+                                    <button
                                         className="create-button"
                                         onClick={() => setShowCreateInventarioModal(true)}
                                     >
@@ -392,6 +406,7 @@ const ApoderadoPanel = () => {
                                 refreshTrigger={refreshKey}
                                 onEdit={handleEditInventario}
                                 onView={handleViewInventario}
+                                excludeStock={true}
                             />
                         </>
                     } />
@@ -586,8 +601,8 @@ const ApoderadoPanel = () => {
                     />
                 </Modal>
 
-                <Modal 
-                    isOpen={!!editingRepresentante} 
+                <Modal
+                    isOpen={!!editingRepresentante}
                     onClose={handleCancelEditRepresentante}
                     title="Editar Representante"
                 >
@@ -601,6 +616,15 @@ const ApoderadoPanel = () => {
                         />
                     )}
                 </Modal>
+
+                <StockModal
+                    isOpen={!!stockModalItem}
+                    onClose={() => { setStockModalItem(null); setRefreshKey(k => k + 1); }}
+                    item={stockModalItem}
+                    itemType={stockModalType}
+                    productos={productos}
+                    piezas={piezas}
+                />
         </div>
     );
 };

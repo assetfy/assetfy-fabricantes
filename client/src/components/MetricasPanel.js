@@ -143,12 +143,12 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
                             <span className="legend-label">Stock bajo</span>
-                            <span className="legend-value">0</span>
+                            <span className="legend-value">{metricas.stockBajo?.productos || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color no-stock"></div>
                             <span className="legend-label">Sin stock</span>
-                            <span className="legend-value">{(metricas.productos || 0) - (metricas.estadisticas?.productosActivos || 0)}</span>
+                            <span className="legend-value">{metricas.sinStock?.productos || 0}</span>
                         </div>
                     </div>
                     <Link to="/apoderado/productos" className="inventory-link">
@@ -187,12 +187,12 @@ const MetricasPanel = () => {
                         <div className="legend-item">
                             <div className="legend-color low-stock"></div>
                             <span className="legend-label">Stock bajo</span>
-                            <span className="legend-value">0</span>
+                            <span className="legend-value">{metricas.stockBajo?.piezas || 0}</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-color no-stock"></div>
                             <span className="legend-label">Sin stock</span>
-                            <span className="legend-value">0</span>
+                            <span className="legend-value">{metricas.sinStock?.piezas || 0}</span>
                         </div>
                     </div>
                     <Link to="/apoderado/piezas" className="inventory-link">

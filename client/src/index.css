@@ -9,7 +9,8 @@
   --primary-purple: #5C2D91;
   --primary-purple-light: #7B4DB4;
   --primary-purple-lighter: #9B6FD4;
-  --bg-gray: #F5F5F5;
+  --bg-gray: #EDE7F6;
+  --bg-purple-soft: #EDE7F6;
   --action-green: #28A745;
   --action-green-hover: #218838;
   --card-white: #FFFFFF;
@@ -136,13 +137,11 @@ button:hover {
   box-shadow: 0 4px 8px rgba(92, 45, 145, 0.3);
 }
 
-/* Estilos de la consola de Apoderado */
+/* Estilos de la consola de Admin */
 .admin-panel {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 
@@ -151,8 +150,6 @@ button:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 .apoderado-panel nav ul {
@@ -568,6 +565,134 @@ table th:nth-child(8), table td:nth-child(8) {
 
 .login-redirect-button:hover {
     background-color: #0056b3;
+}
+
+/* Login Page Styles */
+.login-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0f0620;
+  padding: 1rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* --login-bg-image is injected from Login.js via a JS module import.
+     Webpack resolves and hashes the asset, guaranteeing the path is valid
+     in both development and production builds.
+     Source file: client/src/login-bg.svg
+     To use an alternative format (PNG/WebP) update the import in Login.js. */
+  background-image: var(--login-bg-image);
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px);
+  transform: scale(1.05);
+  z-index: 0;
+}
+
+.login-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 55% 80% at 50% 50%,
+    rgba(15, 6, 32, 0.55) 0%,
+    rgba(15, 6, 32, 0.2) 60%,
+    transparent 100%
+  );
+  z-index: 1;
+}
+
+.login-card {
+  background: #ffffff;
+  padding: 2.5rem 2.25rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.55);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  z-index: 2;
+}
+
+.login-logo-container {
+  margin-bottom: 1.25rem;
+}
+
+.login-logo {
+  max-width: 160px;
+  height: auto;
+}
+
+.login-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 0.6rem 0;
+}
+
+.login-subtitle {
+  color: #666;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.login-brand {
+  color: #5C2D91;
+  font-weight: 600;
+}
+
+.login-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon {
+  position: absolute;
+  left: 12px;
+  color: #aaa;
+  font-size: 1rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-input-wrapper input {
+  padding-left: 2.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 0.875rem;
+  background: #5C2D91;
+  color: #ffffff !important;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.login-submit-btn:hover {
+  background: #4a2278;
+  color: #ffffff !important;
 }
 
 /* Navigation link button styles */
@@ -2375,13 +2500,8 @@ td .action-buttons button {
 /* Sidebar Styles */
 .panel-with-sidebar {
     display: flex;
-    gap: 2rem;
-    width: 100%;
-}
-
-/* No gap for ApoderadoPanel with sidebar */
-.apoderado-panel-with-sidebar .panel-with-sidebar {
     gap: 0;
+    width: 100%;
 }
 
 .sidebar {
@@ -2389,7 +2509,8 @@ td .action-buttons button {
     width: var(--sidebar-width);
     background: #FFFFFF;
     border-radius: 0;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #e0e0e0;
+    box-shadow: none;
     padding: 0;
     height: 100vh;
     position: fixed;
@@ -2407,7 +2528,7 @@ td .action-buttons button {
 }
 
 .sidebar-logo img {
-    max-width: 140px;
+    max-width: 90px;
     height: auto;
 }
 
@@ -2518,14 +2639,14 @@ td .action-buttons button {
 .sidebar-sub-items {
     background: #f9f6fd;
     border-left: 3px solid var(--primary-purple);
-    margin-left: 0;
+    margin-left: 1rem;
 }
 
 .sidebar-sub-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.6rem 1.5rem 0.6rem 2.5rem;
+    padding: 0.6rem 1.5rem 0.6rem 1.2rem;
     cursor: pointer;
     font-size: 0.85rem;
     color: var(--text-dark);
@@ -2539,6 +2660,20 @@ td .action-buttons button {
 
 .sidebar-sub-item:hover {
     background: var(--primary-purple);
+    color: white;
+}
+
+.sidebar-sub-item.active {
+    background: var(--primary-purple);
+    color: white;
+}
+
+a.sidebar-sub-item {
+    text-decoration: none;
+}
+
+a.sidebar-sub-item:hover,
+a.sidebar-sub-item.active {
     color: white;
 }
 
@@ -2559,12 +2694,6 @@ td .action-buttons button {
 .sidebar-content {
     flex: 1;
     min-width: 0;
-    margin-left: var(--sidebar-width);
-    padding: var(--content-padding);
-}
-
-/* No padding for ApoderadoPanel sidebar content */
-.apoderado-panel-with-sidebar .sidebar-content {
     padding: 0;
 }
 
@@ -2711,18 +2840,11 @@ td .action-buttons button {
 .apoderado-panel,
 .usuario-panel {
     margin-left: var(--sidebar-width);
-    padding-top: calc(var(--header-height) + var(--content-padding));
-    padding-left: var(--content-padding);
-    padding-right: var(--content-padding);
-    background: var(--bg-gray);
-    min-height: 100vh;
-}
-
-/* Specific overrides for ApoderadoPanel with sidebar */
-.apoderado-panel.apoderado-panel-with-sidebar {
     padding-top: var(--header-height);
     padding-left: 0;
     padding-right: 0;
+    background: var(--bg-gray);
+    min-height: 100vh;
 }
 
 /* Responsive adjustments for sidebar layout */
@@ -2749,6 +2871,6 @@ td .action-buttons button {
     .apoderado-panel,
     .usuario-panel {
         margin-left: 0;
-        padding-top: calc(var(--mobile-sidebar-height) + var(--header-height) + var(--content-padding));
+        padding-top: calc(var(--mobile-sidebar-height) + var(--header-height));
     }
 }
