@@ -10,6 +10,8 @@ const crypto = require('crypto');
 const { sendInvitationEmail } = require('../utils/emailService');
 const { s3 } = require('../middleware/upload');
 const { geocodeAddress } = require('../utils/geocoding');
+const SolicitudRepresentacion = require('../models/solicitudRepresentacion.model');
+const { generarAlertaProductoRegistrado, generarAlertaSolicitudRepresentacion } = require('../utils/alertEngine');
 
 // @route   GET /api/public/fabricante/:slug
 // @desc    Get fabricante branding info for the branded registration portal
@@ -67,20 +69,21 @@ router.post('/registro', async (req, res) => {
 
     try {
         // Find the product by idInventario
-        const inventario = await Inventario.findOne({ idInventario: idInventario.trim() });
+        const inventario = await Inventario.findOne({ idInventario: idInventario.trim() })
+            .populate({ path: 'producto', select: 'fabricante modelo' });
 
         if (!inventario) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 success: false,
-                message: 'El producto no existe. Por favor, revise el número de inventario o contacte al fabricante.' 
+                message: 'El producto no existe. Por favor, revise el número de inventario o contacte al fabricante.'
             });
         }
 
         // Check if the product is already registered
         if (inventario.registrado === 'Si') {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'Este producto ya está registrado a otro usuario.' 
+                message: 'Este producto ya está registrado a otro usuario.'
             });
         }
 
@@ -105,6 +108,13 @@ router.post('/registro', async (req, res) => {
         // fechaVenta will be set automatically by the pre-save middleware
 
         await inventario.save();
+
+        // Generate product registration notification
+        if (inventario.producto?.fabricante) {
+            generarAlertaProductoRegistrado(inventario, inventario.producto.fabricante).catch(err => {
+                console.error('Error generando alerta de registro:', err);
+            });
+        }
 
         return res.status(200).json({
             success: true,
@@ -242,6 +252,13 @@ router.post('/registro-con-usuario', async (req, res) => {
 
             await inventario.save();
 
+            // Generate product registration notification
+            if (inventario.producto?.fabricante?._id) {
+                generarAlertaProductoRegistrado(inventario, inventario.producto.fabricante._id).catch(err => {
+                    console.error('Error generando alerta de registro:', err);
+                });
+            }
+
             return res.status(200).json({
                 success: true,
                 message: 'Producto registrado exitosamente. El usuario ya existe y el bien ha sido agregado a su cuenta.',
@@ -323,6 +340,13 @@ router.post('/registro-con-usuario', async (req, res) => {
         inventario.fechaRegistro = new Date();
 
         await inventario.save();
+
+        // Generate product registration notification
+        if (inventario.producto?.fabricante?._id) {
+            generarAlertaProductoRegistrado(inventario, inventario.producto.fabricante._id).catch(err => {
+                console.error('Error generando alerta de registro:', err);
+            });
+        }
 
         // Send invitation email
         let emailSent = false;
@@ -616,6 +640,65 @@ router.get('/logo/:s3Key', async (req, res) => {
         }
         console.error('Error serving public logo:', err.message);
         res.status(500).json({ message: 'Error al servir el logo' });
+    }
+});
+
+// @route   POST /api/public/solicitud-representacion
+// @desc    Submit a representation request for a fabricante
+// @access  Public
+router.post('/solicitud-representacion', async (req, res) => {
+    const { slug, razonSocial, nombre, cuit, correo, telefono, direccion, provincia, mensaje } = req.body;
+
+    if (!slug || !razonSocial || !nombre || !cuit || !correo || !telefono) {
+        return res.status(400).json({
+            success: false,
+            message: 'Campos obligatorios: razón social, nombre, CUIT, correo y teléfono.'
+        });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+        return res.status(400).json({
+            success: false,
+            message: 'El formato del correo electrónico no es válido.'
+        });
+    }
+
+    try {
+        const fabricante = await Fabricante.findOne({ slug: slug.toLowerCase(), estado: 'Habilitado' });
+        if (!fabricante) {
+            return res.status(404).json({ success: false, message: 'Fabricante no encontrado.' });
+        }
+
+        const solicitud = new SolicitudRepresentacion({
+            fabricante: fabricante._id,
+            razonSocial: razonSocial.trim(),
+            nombre: nombre.trim(),
+            cuit: cuit.trim(),
+            correo: correo.trim().toLowerCase(),
+            telefono: telefono.trim(),
+            direccion: direccion ? direccion.trim() : '',
+            provincia: provincia ? provincia.trim() : '',
+            mensaje: mensaje ? mensaje.trim() : ''
+        });
+
+        await solicitud.save();
+
+        // Generate notification
+        generarAlertaSolicitudRepresentacion(solicitud, fabricante._id).catch(err => {
+            console.error('Error generando alerta de solicitud:', err);
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Solicitud enviada exitosamente. El fabricante revisará su solicitud.'
+        });
+    } catch (err) {
+        console.error('Error al crear solicitud de representación:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.'
+        });
     }
 });
 

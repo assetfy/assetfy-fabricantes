@@ -10,6 +10,7 @@ import DemoPage from './components/DemoPage';
 import DemoMetricasPage from './components/DemoMetricasPage';
 import RegistroProducto from './components/RegistroProducto';
 import RegistroFabricante from './components/RegistroFabricante';
+import SolicitudRepresentacionForm from './components/SolicitudRepresentacionForm';
 import ActivateAccount from './components/ActivateAccount';
 import { NotificationProvider } from './components/NotificationProvider';
 
@@ -74,6 +75,7 @@ function App() {
             } />
 
             {/* Fabricante branded registration portals - must come after explicit protected paths */}
+            <Route path="/:slug/representacion" element={<SolicitudRepresentacionForm />} />
             <Route path="/:slug" element={<RegistroFabricante />} />
 
             {/* Catch-all */}

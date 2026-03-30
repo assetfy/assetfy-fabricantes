@@ -18,6 +18,7 @@ import StockModal from './StockModal';
 import UserHeader from './UserHeader';
 import AdministracionPanel from './AdministracionPanel';
 import MetricasPanel from './MetricasPanel';
+import AlertasPanel from './AlertasPanel';
 import ReportesPanel from './ReportesPanel';
 import Sidebar from './Sidebar';
 import { useNotification } from './NotificationProvider';
@@ -319,6 +320,12 @@ const ApoderadoPanel = () => {
                                 icon: '◉'
                             },
                             {
+                                label: 'Alertas & Notificaciones',
+                                description: 'Alertas del sistema',
+                                path: '/alertas',
+                                icon: '⚠'
+                            },
+                            {
                                 label: 'Clientes',
                                 description: 'Gestión de Activación de Productos y Garantías',
                                 path: '/garantias',
@@ -441,6 +448,7 @@ const ApoderadoPanel = () => {
                             />
                         </>
                     } />
+                    <Route path="alertas" element={<AlertasPanel />} />
                     <Route path="garantias" element={
                         <>
                             <div className="list-container">
