@@ -113,6 +113,7 @@ h2 {
   width: 16px;
   height: 16px;
   margin: 0;
+  margin-right: 0.5rem;
   flex-shrink: 0;
 }
 

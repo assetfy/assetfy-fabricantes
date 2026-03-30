@@ -164,7 +164,7 @@ const WarrantyManagerForm = ({
             <div className="form-group">
                 <label>Tipo de cobertura</label>
                 <div className="checkbox-group">
-                    {['defectos de fabricación', 'fallas eléctricas', 'desgaste normal', 'accidentes', 'robo'].map(tipo => (
+                    {['Defectos de fabricación', 'Fallas eléctricas', 'Desgaste normal', 'Accidentes', 'Robo'].map(tipo => (
                         <label key={tipo} className="checkbox-label">
                             <input
                                 type="checkbox"
@@ -194,7 +194,7 @@ const WarrantyManagerForm = ({
             <div className="form-group">
                 <label>Exclusiones</label>
                 <div className="checkbox-group">
-                    {['Daños por mal uso', 'humedad', 'modificaciones no autorizadas', 'consumibles (ej. tóner, lámparas)'].map(exclusion => (
+                    {['Daños por mal uso', 'Humedad', 'Modificaciones no autorizadas', 'Consumibles (ej. tóner, lámparas)'].map(exclusion => (
                         <label key={exclusion} className="checkbox-label">
                             <input
                                 type="checkbox"
@@ -222,7 +222,7 @@ const WarrantyManagerForm = ({
             <div className="form-group">
                 <label>Servicios incluidos</label>
                 <div className="checkbox-group">
-                    {['Reparación', 'reemplazo', 'reembolso', 'soporte técnico'].map(servicio => (
+                    {['Reparación', 'Reemplazo', 'Reembolso', 'Soporte técnico'].map(servicio => (
                         <label key={servicio} className="checkbox-label">
                             <input
                                 type="checkbox"
@@ -265,7 +265,7 @@ const WarrantyManagerForm = ({
             <div className="form-group">
                 <label>Uso autorizado</label>
                 <div className="checkbox-group">
-                    {['doméstico', 'profesional', 'industrial'].map(uso => (
+                    {['Doméstico', 'Profesional', 'Industrial'].map(uso => (
                         <label key={uso} className="checkbox-label">
                             <input
                                 type="checkbox"
@@ -308,7 +308,7 @@ const WarrantyManagerForm = ({
             <div className="form-group">
                 <label>Canales de reclamo</label>
                 <div className="checkbox-group">
-                    {['Web', 'app', 'call center', 'tienda'].map(canal => (
+                    {['Web', 'App', 'Call center', 'Tienda'].map(canal => (
                         <label key={canal} className="checkbox-label">
                             <input
                                 type="checkbox"
