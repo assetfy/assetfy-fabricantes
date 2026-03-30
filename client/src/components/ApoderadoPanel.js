@@ -12,10 +12,8 @@ import InventarioForm from './InventarioForm';
 import RepresentanteList from './RepresentanteList';
 import RepresentanteForm from './RepresentanteForm';
 import RepresentanteEditForm from './RepresentanteEditForm';
-import PedidoGarantiaList from './PedidoGarantiaList';
-import ClientesList from './ClientesList';
+import ClientesGarantiasView from './ClientesGarantiasView';
 import InventarioItemViewModal from './InventarioItemViewModal';
-import Tabs from './Tabs';
 import Modal from './Modal';
 import StockModal from './StockModal';
 import UserHeader from './UserHeader';
@@ -478,29 +476,7 @@ const ApoderadoPanel = () => {
                     } />
                     <Route path="alertas" element={<AlertasPanel />} />
                     <Route path="garantias" element={
-                        <>
-                            <div className="list-container">
-                                <div className="section-header">
-                                    <h3>Clientes</h3>
-                                    <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '13px' }}>
-                                        Gestión de clientes, productos registrados y pedidos de garantía.
-                                    </p>
-                                </div>
-                            </div>
-                            <Tabs
-                                defaultTab={0}
-                                tabs={[
-                                    {
-                                        label: 'Clientes',
-                                        content: <ClientesList onOpenInventarioItem={handleOpenInventarioItem} />
-                                    },
-                                    {
-                                        label: 'Pedidos de Garantía',
-                                        content: <PedidoGarantiaList isFabricante={true} />
-                                    }
-                                ]}
-                            />
-                        </>
+                        <ClientesGarantiasView onOpenInventarioItem={handleOpenInventarioItem} />
                     } />
                     <Route path="reportes" element={<ReportesPanel />} />
                     <Route path="administracion" element={<AdministracionPanel fabricantes={fabricantes} allMarcas={allMarcas} garantias={garantias} onRefresh={handleRefresh} />} />
