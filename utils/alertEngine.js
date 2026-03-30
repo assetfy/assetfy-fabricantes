@@ -187,7 +187,7 @@ const obtenerContadores = async (fabricanteIds) => {
             // Solicitudes de Representación pendientes
             SolicitudRepresentacion.countDocuments({
                 fabricante: { $in: fabricanteIds },
-                estado: 'Pendiente'
+                estado: 'En Evaluación'
             }),
             // Productos registrados
             Inventario.countDocuments({

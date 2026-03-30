@@ -46,7 +46,8 @@ const ApoderadoPanel = () => {
     const [showCreateInventarioModal, setShowCreateInventarioModal] = useState(false);
     const [showCreateRepresentanteModal, setShowCreateRepresentanteModal] = useState(false);
     const [garantias, setGarantias] = useState([]);
-    
+    const [prefillRepresentante, setPrefillRepresentante] = useState(null);
+
     const navigate = useNavigate();
     const { showSuccess, showError } = useNotification();
     
@@ -260,6 +261,19 @@ const ApoderadoPanel = () => {
         setEditingRepresentante(null);
     };
 
+    const handleSolicitudAccepted = (solicitud) => {
+        setPrefillRepresentante({
+            razonSocial: solicitud.razonSocial || '',
+            nombre: solicitud.nombre || '',
+            cuit: solicitud.cuit || '',
+            correo: solicitud.correo || '',
+            telefono: solicitud.telefono || '',
+            direccion: solicitud.direccion || '',
+            provincia: solicitud.provincia || ''
+        });
+        setShowCreateRepresentanteModal(true);
+    };
+
     if (loading) {
         return <p>Cargando datos del usuario...</p>;
     }
@@ -434,9 +448,9 @@ const ApoderadoPanel = () => {
                             <div className="list-container">
                                 <div className="section-header">
                                     <h3>Gestión de Representantes</h3>
-                                    <button 
+                                    <button
                                         className="create-button"
-                                        onClick={() => setShowCreateRepresentanteModal(true)}
+                                        onClick={() => { setPrefillRepresentante(null); setShowCreateRepresentanteModal(true); }}
                                     >
                                         Crear Representante
                                     </button>
@@ -445,6 +459,7 @@ const ApoderadoPanel = () => {
                             <RepresentanteList
                                 refreshTrigger={refreshKey}
                                 onEdit={handleEditRepresentante}
+                                onAccepted={handleSolicitudAccepted}
                             />
                         </>
                     } />
@@ -610,15 +625,16 @@ const ApoderadoPanel = () => {
                     )}
                 </Modal>
 
-                <Modal 
-                    isOpen={showCreateRepresentanteModal} 
-                    onClose={() => setShowCreateRepresentanteModal(false)}
-                    title="Crear Nuevo Representante"
+                <Modal
+                    isOpen={showCreateRepresentanteModal}
+                    onClose={() => { setShowCreateRepresentanteModal(false); setPrefillRepresentante(null); }}
+                    title={prefillRepresentante ? "Crear Representante desde Solicitud" : "Crear Nuevo Representante"}
                 >
-                    <RepresentanteForm 
-                        onRepresentanteAdded={handleRefresh} 
+                    <RepresentanteForm
+                        onRepresentanteAdded={handleRefresh}
                         fabricantes={fabricantes}
                         marcas={allMarcas}
+                        prefillData={prefillRepresentante}
                     />
                 </Modal>
 

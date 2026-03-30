@@ -377,8 +377,262 @@ const sendGarantiaUserReplyEmail = async (fabricanteEmail, fabricanteNombre, usu
     }
 };
 
+// Send confirmation email to applicant when representation request is created
+const sendSolicitudConfirmacionEmail = async (correo, nombre, fabricanteNombre, solicitudId) => {
+    try {
+        const transporter = createTransporter();
+        const logoPath = getLogoPath();
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Solicitud de representación recibida</title></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);padding:40px;text-align:center;">
+          <img src="cid:logo" alt="Logo Assetfy" style="max-width:150px;height:auto;margin-bottom:20px;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">Solicitud de representación recibida</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <h2 style="color:#333;font-size:20px;margin-bottom:20px;">Hola ${nombre},</h2>
+          <p style="color:#555;font-size:16px;line-height:1.6;margin-bottom:20px;">
+            Hemos recibido tu solicitud de representación para <strong>${fabricanteNombre}</strong>.
+          </p>
+          <div style="background-color:#f8f9fa;border-left:4px solid #8b5cf6;padding:20px;margin:25px 0;border-radius:4px;">
+            <p style="margin:0;color:#333;font-size:15px;"><strong>ID de Solicitud:</strong> ${solicitudId}</p>
+            <p style="margin:10px 0 0 0;color:#555;font-size:15px;">Tu solicitud está siendo evaluada. Te notificaremos cuando haya novedades.</p>
+          </div>
+          <p style="color:#555;font-size:16px;line-height:1.6;">
+            El fabricante revisará tu solicitud y se pondrá en contacto contigo a la brevedad.
+          </p>
+        </td></tr>
+        <tr><td style="background-color:#f8f9fa;padding:25px;text-align:center;">
+          <p style="color:#999;font-size:13px;margin:0;">© ${new Date().getFullYear()} Assetfy. Todos los derechos reservados.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"Assetfy" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+            to: correo,
+            subject: `Solicitud de representación recibida - ${fabricanteNombre}`,
+            html,
+            attachments: []
+        };
+
+        if (logoPath) {
+            mailOptions.attachments.push({ filename: 'logo.png', path: logoPath, cid: 'logo' });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Solicitud confirmación email sent:', info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Error sending solicitud confirmación email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send message email to applicant when fabricante sends a message
+const sendSolicitudMensajeEmail = async (correo, nombre, fabricanteNombre, solicitudId, mensaje) => {
+    try {
+        const transporter = createTransporter();
+        const logoPath = getLogoPath();
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Nuevo mensaje sobre tu solicitud de representación</title></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);padding:40px;text-align:center;">
+          <img src="cid:logo" alt="Logo Assetfy" style="max-width:150px;height:auto;margin-bottom:20px;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">Nuevo mensaje sobre tu solicitud</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <h2 style="color:#333;font-size:20px;margin-bottom:20px;">Hola ${nombre},</h2>
+          <p style="color:#555;font-size:16px;line-height:1.6;margin-bottom:20px;">
+            El fabricante <strong>${fabricanteNombre}</strong> te ha enviado un mensaje sobre tu solicitud de representación (ID: <strong>${solicitudId}</strong>).
+          </p>
+          <div style="background-color:#f8f9fa;border-left:4px solid #8b5cf6;padding:20px;margin:25px 0;border-radius:4px;">
+            <p style="margin:0;color:#333;font-size:15px;"><strong>Mensaje:</strong></p>
+            <p style="margin:10px 0 0 0;color:#555;font-size:15px;">${mensaje}</p>
+          </div>
+          <p style="color:#555;font-size:16px;line-height:1.6;">
+            Puedes responder a este mensaje respondiendo directamente a este correo o comunicándote con el fabricante.
+          </p>
+        </td></tr>
+        <tr><td style="background-color:#f8f9fa;padding:25px;text-align:center;">
+          <p style="color:#999;font-size:13px;margin:0;">© ${new Date().getFullYear()} Assetfy. Todos los derechos reservados.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"Assetfy" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+            to: correo,
+            subject: `Mensaje sobre tu solicitud de representación - ${fabricanteNombre}`,
+            html,
+            attachments: []
+        };
+
+        if (logoPath) {
+            mailOptions.attachments.push({ filename: 'logo.png', path: logoPath, cid: 'logo' });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Solicitud mensaje email sent:', info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Error sending solicitud mensaje email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send status change email to applicant
+const sendSolicitudEstadoEmail = async (correo, nombre, fabricanteNombre, solicitudId, nuevoEstado, comentarios) => {
+    try {
+        const transporter = createTransporter();
+        const logoPath = getLogoPath();
+
+        const esAceptada = nuevoEstado === 'Aceptada';
+        const colorEstado = esAceptada ? '#22c55e' : '#ef4444';
+        const tituloEstado = esAceptada ? 'Solicitud Aceptada' : 'Solicitud Rechazada';
+        const mensajeEstado = esAceptada
+            ? 'Tu solicitud de representación ha sido <strong>aceptada</strong>. El fabricante se pondrá en contacto contigo para los próximos pasos.'
+            : 'Lamentablemente, tu solicitud de representación ha sido <strong>rechazada</strong>.';
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>${tituloEstado}</title></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <tr><td style="background:linear-gradient(135deg,${colorEstado} 0%,${esAceptada ? '#16a34a' : '#dc2626'} 100%);padding:40px;text-align:center;">
+          <img src="cid:logo" alt="Logo Assetfy" style="max-width:150px;height:auto;margin-bottom:20px;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">${tituloEstado}</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <h2 style="color:#333;font-size:20px;margin-bottom:20px;">Hola ${nombre},</h2>
+          <p style="color:#555;font-size:16px;line-height:1.6;margin-bottom:20px;">
+            ${mensajeEstado}
+          </p>
+          <div style="background-color:#f8f9fa;border-left:4px solid ${colorEstado};padding:20px;margin:25px 0;border-radius:4px;">
+            <p style="margin:0;color:#333;font-size:15px;"><strong>Fabricante:</strong> ${fabricanteNombre}</p>
+            <p style="margin:5px 0 0 0;color:#333;font-size:15px;"><strong>ID de Solicitud:</strong> ${solicitudId}</p>
+            <p style="margin:5px 0 0 0;color:#333;font-size:15px;"><strong>Estado:</strong> <span style="color:${colorEstado};font-weight:600;">${nuevoEstado}</span></p>
+            ${comentarios ? `<p style="margin:10px 0 0 0;color:#555;font-size:15px;"><strong>Comentarios:</strong> ${comentarios}</p>` : ''}
+          </div>
+        </td></tr>
+        <tr><td style="background-color:#f8f9fa;padding:25px;text-align:center;">
+          <p style="color:#999;font-size:13px;margin:0;">© ${new Date().getFullYear()} Assetfy. Todos los derechos reservados.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"Assetfy" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+            to: correo,
+            subject: `${tituloEstado} - ${fabricanteNombre}`,
+            html,
+            attachments: []
+        };
+
+        if (logoPath) {
+            mailOptions.attachments.push({ filename: 'logo.png', path: logoPath, cid: 'logo' });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`✅ Solicitud estado (${nuevoEstado}) email sent:`, info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Error sending solicitud estado email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send notification email to fabricante when applicant replies
+const sendSolicitudRespuestaEmail = async (fabricanteEmail, fabricanteNombre, solicitanteNombre, solicitudId, mensaje) => {
+    try {
+        const transporter = createTransporter();
+        const logoPath = getLogoPath();
+
+        const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Nueva respuesta en solicitud de representación</title></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);padding:40px;text-align:center;">
+          <img src="cid:logo" alt="Logo Assetfy" style="max-width:150px;height:auto;margin-bottom:20px;">
+          <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">Nueva respuesta en solicitud de representación</h1>
+        </td></tr>
+        <tr><td style="padding:40px 30px;">
+          <h2 style="color:#333;font-size:20px;margin-bottom:20px;">Estimado/a ${fabricanteNombre},</h2>
+          <p style="color:#555;font-size:16px;line-height:1.6;margin-bottom:20px;">
+            El solicitante <strong>${solicitanteNombre}</strong> ha respondido a la solicitud de representación (ID: <strong>${solicitudId}</strong>).
+          </p>
+          <div style="background-color:#f8f9fa;border-left:4px solid #28a745;padding:20px;margin:25px 0;border-radius:4px;">
+            <p style="margin:0;color:#333;font-size:15px;"><strong>Mensaje del solicitante:</strong></p>
+            <p style="margin:10px 0 0 0;color:#555;font-size:15px;">${mensaje}</p>
+          </div>
+          <p style="color:#555;font-size:16px;line-height:1.6;">
+            Ingresa a la plataforma para ver el historial completo y responder.
+          </p>
+        </td></tr>
+        <tr><td style="background-color:#f8f9fa;padding:25px;text-align:center;">
+          <p style="color:#999;font-size:13px;margin:0;">© ${new Date().getFullYear()} Assetfy. Todos los derechos reservados.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+        const mailOptions = {
+            from: `"Assetfy" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+            to: fabricanteEmail,
+            subject: `Nueva respuesta en solicitud de representación de ${solicitanteNombre}`,
+            html,
+            attachments: []
+        };
+
+        if (logoPath) {
+            mailOptions.attachments.push({ filename: 'logo.png', path: logoPath, cid: 'logo' });
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Solicitud respuesta email sent:', info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('❌ Error sending solicitud respuesta email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     sendInvitationEmail,
     sendGarantiaResponseEmail,
     sendGarantiaUserReplyEmail,
+    sendSolicitudConfirmacionEmail,
+    sendSolicitudMensajeEmail,
+    sendSolicitudEstadoEmail,
+    sendSolicitudRespuestaEmail,
 };
