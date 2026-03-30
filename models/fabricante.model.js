@@ -31,6 +31,11 @@ const fabricanteSchema = new Schema({
   },
   portalColor: { type: String, default: '#1a73e8' },
   stockBajoUmbral: { type: Number, default: 3 },
+  umbralGarantiaPorVencer: {
+    type: String,
+    enum: ['2_semanas', '3_semanas', '1_mes', '2_meses', '3_meses'],
+    default: '1_mes'
+  },
   rangoNuevos: {
     type: String,
     enum: ['ultima_semana', 'ultimas_2_semanas', 'ultimo_mes', 'ultimos_2_meses', 'ultimos_3_meses', 'ultimos_6_meses'],

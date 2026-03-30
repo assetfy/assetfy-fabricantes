@@ -41,6 +41,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
     const [stockBajoUmbral, setStockBajoUmbral] = useState(3);
     const [rangoNuevos, setRangoNuevos] = useState('ultimo_mes');
     const [configLoading, setConfigLoading] = useState(true);
+    const [umbralGarantiaPorVencer, setUmbralGarantiaPorVencer] = useState('1_mes');
     const [savingConfig, setSavingConfig] = useState(false);
 
     const { showSuccess, showError } = useNotification();
@@ -68,6 +69,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                     setSelectedConfigFabricanteId(list[0]._id);
                     setStockBajoUmbral(list[0].stockBajoUmbral != null ? list[0].stockBajoUmbral : 3);
                     setRangoNuevos(list[0].rangoNuevos || 'ultimo_mes');
+                    setUmbralGarantiaPorVencer(list[0].umbralGarantiaPorVencer || '1_mes');
                 }
             })
             .catch(() => {})
@@ -240,6 +242,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
         if (fab) {
             setStockBajoUmbral(fab.stockBajoUmbral != null ? fab.stockBajoUmbral : 3);
             setRangoNuevos(fab.rangoNuevos || 'ultimo_mes');
+            setUmbralGarantiaPorVencer(fab.umbralGarantiaPorVencer || '1_mes');
         }
     };
 
@@ -249,12 +252,14 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
             const res = await api.put('/apoderado/configuracion', {
                 fabricanteId: selectedConfigFabricanteId,
                 stockBajoUmbral,
-                rangoNuevos
+                rangoNuevos,
+                umbralGarantiaPorVencer
             });
             const updatedUmbral = res.data.stockBajoUmbral;
             const updatedRango = res.data.rangoNuevos;
+            const updatedUmbralGarantia = res.data.umbralGarantiaPorVencer;
             setConfigFabricantes(prev => prev.map(f =>
-                f._id === selectedConfigFabricanteId ? { ...f, stockBajoUmbral: updatedUmbral, rangoNuevos: updatedRango } : f
+                f._id === selectedConfigFabricanteId ? { ...f, stockBajoUmbral: updatedUmbral, rangoNuevos: updatedRango, umbralGarantiaPorVencer: updatedUmbralGarantia } : f
             ));
             showSuccess('Configuración guardada');
         } catch (err) {
@@ -325,6 +330,26 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                         </div>
                     </div>
 
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                        <label>Umbral de garantías por vencer</label>
+                        <p style={{ color: '#666', fontSize: '13px', margin: '4px 0 8px 0' }}>
+                            Considerar garantías por vencer cuando falten menos de este período para la fecha de vencimiento. Las alertas y contadores del panel de notificaciones se calcularán en base a este valor.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <select
+                                value={umbralGarantiaPorVencer}
+                                onChange={e => setUmbralGarantiaPorVencer(e.target.value)}
+                                style={{ width: '250px' }}
+                            >
+                                <option value="2_semanas">2 semanas</option>
+                                <option value="3_semanas">3 semanas</option>
+                                <option value="1_mes">1 mes</option>
+                                <option value="2_meses">2 meses</option>
+                                <option value="3_meses">3 meses</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <button
                         className="create-button"
                         onClick={handleSaveConfig}
@@ -338,6 +363,17 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
     );
 
     const portalUrl = branding.slug ? `${window.location.origin}/${branding.slug}` : null;
+    const portalRepresentacionUrl = branding.slug ? `${window.location.origin}/${branding.slug}/representacion` : null;
+
+    const handleCopyRepresentacionLink = async () => {
+        if (!portalRepresentacionUrl) return;
+        try {
+            await navigator.clipboard.writeText(portalRepresentacionUrl);
+            showSuccess('Link del portal de representación copiado: ' + portalRepresentacionUrl);
+        } catch (err) {
+            showError('Error al copiar. URL: ' + portalRepresentacionUrl);
+        }
+    };
 
     const handleCopyPortalLink = async () => {
         if (!portalUrl) return;
@@ -390,6 +426,32 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                 <button
                                     className="create-button"
                                     onClick={() => window.open(portalUrl, '_blank', 'noopener,noreferrer')}
+                                    title="Abrir portal en nueva pestaña"
+                                >
+                                    Abrir portal
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {portalRepresentacionUrl && (
+                        <div className="form-group" style={{ marginBottom: '24px' }}>
+                            <label>URL del portal de solicitud de representación</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input
+                                    type="text"
+                                    value={portalRepresentacionUrl}
+                                    readOnly
+                                    style={{ flex: 1, backgroundColor: '#f5f5f5', cursor: 'pointer' }}
+                                    onClick={handleCopyRepresentacionLink}
+                                    title="Clic para copiar"
+                                />
+                                <button className="create-button" onClick={handleCopyRepresentacionLink} title="Copiar URL">
+                                    Copiar
+                                </button>
+                                <button
+                                    className="create-button"
+                                    onClick={() => window.open(portalRepresentacionUrl, '_blank', 'noopener,noreferrer')}
                                     title="Abrir portal en nueva pestaña"
                                 >
                                     Abrir portal

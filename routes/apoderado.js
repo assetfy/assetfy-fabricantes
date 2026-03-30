@@ -19,6 +19,9 @@ const argentineRegions = require('../data/argentine-regions'); // Importa los da
 const { Parser } = require('json2csv');
 const { sendGarantiaResponseEmail } = require('../utils/emailService');
 const { geocodeAddress, geocodeProvince, PROVINCE_COORDS } = require('../utils/geocoding');
+const Notificacion = require('../models/notificacion.model');
+const SolicitudRepresentacion = require('../models/solicitudRepresentacion.model');
+const { obtenerContadores, verificarGarantiasPorVencer } = require('../utils/alertEngine');
 
 // Helper function to transform legacy S3 URLs to proxy URLs
 const transformMarcaLegacyUrls = (marca) => {
@@ -3683,7 +3686,7 @@ router.delete('/piezas/:id/imagen', auth, async (req, res) => {
 router.get('/configuracion', auth, async (req, res) => {
     try {
         const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id))
-            .select('razonSocial stockBajoUmbral rangoNuevos');
+            .select('razonSocial stockBajoUmbral rangoNuevos umbralGarantiaPorVencer');
 
         if (!fabricantes || fabricantes.length === 0) {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
@@ -3694,7 +3697,8 @@ router.get('/configuracion', auth, async (req, res) => {
                 _id: f._id,
                 razonSocial: f.razonSocial,
                 stockBajoUmbral: f.stockBajoUmbral != null ? f.stockBajoUmbral : 3,
-                rangoNuevos: f.rangoNuevos || 'ultimo_mes'
+                rangoNuevos: f.rangoNuevos || 'ultimo_mes',
+                umbralGarantiaPorVencer: f.umbralGarantiaPorVencer || '1_mes'
             }))
         });
     } catch (err) {
@@ -3708,7 +3712,7 @@ router.get('/configuracion', auth, async (req, res) => {
 // @access  Privado (Apoderado)
 router.put('/configuracion', auth, async (req, res) => {
     try {
-        const { fabricanteId, stockBajoUmbral, rangoNuevos } = req.body;
+        const { fabricanteId, stockBajoUmbral, rangoNuevos, umbralGarantiaPorVencer } = req.body;
 
         const query = fabricanteId
             ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
@@ -3736,8 +3740,16 @@ router.put('/configuracion', auth, async (req, res) => {
             fabricante.rangoNuevos = rangoNuevos;
         }
 
+        if (umbralGarantiaPorVencer !== undefined) {
+            const umbralesValidos = ['2_semanas', '3_semanas', '1_mes', '2_meses', '3_meses'];
+            if (!umbralesValidos.includes(umbralGarantiaPorVencer)) {
+                return res.status(400).json({ msg: 'Umbral de garantía por vencer inválido.' });
+            }
+            fabricante.umbralGarantiaPorVencer = umbralGarantiaPorVencer;
+        }
+
         await fabricante.save();
-        res.json({ msg: 'Configuración actualizada', stockBajoUmbral: fabricante.stockBajoUmbral, rangoNuevos: fabricante.rangoNuevos });
+        res.json({ msg: 'Configuración actualizada', stockBajoUmbral: fabricante.stockBajoUmbral, rangoNuevos: fabricante.rangoNuevos, umbralGarantiaPorVencer: fabricante.umbralGarantiaPorVencer });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
@@ -4050,6 +4062,164 @@ router.put('/pedidos-garantia/:id/estado', auth, async (req, res) => {
             .populate(PEDIDO_GARANTIA_POPULATE);
 
         res.json({ msg: 'Estado actualizado', pedido: updatedPedido });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// =============================================
+// ALERTAS & NOTIFICACIONES
+// =============================================
+
+// @route   GET /api/apoderado/alertas/contadores
+// @desc    Get alert counters for all fabricantes the user has access to
+// @access  Privado (Apoderado)
+router.get('/alertas/contadores', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id);
+        const contadores = await obtenerContadores(fabricanteIds);
+        res.json(contadores);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/alertas
+// @desc    Get paginated list of notifications
+// @access  Privado (Apoderado)
+router.get('/alertas', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id);
+
+        const { tipo, page = 1, limit = 20 } = req.query;
+        const query = { fabricante: { $in: fabricanteIds } };
+        if (tipo) query.tipo = tipo;
+
+        const total = await Notificacion.countDocuments(query);
+        const notificaciones = await Notificacion.find(query)
+            .sort({ createdAt: -1 })
+            .skip((parseInt(page) - 1) * parseInt(limit))
+            .limit(parseInt(limit));
+
+        const noLeidas = await Notificacion.countDocuments({ ...query, leida: false });
+
+        res.json({
+            notificaciones,
+            total,
+            noLeidas,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/alertas/:id/leer
+// @desc    Mark a notification as read
+// @access  Privado (Apoderado)
+router.put('/alertas/:id/leer', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const notificacion = await Notificacion.findById(req.params.id);
+        if (!notificacion || !fabricanteIds.includes(notificacion.fabricante.toString())) {
+            return res.status(404).json({ msg: 'Notificación no encontrada' });
+        }
+
+        notificacion.leida = true;
+        await notificacion.save();
+        res.json({ msg: 'Notificación marcada como leída' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/alertas/leer-todas
+// @desc    Mark all notifications as read
+// @access  Privado (Apoderado)
+router.put('/alertas/leer-todas', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id);
+
+        await Notificacion.updateMany(
+            { fabricante: { $in: fabricanteIds }, leida: false },
+            { $set: { leida: true } }
+        );
+
+        res.json({ msg: 'Todas las notificaciones marcadas como leídas' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// =============================================
+// SOLICITUDES DE REPRESENTACIÓN
+// =============================================
+
+// @route   GET /api/apoderado/solicitudes-representacion
+// @desc    Get all representation requests for user's fabricantes
+// @access  Privado (Apoderado)
+router.get('/solicitudes-representacion', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id);
+
+        const { estado, page = 1, limit = 20 } = req.query;
+        const query = { fabricante: { $in: fabricanteIds } };
+        if (estado) query.estado = estado;
+
+        const total = await SolicitudRepresentacion.countDocuments(query);
+        const solicitudes = await SolicitudRepresentacion.find(query)
+            .populate('fabricante', 'razonSocial')
+            .sort({ createdAt: -1 })
+            .skip((parseInt(page) - 1) * parseInt(limit))
+            .limit(parseInt(limit));
+
+        res.json({
+            solicitudes,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/solicitudes-representacion/:id
+// @desc    Update representation request status (approve/reject)
+// @access  Privado (Apoderado)
+router.put('/solicitudes-representacion/:id', auth, async (req, res) => {
+    try {
+        const { estado } = req.body;
+        const estadosValidos = ['Pendiente', 'Aprobada', 'Rechazada'];
+        if (!estadosValidos.includes(estado)) {
+            return res.status(400).json({ msg: 'Estado inválido' });
+        }
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const solicitud = await SolicitudRepresentacion.findById(req.params.id);
+        if (!solicitud || !fabricanteIds.includes(solicitud.fabricante.toString())) {
+            return res.status(404).json({ msg: 'Solicitud no encontrada' });
+        }
+
+        solicitud.estado = estado;
+        await solicitud.save();
+
+        res.json({ msg: 'Estado actualizado', solicitud });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
