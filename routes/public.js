@@ -7,7 +7,7 @@ const Bien = require('../models/bien.model');
 const Fabricante = require('../models/fabricante.model');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { sendInvitationEmail } = require('../utils/emailService');
+const { sendInvitationEmail, sendSolicitudConfirmacionEmail, sendSolicitudRespuestaEmail } = require('../utils/emailService');
 const { s3 } = require('../middleware/upload');
 const { geocodeAddress } = require('../utils/geocoding');
 const SolicitudRepresentacion = require('../models/solicitudRepresentacion.model');
@@ -670,6 +670,7 @@ router.post('/solicitud-representacion', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Fabricante no encontrado.' });
         }
 
+        const mensajeTexto = mensaje ? mensaje.trim() : '';
         const solicitud = new SolicitudRepresentacion({
             fabricante: fabricante._id,
             razonSocial: razonSocial.trim(),
@@ -679,7 +680,12 @@ router.post('/solicitud-representacion', async (req, res) => {
             telefono: telefono.trim(),
             direccion: direccion ? direccion.trim() : '',
             provincia: provincia ? provincia.trim() : '',
-            mensaje: mensaje ? mensaje.trim() : ''
+            mensaje: mensajeTexto,
+            mensajes: mensajeTexto ? [{
+                autor: 'solicitante',
+                autorNombre: nombre.trim(),
+                contenido: mensajeTexto
+            }] : []
         });
 
         await solicitud.save();
@@ -687,6 +693,16 @@ router.post('/solicitud-representacion', async (req, res) => {
         // Generate notification
         generarAlertaSolicitudRepresentacion(solicitud, fabricante._id).catch(err => {
             console.error('Error generando alerta de solicitud:', err);
+        });
+
+        // Send confirmation email to applicant
+        sendSolicitudConfirmacionEmail(
+            solicitud.correo,
+            solicitud.nombre,
+            fabricante.razonSocial,
+            solicitud._id.toString().slice(-6).toUpperCase()
+        ).catch(err => {
+            console.error('Error sending solicitud confirmación email:', err);
         });
 
         return res.status(200).json({
@@ -698,6 +714,66 @@ router.post('/solicitud-representacion', async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.'
+        });
+    }
+});
+
+// @route   POST /api/public/solicitud-representacion/:id/responder
+// @desc    Applicant replies to their representation request (verified by email)
+// @access  Public
+router.post('/solicitud-representacion/:id/responder', async (req, res) => {
+    const { correo, contenido } = req.body;
+
+    if (!correo || !contenido) {
+        return res.status(400).json({
+            success: false,
+            message: 'Correo y contenido son requeridos.'
+        });
+    }
+
+    try {
+        const solicitud = await SolicitudRepresentacion.findById(req.params.id)
+            .populate('fabricante', 'razonSocial usuarioApoderado');
+        if (!solicitud) {
+            return res.status(404).json({ success: false, message: 'Solicitud no encontrada.' });
+        }
+
+        // Verify identity by email
+        if (solicitud.correo !== correo.trim().toLowerCase()) {
+            return res.status(403).json({ success: false, message: 'Correo no coincide con la solicitud.' });
+        }
+
+        solicitud.mensajes.push({
+            autor: 'solicitante',
+            autorNombre: solicitud.nombre,
+            contenido: contenido.trim()
+        });
+
+        await solicitud.save();
+
+        // Notify fabricante via email
+        if (solicitud.fabricante.usuarioApoderado) {
+            const apoderado = await Usuario.findById(solicitud.fabricante.usuarioApoderado).select('correoElectronico nombreCompleto');
+            if (apoderado && apoderado.correoElectronico) {
+                sendSolicitudRespuestaEmail(
+                    apoderado.correoElectronico,
+                    solicitud.fabricante.razonSocial,
+                    solicitud.nombre,
+                    solicitud._id.toString().slice(-6).toUpperCase(),
+                    contenido.trim()
+                ).catch(err => console.error('Error sending solicitud respuesta email:', err));
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Respuesta enviada exitosamente.'
+        });
+    } catch (err) {
+        console.error('Error al responder solicitud de representación:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor.'
         });
     }
 });

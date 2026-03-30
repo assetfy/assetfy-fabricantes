@@ -3,7 +3,7 @@ import api from '../api';
 import { useNotification } from './NotificationProvider';
 import Tabs from './Tabs';
 
-const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas }) => {
+const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillData }) => {
     const [formData, setFormData] = useState({
         razonSocial: '',
         nombre: '',
@@ -44,6 +44,25 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas }) => {
         };
         fetchRegions();
     }, []);
+
+    // Pre-fill form data from solicitud (when accepting a representation request)
+    useEffect(() => {
+        if (prefillData) {
+            setFormData(prev => ({
+                ...prev,
+                razonSocial: prefillData.razonSocial || prev.razonSocial,
+                nombre: prefillData.nombre || prev.nombre,
+                cuit: prefillData.cuit || prev.cuit,
+                correo: prefillData.correo || prev.correo,
+                telefono: prefillData.telefono || prev.telefono,
+                direccion: prefillData.direccion || prev.direccion,
+                cobertura: prefillData.provincia ? {
+                    ...prev.cobertura,
+                    provincias: [prefillData.provincia]
+                } : prev.cobertura
+            }));
+        }
+    }, [prefillData]);
 
     // Update available marcas based on selected fabricantes
     useEffect(() => {

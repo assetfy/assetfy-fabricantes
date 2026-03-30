@@ -3,6 +3,27 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const mensajeSolicitudSchema = new Schema({
+    autor: {
+        type: String,
+        enum: ['solicitante', 'fabricante'],
+        required: true
+    },
+    autorNombre: {
+        type: String,
+        required: true
+    },
+    contenido: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    fecha: {
+        type: Date,
+        default: Date.now
+    }
+});
+
 const solicitudRepresentacionSchema = new Schema({
     fabricante: { type: Schema.Types.ObjectId, ref: 'Fabricante', required: true },
     razonSocial: { type: String, required: true },
@@ -15,9 +36,11 @@ const solicitudRepresentacionSchema = new Schema({
     mensaje: { type: String },
     estado: {
         type: String,
-        enum: ['Pendiente', 'Aprobada', 'Rechazada'],
-        default: 'Pendiente'
-    }
+        enum: ['En Evaluación', 'Aceptada', 'Rechazada'],
+        default: 'En Evaluación'
+    },
+    mensajes: [mensajeSolicitudSchema],
+    comentarioRechazo: { type: String }
 }, {
     timestamps: true
 });

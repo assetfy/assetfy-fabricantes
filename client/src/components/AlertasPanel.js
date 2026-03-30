@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useNotification } from './NotificationProvider';
 
@@ -27,6 +28,7 @@ const AlertasPanel = () => {
     const [total, setTotal] = useState(0);
     const [noLeidas, setNoLeidas] = useState(0);
     const { showSuccess, showError } = useNotification();
+    const navigate = useNavigate();
 
     const fetchContadores = async () => {
         try {
@@ -210,10 +212,15 @@ const AlertasPanel = () => {
                                         border: '1px solid',
                                         borderColor: notif.leida ? '#e5e7eb' : '#c7d2fe',
                                         borderRadius: '8px',
-                                        cursor: notif.leida ? 'default' : 'pointer',
+                                        cursor: (!notif.leida || notif.tipo === 'solicitud_representacion') ? 'pointer' : 'default',
                                         transition: 'background-color 0.2s'
                                     }}
-                                    onClick={() => !notif.leida && handleMarcarLeida(notif._id)}
+                                    onClick={() => {
+                                        if (!notif.leida) handleMarcarLeida(notif._id);
+                                        if (notif.tipo === 'solicitud_representacion' && notif.referencia?.id) {
+                                            navigate(`/apoderado/representantes?view=solicitudes&solicitudId=${notif.referencia.id}`);
+                                        }
+                                    }}
                                 >
                                     <span style={{
                                         display: 'inline-block',

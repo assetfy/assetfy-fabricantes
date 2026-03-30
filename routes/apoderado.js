@@ -17,7 +17,7 @@ const Ubicacion = require('../models/ubicacion.model'); // Importa el modelo de 
 const Bien = require('../models/bien.model'); // Importa el modelo de bien
 const argentineRegions = require('../data/argentine-regions'); // Importa los datos de regiones argentinas
 const { Parser } = require('json2csv');
-const { sendGarantiaResponseEmail } = require('../utils/emailService');
+const { sendGarantiaResponseEmail, sendSolicitudMensajeEmail, sendSolicitudEstadoEmail } = require('../utils/emailService');
 const { geocodeAddress, geocodeProvince, PROVINCE_COORDS } = require('../utils/geocoding');
 const Notificacion = require('../models/notificacion.model');
 const SolicitudRepresentacion = require('../models/solicitudRepresentacion.model');
@@ -4409,29 +4409,113 @@ router.get('/solicitudes-representacion', auth, async (req, res) => {
     }
 });
 
+// @route   GET /api/apoderado/solicitudes-representacion/:id
+// @desc    Get a single representation request by ID
+// @access  Privado (Apoderado)
+router.get('/solicitudes-representacion/:id', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const solicitud = await SolicitudRepresentacion.findById(req.params.id)
+            .populate('fabricante', 'razonSocial');
+        if (!solicitud || !fabricanteIds.includes(solicitud.fabricante._id.toString())) {
+            return res.status(404).json({ msg: 'Solicitud no encontrada' });
+        }
+
+        res.json(solicitud);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // @route   PUT /api/apoderado/solicitudes-representacion/:id
 // @desc    Update representation request status (approve/reject)
 // @access  Privado (Apoderado)
 router.put('/solicitudes-representacion/:id', auth, async (req, res) => {
     try {
-        const { estado } = req.body;
-        const estadosValidos = ['Pendiente', 'Aprobada', 'Rechazada'];
+        const { estado, comentarioRechazo } = req.body;
+        const estadosValidos = ['En Evaluación', 'Aceptada', 'Rechazada'];
         if (!estadosValidos.includes(estado)) {
             return res.status(400).json({ msg: 'Estado inválido' });
         }
 
-        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id razonSocial');
         const fabricanteIds = fabricantes.map(f => f._id.toString());
 
-        const solicitud = await SolicitudRepresentacion.findById(req.params.id);
-        if (!solicitud || !fabricanteIds.includes(solicitud.fabricante.toString())) {
+        const solicitud = await SolicitudRepresentacion.findById(req.params.id)
+            .populate('fabricante', 'razonSocial');
+        if (!solicitud || !fabricanteIds.includes(solicitud.fabricante._id.toString())) {
             return res.status(404).json({ msg: 'Solicitud no encontrada' });
         }
 
         solicitud.estado = estado;
+        if (estado === 'Rechazada' && comentarioRechazo) {
+            solicitud.comentarioRechazo = comentarioRechazo;
+        }
         await solicitud.save();
 
+        // Send email notification to applicant on status change
+        if (estado === 'Aceptada' || estado === 'Rechazada') {
+            sendSolicitudEstadoEmail(
+                solicitud.correo,
+                solicitud.nombre,
+                solicitud.fabricante.razonSocial,
+                solicitud._id.toString().slice(-6).toUpperCase(),
+                estado,
+                estado === 'Rechazada' ? comentarioRechazo : ''
+            ).catch(err => console.error('Error sending solicitud estado email:', err));
+        }
+
         res.json({ msg: 'Estado actualizado', solicitud });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/apoderado/solicitudes-representacion/:id/mensaje
+// @desc    Send a message to the applicant
+// @access  Privado (Apoderado)
+router.post('/solicitudes-representacion/:id/mensaje', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id razonSocial');
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const solicitud = await SolicitudRepresentacion.findById(req.params.id)
+            .populate('fabricante', 'razonSocial');
+        if (!solicitud || !fabricanteIds.includes(solicitud.fabricante._id.toString())) {
+            return res.status(404).json({ msg: 'Solicitud no encontrada' });
+        }
+
+        const { contenido } = req.body;
+        if (!contenido) {
+            return res.status(400).json({ msg: 'El contenido del mensaje es requerido' });
+        }
+
+        // Get the user's name for the message
+        const usuario = await Usuario.findById(req.usuario.id).select('nombreCompleto');
+        const autorNombre = usuario?.nombreCompleto || 'Fabricante';
+
+        solicitud.mensajes.push({
+            autor: 'fabricante',
+            autorNombre,
+            contenido
+        });
+
+        await solicitud.save();
+
+        // Send email notification to applicant
+        sendSolicitudMensajeEmail(
+            solicitud.correo,
+            solicitud.nombre,
+            solicitud.fabricante.razonSocial,
+            solicitud._id.toString().slice(-6).toUpperCase(),
+            contenido
+        ).catch(err => console.error('Error sending solicitud mensaje email:', err));
+
+        res.json({ msg: 'Mensaje enviado', solicitud });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
