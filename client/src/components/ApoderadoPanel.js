@@ -276,6 +276,8 @@ const ApoderadoPanel = () => {
             provincia: solicitud.provincia || ''
         });
         setShowCreateRepresentanteModal(true);
+    };
+
     const handleOpenInventarioItem = async (inventarioId) => {
         try {
             const res = await api.get(`/apoderado/inventario/${inventarioId}`);
