@@ -1742,6 +1742,25 @@ router.post('/inventario/add', auth, async (req, res) => {
     }
 });
 
+// @route   GET /api/apoderado/inventario/:id
+// @desc    Get a single inventory item by ID
+// @access  Private (Apoderado)
+router.get('/inventario/:id', auth, async (req, res) => {
+    try {
+        const item = await Inventario.findById(req.params.id)
+            .populate('producto', 'modelo imagenPrincipal')
+            .populate('pieza', 'nombre')
+            .populate('ubicacion', 'nombre');
+        if (!item) {
+            return res.status(404).json({ msg: 'Item de inventario no encontrado' });
+        }
+        res.json(item);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // @route   PUT /api/apoderado/inventario/:id
 // @desc    Actualizar un artículo de inventario
 // @access  Privado (Apoderado)
@@ -3930,6 +3949,199 @@ const PEDIDO_GARANTIA_POPULATE = [
     { path: 'usuario', select: 'nombreCompleto correoElectronico' },
     { path: 'fabricante', select: 'razonSocial' }
 ];
+
+// ========== CLIENTES ==========
+
+// @route   GET /api/apoderado/clientes
+// @desc    Get unique clients who registered products (from inventory comprador data)
+// @access  Private (Apoderado)
+router.get('/clientes', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(f => f._id);
+
+        // Get all products and piezas accessible by this user
+        const productosAccesibles = await Producto.find({
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        }).select('_id');
+        const productoIdsAccesibles = productosAccesibles.map(p => p._id);
+
+        const piezasAccesibles = await Pieza.find({
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        }).select('_id');
+        const piezaIdsAccesibles = piezasAccesibles.map(p => p._id);
+
+        // Get all inventory items that have been registered (have comprador data)
+        const inventarioItems = await Inventario.find({
+            $or: [
+                { usuarioApoderado },
+                { producto: { $in: productoIdsAccesibles } },
+                { pieza: { $in: piezaIdsAccesibles } }
+            ],
+            'comprador.correoElectronico': { $exists: true, $ne: '' }
+        })
+        .populate('producto', 'modelo imagenPrincipal garantia')
+        .populate('pieza', 'nombre garantia')
+        .populate({
+            path: 'producto',
+            populate: { path: 'garantia', select: 'nombre duracionNumero duracionUnidad fechaInicio' }
+        })
+        .populate({
+            path: 'pieza',
+            populate: { path: 'garantia', select: 'nombre duracionNumero duracionUnidad fechaInicio' }
+        })
+        .sort({ fechaRegistro: -1, createdAt: -1 });
+
+        // Group by unique client (email as key)
+        const clientesMap = {};
+        for (const item of inventarioItems) {
+            const email = item.comprador?.correoElectronico?.toLowerCase().trim();
+            if (!email) continue;
+
+            if (!clientesMap[email]) {
+                clientesMap[email] = {
+                    email: email,
+                    nombreCompleto: item.comprador.nombreCompleto || '',
+                    telefono: item.comprador.telefono || '',
+                    cuil: item.comprador.cuil || '',
+                    direccion: item.comprador.direccion || '',
+                    provincia: item.comprador.provincia || '',
+                    coordenadas: item.comprador.coordenadas || null,
+                    productos: [],
+                    primerRegistro: item.fechaRegistro || item.createdAt
+                };
+            }
+
+            // Calculate warranty expiration
+            let garantiaVencimiento = null;
+            const garantia = item.producto?.garantia || item.pieza?.garantia;
+            if (garantia) {
+                let fechaBase = null;
+                if (garantia.fechaInicio === 'Compra' && item.fechaVenta) {
+                    fechaBase = new Date(item.fechaVenta);
+                } else if (garantia.fechaInicio === 'Registro' && item.fechaRegistro) {
+                    fechaBase = new Date(item.fechaRegistro);
+                } else if (item.fechaVenta) {
+                    fechaBase = new Date(item.fechaVenta);
+                } else if (item.fechaRegistro) {
+                    fechaBase = new Date(item.fechaRegistro);
+                }
+
+                if (fechaBase) {
+                    const vencimiento = new Date(fechaBase);
+                    if (garantia.duracionUnidad === 'dias') {
+                        vencimiento.setDate(vencimiento.getDate() + garantia.duracionNumero);
+                    } else if (garantia.duracionUnidad === 'meses') {
+                        vencimiento.setMonth(vencimiento.getMonth() + garantia.duracionNumero);
+                    } else if (garantia.duracionUnidad === 'años') {
+                        vencimiento.setFullYear(vencimiento.getFullYear() + garantia.duracionNumero);
+                    }
+                    garantiaVencimiento = vencimiento;
+                }
+            }
+
+            clientesMap[email].productos.push({
+                inventarioId: item._id,
+                idInventario: item.idInventario,
+                numeroSerie: item.numeroSerie,
+                productoNombre: item.producto?.modelo || item.pieza?.nombre || '—',
+                estado: item.estado,
+                fechaRegistro: item.fechaRegistro,
+                fechaVenta: item.fechaVenta,
+                garantiaNombre: garantia?.nombre || null,
+                garantiaVencimiento,
+                registrado: item.registrado
+            });
+
+            // Update client name if this record has a more complete one
+            if (item.comprador.nombreCompleto && (!clientesMap[email].nombreCompleto || clientesMap[email].nombreCompleto.length < item.comprador.nombreCompleto.length)) {
+                clientesMap[email].nombreCompleto = item.comprador.nombreCompleto;
+            }
+            if (item.comprador.telefono && !clientesMap[email].telefono) {
+                clientesMap[email].telefono = item.comprador.telefono;
+            }
+            if (item.comprador.cuil && !clientesMap[email].cuil) {
+                clientesMap[email].cuil = item.comprador.cuil;
+            }
+            if (item.comprador.direccion && !clientesMap[email].direccion) {
+                clientesMap[email].direccion = item.comprador.direccion;
+            }
+            if (item.comprador.provincia && !clientesMap[email].provincia) {
+                clientesMap[email].provincia = item.comprador.provincia;
+            }
+        }
+
+        const clientes = Object.values(clientesMap).sort((a, b) => {
+            return new Date(b.primerRegistro) - new Date(a.primerRegistro);
+        });
+
+        res.json(clientes);
+    } catch (err) {
+        console.error('Error al cargar clientes:', err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/clientes/:email
+// @desc    Update client data across all their inventory items
+// @access  Private (Apoderado)
+router.put('/clientes/:email', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+        const clientEmail = decodeURIComponent(req.params.email).toLowerCase().trim();
+        const { nombreCompleto, telefono, cuil, direccion, provincia } = req.body;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(f => f._id);
+
+        const productosAccesibles = await Producto.find({
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        }).select('_id');
+        const productoIdsAccesibles = productosAccesibles.map(p => p._id);
+
+        const piezasAccesibles = await Pieza.find({
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        }).select('_id');
+        const piezaIdsAccesibles = piezasAccesibles.map(p => p._id);
+
+        const updateFields = {};
+        if (nombreCompleto !== undefined) updateFields['comprador.nombreCompleto'] = nombreCompleto;
+        if (telefono !== undefined) updateFields['comprador.telefono'] = telefono;
+        if (cuil !== undefined) updateFields['comprador.cuil'] = cuil;
+        if (direccion !== undefined) updateFields['comprador.direccion'] = direccion;
+        if (provincia !== undefined) updateFields['comprador.provincia'] = provincia;
+
+        await Inventario.updateMany(
+            {
+                $or: [
+                    { usuarioApoderado },
+                    { producto: { $in: productoIdsAccesibles } },
+                    { pieza: { $in: piezaIdsAccesibles } }
+                ],
+                'comprador.correoElectronico': { $regex: new RegExp('^' + clientEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
+            },
+            { $set: updateFields }
+        );
+
+        res.json({ message: 'Cliente actualizado correctamente' });
+    } catch (err) {
+        console.error('Error al actualizar cliente:', err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
 
 // @route   GET /api/apoderado/pedidos-garantia
 // @desc    Get all warranty claims for fabricantes managed by this user

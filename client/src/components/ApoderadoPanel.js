@@ -13,6 +13,9 @@ import RepresentanteList from './RepresentanteList';
 import RepresentanteForm from './RepresentanteForm';
 import RepresentanteEditForm from './RepresentanteEditForm';
 import PedidoGarantiaList from './PedidoGarantiaList';
+import ClientesList from './ClientesList';
+import InventarioItemViewModal from './InventarioItemViewModal';
+import Tabs from './Tabs';
 import Modal from './Modal';
 import StockModal from './StockModal';
 import UserHeader from './UserHeader';
@@ -46,7 +49,8 @@ const ApoderadoPanel = () => {
     const [showCreateInventarioModal, setShowCreateInventarioModal] = useState(false);
     const [showCreateRepresentanteModal, setShowCreateRepresentanteModal] = useState(false);
     const [garantias, setGarantias] = useState([]);
-    
+    const [viewingInventarioItem, setViewingInventarioItem] = useState(null);
+
     const navigate = useNavigate();
     const { showSuccess, showError } = useNotification();
     
@@ -260,6 +264,15 @@ const ApoderadoPanel = () => {
         setEditingRepresentante(null);
     };
 
+    const handleOpenInventarioItem = async (inventarioId) => {
+        try {
+            const res = await api.get(`/apoderado/inventario/${inventarioId}`);
+            setViewingInventarioItem(res.data);
+        } catch (err) {
+            console.error('Error al cargar item de inventario:', err);
+        }
+    };
+
     if (loading) {
         return <p>Cargando datos del usuario...</p>;
     }
@@ -453,13 +466,25 @@ const ApoderadoPanel = () => {
                         <>
                             <div className="list-container">
                                 <div className="section-header">
-                                    <h3>Pedidos de Garantía</h3>
+                                    <h3>Clientes</h3>
                                     <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '13px' }}>
-                                        Gestión de pedidos de garantía enviados por los usuarios.
+                                        Gestión de clientes, productos registrados y pedidos de garantía.
                                     </p>
                                 </div>
                             </div>
-                            <PedidoGarantiaList isFabricante={true} />
+                            <Tabs
+                                defaultTab={0}
+                                tabs={[
+                                    {
+                                        label: 'Clientes',
+                                        content: <ClientesList onOpenInventarioItem={handleOpenInventarioItem} />
+                                    },
+                                    {
+                                        label: 'Pedidos de Garantía',
+                                        content: <PedidoGarantiaList isFabricante={true} />
+                                    }
+                                ]}
+                            />
                         </>
                     } />
                     <Route path="reportes" element={<ReportesPanel />} />
@@ -645,6 +670,12 @@ const ApoderadoPanel = () => {
                     itemType={stockModalType}
                     productos={productos}
                     piezas={piezas}
+                />
+
+                <InventarioItemViewModal
+                    isOpen={!!viewingInventarioItem}
+                    onClose={() => setViewingInventarioItem(null)}
+                    item={viewingInventarioItem}
                 />
         </div>
     );
