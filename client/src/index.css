@@ -2534,6 +2534,24 @@ td .action-buttons button {
     margin-top: 0.25rem;
 }
 
+/* Counter box sub-details */
+.counter-box-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.counter-box-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
 @media (max-width: 640px) {
     .representantes-counters {
         grid-template-columns: 1fr;

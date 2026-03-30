@@ -47,9 +47,10 @@ const SolicitudRepresentacionDetail = ({ solicitud, onClose, onUpdated, onAccept
                 estado: nuevoEstado,
                 comentarioRechazo: nuevoEstado === 'Rechazada' ? comentarioRechazo : undefined
             });
-            if (onUpdated) onUpdated(res.data.solicitud);
             if (nuevoEstado === 'Aceptada' && onAccepted) {
                 onAccepted(res.data.solicitud);
+            } else {
+                if (onUpdated) onUpdated(res.data.solicitud);
             }
         } catch (err) {
             setError(err.response?.data?.msg || 'Error al cambiar el estado');

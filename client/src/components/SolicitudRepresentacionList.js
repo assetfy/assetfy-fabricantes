@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../api';
 import Modal from './Modal';
 import SolicitudRepresentacionDetail from './SolicitudRepresentacionDetail';
@@ -15,6 +15,7 @@ const SolicitudRepresentacionList = ({ onAccepted, initialSolicitudId, onRefresh
     const [selectedSolicitud, setSelectedSolicitud] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [estadoFilter, setEstadoFilter] = useState('todos');
+    const deepLinkProcessedRef = useRef(false);
 
     const fetchSolicitudes = useCallback(async () => {
         try {
@@ -33,9 +34,10 @@ const SolicitudRepresentacionList = ({ onAccepted, initialSolicitudId, onRefresh
         fetchSolicitudes();
     }, [fetchSolicitudes]);
 
-    // Open specific solicitud from deep-link
+    // Open specific solicitud from deep-link (only once)
     useEffect(() => {
-        if (initialSolicitudId && solicitudes.length > 0 && !selectedSolicitud) {
+        if (initialSolicitudId && solicitudes.length > 0 && !selectedSolicitud && !deepLinkProcessedRef.current) {
+            deepLinkProcessedRef.current = true;
             const found = solicitudes.find(s => s._id === initialSolicitudId);
             if (found) {
                 setSelectedSolicitud(found);
@@ -55,7 +57,9 @@ const SolicitudRepresentacionList = ({ onAccepted, initialSolicitudId, onRefresh
     };
 
     const handleAccepted = (solicitud) => {
+        setSolicitudes(prev => prev.map(s => s._id === solicitud._id ? solicitud : s));
         setSelectedSolicitud(null);
+        if (onRefresh) onRefresh();
         if (onAccepted) onAccepted(solicitud);
     };
 
