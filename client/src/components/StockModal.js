@@ -62,6 +62,25 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
     const [slots, setSlots] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
+    // Remove stock form state
+    const [showRemoveForm, setShowRemoveForm] = useState(false);
+    const [removeSearchTerm, setRemoveSearchTerm] = useState('');
+    const [removeFoundItem, setRemoveFoundItem] = useState(null);
+    const [removeSearching, setRemoveSearching] = useState(false);
+    const [removeFormData, setRemoveFormData] = useState({
+        estado: '',
+        representante: '',
+        useOtro: false,
+        comprador: { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
+        fechaVenta: '',
+        fechaInicioAlquiler: '',
+        fechaFinAlquiler: '',
+    });
+    const [removeSubmitting, setRemoveSubmitting] = useState(false);
+
+    // Representantes state (shared by remove form and inline edit)
+    const [representantes, setRepresentantes] = useState([]);
+
     const getItemAtributos = useCallback(() => {
         if (!item) return [];
         return item.atributos || [];
@@ -105,11 +124,33 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
         }
     }, []);
 
+    const fetchRepresentantes = useCallback(async () => {
+        try {
+            const res = await api.get('/apoderado/representantes?estado=Activo');
+            setRepresentantes(res.data || []);
+        } catch (err) {
+            console.error('Error al obtener representantes:', err);
+        }
+    }, []);
+
     useEffect(() => {
         if (isOpen) {
             fetchInventario();
             fetchUbicaciones();
+            fetchRepresentantes();
             setShowAddForm(false);
+            setShowRemoveForm(false);
+            setRemoveSearchTerm('');
+            setRemoveFoundItem(null);
+            setRemoveFormData({
+                estado: '',
+                representante: '',
+                useOtro: false,
+                comprador: { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
+                fechaVenta: '',
+                fechaInicioAlquiler: '',
+                fechaFinAlquiler: '',
+            });
             setSlots([emptySlot(getItemAtributos())]);
             setSearchTerm('');
             setUbicacionFilter('');
@@ -215,6 +256,89 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
         }
     };
 
+    // ── Remove stock form handlers ────────────────────────────────────────────
+
+    const handleRemoveSearch = async () => {
+        if (!removeSearchTerm.trim()) return;
+        setRemoveSearching(true);
+        setRemoveFoundItem(null);
+        try {
+            const param = itemType === 'producto' ? `productoId=${item._id}` : `piezaId=${item._id}`;
+            const searchParam = `&search=${encodeURIComponent(removeSearchTerm)}`;
+            const res = await api.get(`/apoderado/inventario?${param}&estado=stock${searchParam}`);
+            const found = (res.data || []).find(i =>
+                i.idInventario?.toLowerCase() === removeSearchTerm.trim().toLowerCase() ||
+                i.numeroSerie?.toLowerCase() === removeSearchTerm.trim().toLowerCase()
+            ) || (res.data || [])[0];
+            if (found) {
+                setRemoveFoundItem(found);
+                setRemoveFormData(prev => ({
+                    ...prev,
+                    estado: '',
+                    representante: '',
+                    useOtro: false,
+                    comprador: { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
+                    fechaVenta: new Date().toISOString().split('T')[0],
+                    fechaInicioAlquiler: new Date().toISOString().split('T')[0],
+                    fechaFinAlquiler: '',
+                }));
+            } else {
+                showError('No se encontró un artículo en stock con ese ID o número de serie');
+            }
+        } catch (err) {
+            showError('Error al buscar el artículo');
+        }
+        setRemoveSearching(false);
+    };
+
+    const handleRemoveFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        if (name === 'useOtro') {
+            setRemoveFormData(prev => ({
+                ...prev,
+                useOtro: checked,
+                representante: checked ? '' : prev.representante,
+                comprador: checked ? prev.comprador : { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
+            }));
+        } else if (name.startsWith('comprador.')) {
+            const field = name.split('.')[1];
+            setRemoveFormData(prev => ({ ...prev, comprador: { ...prev.comprador, [field]: value } }));
+        } else {
+            setRemoveFormData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleSubmitRemove = async (e) => {
+        e.preventDefault();
+        if (!removeFoundItem || !removeFormData.estado) return;
+        setRemoveSubmitting(true);
+        try {
+            const payload = {
+                numeroSerie: removeFoundItem.numeroSerie,
+                estado: removeFormData.estado,
+                ...(itemType === 'producto' ? { producto: item._id } : { pieza: item._id }),
+                atributos: removeFoundItem.atributos || [],
+                ubicacion: removeFoundItem.ubicacion?._id || '',
+                representante: !removeFormData.useOtro ? removeFormData.representante || null : null,
+                comprador: removeFormData.useOtro ? removeFormData.comprador : {
+                    nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: ''
+                },
+                fechaVenta: removeFormData.estado === 'vendido' ? removeFormData.fechaVenta : '',
+                fechaInicioAlquiler: removeFormData.estado === 'alquilado' ? removeFormData.fechaInicioAlquiler : '',
+                fechaFinAlquiler: removeFormData.estado === 'alquilado' ? removeFormData.fechaFinAlquiler : '',
+            };
+            await api.put(`/apoderado/inventario/${removeFoundItem._id}`, payload);
+            showSuccess(`Artículo marcado como ${removeFormData.estado === 'vendido' ? 'vendido' : 'alquilado'} exitosamente`);
+            setShowRemoveForm(false);
+            setRemoveFoundItem(null);
+            setRemoveSearchTerm('');
+            fetchInventario();
+        } catch (err) {
+            showError('Error al actualizar el artículo: ' + (err.response?.data || 'Error desconocido'));
+        }
+        setRemoveSubmitting(false);
+    };
+
     // ── List handlers ────────────────────────────────────────────────────────
 
     const handleSelectItem = (itemId) => {
@@ -256,14 +380,20 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
 
     const handleStartEdit = (invItem) => {
         setEditingItem(invItem._id);
+        const hasRepresentante = !!invItem.representante;
+        const hasManualComprador = !hasRepresentante && invItem.comprador?.nombreCompleto;
         setEditFormData({
             numeroSerie: invItem.numeroSerie || '',
             estado: invItem.estado || 'stock',
             ubicacion: invItem.ubicacion?._id || '',
+            representante: invItem.representante?._id || '',
+            useOtro: !!hasManualComprador,
             comprador: {
                 nombreCompleto: invItem.comprador?.nombreCompleto || '',
                 correoElectronico: invItem.comprador?.correoElectronico || '',
                 telefono: invItem.comprador?.telefono || '',
+                direccion: invItem.comprador?.direccion || '',
+                provincia: invItem.comprador?.provincia || '',
             },
             atributos: invItem.atributos || [],
             fechaVenta: invItem.fechaVenta ? new Date(invItem.fechaVenta).toISOString().split('T')[0] : '',
@@ -273,8 +403,15 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
     };
 
     const handleEditChange = (e) => {
-        const { name, value } = e.target;
-        if (name.startsWith('comprador.')) {
+        const { name, value, type, checked } = e.target;
+        if (name === 'useOtro') {
+            setEditFormData(prev => ({
+                ...prev,
+                useOtro: checked,
+                representante: checked ? '' : prev.representante,
+                comprador: checked ? prev.comprador : { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
+            }));
+        } else if (name.startsWith('comprador.')) {
             const field = name.split('.')[1];
             setEditFormData(prev => ({ ...prev, comprador: { ...prev.comprador, [field]: value } }));
         } else {
@@ -289,6 +426,18 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                     next.fechaInicioAlquiler = '';
                     next.fechaFinAlquiler = '';
                 }
+                if (name === 'estado' && (value === 'vendido' || value === 'alquilado')) {
+                    // Reset representante/otro when changing to sold/rented
+                    if (!prev.representante && !prev.useOtro) {
+                        next.representante = '';
+                        next.useOtro = false;
+                    }
+                }
+                if (name === 'estado' && value === 'stock') {
+                    next.representante = '';
+                    next.useOtro = false;
+                    next.comprador = { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' };
+                }
                 return next;
             });
         }
@@ -296,8 +445,11 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
 
     const handleSaveEdit = async (invItem) => {
         try {
+            const { useOtro, ...rest } = editFormData;
             const payload = {
-                ...editFormData,
+                ...rest,
+                representante: !useOtro ? editFormData.representante || null : null,
+                comprador: useOtro ? editFormData.comprador : { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
                 ...(itemType === 'producto' ? { producto: item._id } : { pieza: item._id })
             };
             await api.put(`/apoderado/inventario/${invItem._id}`, payload);
@@ -335,19 +487,33 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                 </div>
                 <div className="modal-body">
 
-                    {/* ── Agregar Stock Form ──────────────────────────────── */}
+                    {/* ── Agregar / Remover Stock Buttons ──────────────────── */}
                     <div className="stock-add-section">
-                        {!showAddForm ? (
-                            <button
-                                className="create-button"
-                                onClick={() => {
-                                    setShowAddForm(true);
-                                    setSlots([emptySlot(itemAttrs)]);
-                                }}
-                            >
-                                + Agregar Stock
-                            </button>
-                        ) : (
+                        {!showAddForm && !showRemoveForm ? (
+                            <div className="stock-buttons-row">
+                                <button
+                                    className="create-button"
+                                    onClick={() => {
+                                        setShowAddForm(true);
+                                        setShowRemoveForm(false);
+                                        setSlots([emptySlot(itemAttrs)]);
+                                    }}
+                                >
+                                    + Agregar Stock
+                                </button>
+                                <button
+                                    className="remove-stock-button"
+                                    onClick={() => {
+                                        setShowRemoveForm(true);
+                                        setShowAddForm(false);
+                                        setRemoveSearchTerm('');
+                                        setRemoveFoundItem(null);
+                                    }}
+                                >
+                                    - Remover Stock
+                                </button>
+                            </div>
+                        ) : showAddForm ? (
                             <div className="stock-add-form">
                                 <h4>Agregar Stock a {itemName}</h4>
                                 <form onSubmit={handleSubmitStock}>
@@ -474,7 +640,157 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                     </div>
                                 </form>
                             </div>
-                        )}
+                        ) : showRemoveForm ? (
+                            <div className="stock-add-form">
+                                <h4>Remover Stock de {itemName}</h4>
+                                <div className="form-group">
+                                    <label>Buscar por ID de Inventario o Número de Serie</label>
+                                    <div className="input-with-button">
+                                        <input
+                                            type="text"
+                                            value={removeSearchTerm}
+                                            onChange={(e) => setRemoveSearchTerm(e.target.value)}
+                                            placeholder="Ingresa ID de inventario o número de serie"
+                                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleRemoveSearch(); } }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveSearch}
+                                            className="generate-serial-btn"
+                                            disabled={removeSearching}
+                                            title="Buscar"
+                                        >
+                                            🔍
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {removeFoundItem && (
+                                    <form onSubmit={handleSubmitRemove}>
+                                        <div className="remove-found-item">
+                                            <p><strong>Artículo encontrado:</strong> {removeFoundItem.idInventario} — Serie: {removeFoundItem.numeroSerie}</p>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Estado</label>
+                                            <select name="estado" value={removeFormData.estado} onChange={handleRemoveFormChange} required>
+                                                <option value="">Seleccionar estado...</option>
+                                                <option value="vendido">Vendido</option>
+                                                <option value="alquilado">Alquilado</option>
+                                            </select>
+                                        </div>
+
+                                        {removeFormData.estado && (
+                                            <>
+                                                {removeFormData.estado === 'vendido' && (
+                                                    <div className="form-group">
+                                                        <label>Fecha de Venta</label>
+                                                        <input type="date" name="fechaVenta" value={removeFormData.fechaVenta} onChange={handleRemoveFormChange} />
+                                                    </div>
+                                                )}
+                                                {removeFormData.estado === 'alquilado' && (
+                                                    <>
+                                                        <div className="form-group">
+                                                            <label>Inicio Alquiler</label>
+                                                            <input type="date" name="fechaInicioAlquiler" value={removeFormData.fechaInicioAlquiler} onChange={handleRemoveFormChange} />
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Fin Alquiler</label>
+                                                            <input type="date" name="fechaFinAlquiler" value={removeFormData.fechaFinAlquiler} onChange={handleRemoveFormChange} />
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                <div className="form-group">
+                                                    <label>{removeFormData.estado === 'vendido' ? 'Vendido a' : 'Alquilado a'} (Representante Oficial)</label>
+                                                    <select
+                                                        name="representante"
+                                                        value={removeFormData.representante}
+                                                        onChange={handleRemoveFormChange}
+                                                        disabled={removeFormData.useOtro}
+                                                        style={removeFormData.useOtro ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}}
+                                                    >
+                                                        <option value="">Seleccionar representante...</option>
+                                                        {representantes.map(r => (
+                                                            <option key={r._id} value={r._id}>{r.nombre}{r.razonSocial ? ` (${r.razonSocial})` : ''}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                <div className="form-group form-group-checkbox">
+                                                    <label>
+                                                        <input
+                                                            type="checkbox"
+                                                            name="useOtro"
+                                                            checked={removeFormData.useOtro}
+                                                            onChange={handleRemoveFormChange}
+                                                        />
+                                                        Otro
+                                                    </label>
+                                                </div>
+
+                                                {removeFormData.useOtro && (
+                                                    <div className="comprador-fields">
+                                                        <div className="form-group">
+                                                            <label>Nombre Completo</label>
+                                                            <input type="text" name="comprador.nombreCompleto" value={removeFormData.comprador.nombreCompleto} onChange={handleRemoveFormChange} required />
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Correo Electrónico</label>
+                                                            <input type="email" name="comprador.correoElectronico" value={removeFormData.comprador.correoElectronico} onChange={handleRemoveFormChange} />
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Teléfono</label>
+                                                            <input type="tel" name="comprador.telefono" value={removeFormData.comprador.telefono} onChange={handleRemoveFormChange} />
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Dirección</label>
+                                                            <input type="text" name="comprador.direccion" value={removeFormData.comprador.direccion} onChange={handleRemoveFormChange} />
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Provincia</label>
+                                                            <input type="text" name="comprador.provincia" value={removeFormData.comprador.provincia} onChange={handleRemoveFormChange} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+
+                                        <div className="stock-form-actions">
+                                            <button type="submit" disabled={removeSubmitting || !removeFormData.estado}>
+                                                {removeSubmitting ? 'Guardando...' : 'Confirmar'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="cancel-button"
+                                                onClick={() => {
+                                                    setShowRemoveForm(false);
+                                                    setRemoveFoundItem(null);
+                                                    setRemoveSearchTerm('');
+                                                }}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {!removeFoundItem && (
+                                    <div className="stock-form-actions">
+                                        <button
+                                            type="button"
+                                            className="cancel-button"
+                                            onClick={() => {
+                                                setShowRemoveForm(false);
+                                                setRemoveSearchTerm('');
+                                            }}
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
                     </div>
 
                     {/* ── Inventory List ──────────────────────────────────── */}
@@ -647,20 +963,60 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                                                 )}
                                                             </div>
                                                             {(editFormData.estado === 'vendido' || editFormData.estado === 'alquilado') && (
-                                                                <div className="inline-edit-row">
-                                                                    <div className="form-group">
-                                                                        <label>Nombre Comprador/Inquilino</label>
-                                                                        <input type="text" name="comprador.nombreCompleto" value={editFormData.comprador.nombreCompleto} onChange={handleEditChange} />
+                                                                <>
+                                                                    <div className="inline-edit-row">
+                                                                        <div className="form-group">
+                                                                            <label>{editFormData.estado === 'vendido' ? 'Vendido a' : 'Alquilado a'} (Representante Oficial)</label>
+                                                                            <select
+                                                                                name="representante"
+                                                                                value={editFormData.representante}
+                                                                                onChange={handleEditChange}
+                                                                                disabled={editFormData.useOtro}
+                                                                                style={editFormData.useOtro ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}}
+                                                                            >
+                                                                                <option value="">Seleccionar representante...</option>
+                                                                                {representantes.map(r => (
+                                                                                    <option key={r._id} value={r._id}>{r.nombre}{r.razonSocial ? ` (${r.razonSocial})` : ''}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                        <div className="form-group form-group-checkbox" style={{ alignSelf: 'flex-end', paddingBottom: '8px' }}>
+                                                                            <label>
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    name="useOtro"
+                                                                                    checked={editFormData.useOtro}
+                                                                                    onChange={handleEditChange}
+                                                                                />
+                                                                                Otro
+                                                                            </label>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="form-group">
-                                                                        <label>Email</label>
-                                                                        <input type="email" name="comprador.correoElectronico" value={editFormData.comprador.correoElectronico} onChange={handleEditChange} />
-                                                                    </div>
-                                                                    <div className="form-group">
-                                                                        <label>Teléfono</label>
-                                                                        <input type="tel" name="comprador.telefono" value={editFormData.comprador.telefono} onChange={handleEditChange} />
-                                                                    </div>
-                                                                </div>
+                                                                    {editFormData.useOtro && (
+                                                                        <div className="inline-edit-row">
+                                                                            <div className="form-group">
+                                                                                <label>Nombre Completo</label>
+                                                                                <input type="text" name="comprador.nombreCompleto" value={editFormData.comprador.nombreCompleto} onChange={handleEditChange} />
+                                                                            </div>
+                                                                            <div className="form-group">
+                                                                                <label>Email</label>
+                                                                                <input type="email" name="comprador.correoElectronico" value={editFormData.comprador.correoElectronico} onChange={handleEditChange} />
+                                                                            </div>
+                                                                            <div className="form-group">
+                                                                                <label>Teléfono</label>
+                                                                                <input type="tel" name="comprador.telefono" value={editFormData.comprador.telefono} onChange={handleEditChange} />
+                                                                            </div>
+                                                                            <div className="form-group">
+                                                                                <label>Dirección</label>
+                                                                                <input type="text" name="comprador.direccion" value={editFormData.comprador.direccion} onChange={handleEditChange} />
+                                                                            </div>
+                                                                            <div className="form-group">
+                                                                                <label>Provincia</label>
+                                                                                <input type="text" name="comprador.provincia" value={editFormData.comprador.provincia} onChange={handleEditChange} />
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </>
                                                             )}
                                                             <div className="inline-edit-actions">
                                                                 <button type="button" onClick={() => handleSaveEdit(invItem)}>Guardar</button>

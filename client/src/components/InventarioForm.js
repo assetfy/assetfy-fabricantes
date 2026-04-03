@@ -13,10 +13,13 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
         producto: '',
         pieza: '',
         ubicacion: '',
+        representante: '',
         comprador: {
             nombreCompleto: '',
             correoElectronico: '',
             telefono: '',
+            direccion: '',
+            provincia: '',
         },
         atributos: [],
         fechaVenta: '',
@@ -27,6 +30,8 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
     });
     const [registrarDatos, setRegistrarDatos] = useState(false);
     const [ubicaciones, setUbicaciones] = useState([]);
+    const [representantes, setRepresentantes] = useState([]);
+    const [useOtro, setUseOtro] = useState(false);
 
     useEffect(() => {
         const fetchUbicaciones = async () => {
@@ -39,7 +44,18 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                 console.error('Error al obtener ubicaciones:', err);
             }
         };
+        const fetchRepresentantes = async () => {
+            try {
+                const res = await api.get('/apoderado/representantes?estado=Activo');
+                if (res && res.data) {
+                    setRepresentantes(res.data);
+                }
+            } catch (err) {
+                console.error('Error al obtener representantes:', err);
+            }
+        };
         fetchUbicaciones();
+        fetchRepresentantes();
     }, []);
 
     // Get the fabricante ID from the selected producto or pieza
@@ -71,16 +87,21 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
             
             setItemType(isPieza ? 'pieza' : 'producto');
             
+            const hasRepresentante = !!editingItem.representante;
+            const hasManualComprador = !hasRepresentante && editingItem.comprador?.nombreCompleto;
             setFormData({
                 numeroSerie: editingItem.numeroSerie || '',
                 estado: editingItem.estado || 'stock',
                 producto: isProducto && editingItem.producto?._id ? editingItem.producto._id : '',
                 pieza: isPieza && editingItem.pieza?._id ? editingItem.pieza._id : '',
                 ubicacion: editingItem.ubicacion?._id || '',
+                representante: editingItem.representante?._id || '',
                 comprador: {
                     nombreCompleto: editingItem.comprador?.nombreCompleto || '',
                     correoElectronico: editingItem.comprador?.correoElectronico || '',
                     telefono: editingItem.comprador?.telefono || '',
+                    direccion: editingItem.comprador?.direccion || '',
+                    provincia: editingItem.comprador?.provincia || '',
                 },
                 atributos: editingItem.atributos || [],
                 fechaVenta: editingItem.fechaVenta ? new Date(editingItem.fechaVenta).toISOString().split('T')[0] : '',
@@ -89,6 +110,7 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                 registrado: editingItem.registrado || 'No',
 
             });
+            setUseOtro(!!hasManualComprador);
             setRegistrarDatos(editingItem.registrado === 'Si' || (editingItem.comprador?.nombreCompleto && editingItem.comprador?.nombreCompleto.trim() !== ''));
         }
     }, [editingItem]);
@@ -206,7 +228,9 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
         e.preventDefault();
         
         const dataToSend = {
-            ...formData
+            ...formData,
+            representante: !useOtro ? formData.representante || null : null,
+            comprador: useOtro ? formData.comprador : { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' },
         };
         
         const apiCall = editingItem
@@ -221,10 +245,13 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                 estado: 'stock',
                 producto: '',
                 pieza: '',
+                representante: '',
                 comprador: {
                     nombreCompleto: '',
                     correoElectronico: '',
                     telefono: '',
+                    direccion: '',
+                    provincia: '',
                 },
                 atributos: [],
                 fechaVenta: '',
@@ -233,6 +260,7 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                 registrado: 'No',
 
             });
+            setUseOtro(false);
             setRegistrarDatos(false);
             setItemType('producto'); // Reset to producto
             if (onInventarioAdded) {
@@ -433,55 +461,122 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                                         </div>
                                     )}
 
-                                    {formData.estado === 'vendido' && !readOnly && (
-                                        <div className="form-group form-group-checkbox">
-                                            <label>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={registrarDatos}
-                                                    onChange={handleRegistrarChange}
-                                                />
-                                                Registrar
-                                            </label>
-                                        </div>
+                                    {(formData.estado === 'vendido' || formData.estado === 'alquilado') && !readOnly && (
+                                        <>
+                                            <div className="form-group">
+                                                <label>{formData.estado === 'vendido' ? 'Vendido a' : 'Alquilado a'} (Representante Oficial)</label>
+                                                <select
+                                                    name="representante"
+                                                    value={formData.representante}
+                                                    onChange={handleChange}
+                                                    disabled={useOtro}
+                                                    style={useOtro ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}}
+                                                >
+                                                    <option value="">Seleccionar representante...</option>
+                                                    {representantes.map(r => (
+                                                        <option key={r._id} value={r._id}>{r.nombre}{r.razonSocial ? ` (${r.razonSocial})` : ''}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="form-group form-group-checkbox">
+                                                <label>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={useOtro}
+                                                        onChange={(e) => {
+                                                            setUseOtro(e.target.checked);
+                                                            if (e.target.checked) {
+                                                                setFormData(prev => ({ ...prev, representante: '' }));
+                                                            } else {
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    comprador: { nombreCompleto: '', correoElectronico: '', telefono: '', direccion: '', provincia: '' }
+                                                                }));
+                                                            }
+                                                        }}
+                                                    />
+                                                    Otro
+                                                </label>
+                                            </div>
+                                            {useOtro && (
+                                                <div className="comprador-fields">
+                                                    <h4>Información del Comprador/Inquilino</h4>
+                                                    <div className="form-group">
+                                                        <label>Nombre Completo</label>
+                                                        <input
+                                                            type="text"
+                                                            name="comprador.nombreCompleto"
+                                                            value={formData.comprador.nombreCompleto}
+                                                            onChange={handleChange}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Correo Electrónico</label>
+                                                        <input
+                                                            type="email"
+                                                            name="comprador.correoElectronico"
+                                                            value={formData.comprador.correoElectronico}
+                                                            onChange={handleChange}
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Teléfono</label>
+                                                        <input
+                                                            type="tel"
+                                                            name="comprador.telefono"
+                                                            value={formData.comprador.telefono}
+                                                            onChange={handleChange}
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Dirección</label>
+                                                        <input
+                                                            type="text"
+                                                            name="comprador.direccion"
+                                                            value={formData.comprador.direccion}
+                                                            onChange={handleChange}
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Provincia</label>
+                                                        <input
+                                                            type="text"
+                                                            name="comprador.provincia"
+                                                            value={formData.comprador.provincia}
+                                                            onChange={handleChange}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
 
-                                    {((formData.estado === 'vendido' && registrarDatos) || (formData.estado === 'alquilado')) && (
+                                    {(formData.estado === 'vendido' || formData.estado === 'alquilado') && readOnly && (
                                         <div className="comprador-fields">
                                             <h4>Información del Comprador/Inquilino</h4>
-                                            <div className="form-group">
-                                                <label>Nombre Completo</label>
-                                                <input
-                                                    type="text"
-                                                    name="comprador.nombreCompleto"
-                                                    value={formData.comprador.nombreCompleto}
-                                                    onChange={handleChange}
-                                                    required={((formData.estado === 'vendido' && registrarDatos) || formData.estado === 'alquilado')}
-                                                    readOnly={readOnly}
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Correo Electrónico</label>
-                                                <input
-                                                    type="email"
-                                                    name="comprador.correoElectronico"
-                                                    value={formData.comprador.correoElectronico}
-                                                    onChange={handleChange}
-                                                    required={((formData.estado === 'vendido' && registrarDatos) || formData.estado === 'alquilado')}
-                                                    readOnly={readOnly}
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Teléfono</label>
-                                                <input
-                                                    type="tel"
-                                                    name="comprador.telefono"
-                                                    value={formData.comprador.telefono}
-                                                    onChange={handleChange}
-                                                    required={((formData.estado === 'vendido' && registrarDatos) || formData.estado === 'alquilado')}
-                                                    readOnly={readOnly}
-                                                />
-                                            </div>
+                                            {formData.representante && (
+                                                <div className="form-group">
+                                                    <label>Representante</label>
+                                                    <input type="text" value={representantes.find(r => r._id === formData.representante)?.nombre || formData.representante} readOnly />
+                                                </div>
+                                            )}
+                                            {formData.comprador?.nombreCompleto && (
+                                                <>
+                                                    <div className="form-group">
+                                                        <label>Nombre Completo</label>
+                                                        <input type="text" value={formData.comprador.nombreCompleto} readOnly />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Correo Electrónico</label>
+                                                        <input type="email" value={formData.comprador.correoElectronico} readOnly />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Teléfono</label>
+                                                        <input type="tel" value={formData.comprador.telefono} readOnly />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </>

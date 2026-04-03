@@ -1680,7 +1680,8 @@ router.get('/inventario', auth, async (req, res) => {
                 populate: { path: 'fabricante' }
             })
             .populate('pieza')
-            .populate('ubicacion');
+            .populate('ubicacion')
+            .populate('representante');
 
         res.json(inventario);
     } catch (err) {
@@ -1766,7 +1767,7 @@ router.get('/inventario/:id', auth, async (req, res) => {
 // @access  Privado (Apoderado)
 router.put('/inventario/:id', auth, async (req, res) => {
 
-    const { numeroSerie, estado, producto, pieza, comprador, atributos, fechaVenta, ubicacion } = req.body;
+    const { numeroSerie, estado, producto, pieza, comprador, atributos, fechaVenta, ubicacion, representante, fechaInicioAlquiler, fechaFinAlquiler } = req.body;
 
     try {
         const item = await Inventario.findById(req.params.id);
@@ -1809,7 +1810,8 @@ router.put('/inventario/:id', auth, async (req, res) => {
         item.comprador = comprador;
         item.atributos = atributos || [];
         item.ubicacion = ubicacion || undefined;
-        
+        item.representante = representante || null;
+
         // Handle fechaVenta logic
         if (fechaVenta) {
             item.fechaVenta = fechaVenta;
@@ -1819,6 +1821,12 @@ router.put('/inventario/:id', auth, async (req, res) => {
         } else if (estado !== 'vendido') {
             // Clear fechaVenta if not vendido
             item.fechaVenta = undefined;
+        }
+
+        // Handle rental dates
+        if (estado === 'alquilado') {
+            if (fechaInicioAlquiler) item.fechaInicioAlquiler = fechaInicioAlquiler;
+            if (fechaFinAlquiler) item.fechaFinAlquiler = fechaFinAlquiler;
         }
 
         await item.save();
