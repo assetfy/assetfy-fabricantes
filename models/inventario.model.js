@@ -122,6 +122,12 @@ const inventarioSchema = new Schema({
         ref: 'Ubicacion',
         required: false
     },
+    representante: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Representante',
+        required: false,
+        default: null
+    },
     atributos: [{
         nombre: {
             type: String,
