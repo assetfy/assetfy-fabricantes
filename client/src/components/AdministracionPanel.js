@@ -578,7 +578,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                             className="create-button"
                                             onClick={() => setShowCreateUbicacionModal(true)}
                                         >
-                                            Crear Ubicación / Depósito
+                                            +
                                         </button>
                                     </div>
                                 </div>
@@ -600,7 +600,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                             className="create-button"
                                             onClick={() => setShowCreateMarcaModal(true)}
                                         >
-                                            Crear Marca
+                                            +
                                         </button>
                                     </div>
                                 </div>
@@ -625,7 +625,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                             className="create-button"
                                             onClick={() => setShowCreateGarantiaModal(true)}
                                         >
-                                            Crear Tipo de Garantía
+                                            +
                                         </button>
                                     </div>
                                 </div>

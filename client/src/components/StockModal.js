@@ -499,7 +499,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                         setSlots([emptySlot(itemAttrs)]);
                                     }}
                                 >
-                                    + Agregar Stock
+                                    +Stock
                                 </button>
                                 <button
                                     className="remove-stock-button"
@@ -510,7 +510,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                         setRemoveFoundItem(null);
                                     }}
                                 >
-                                    - Remover Stock
+                                    -Stock
                                 </button>
                             </div>
                         ) : showAddForm ? (
