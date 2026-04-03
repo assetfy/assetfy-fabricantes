@@ -163,7 +163,7 @@ const MetricasPanel = () => {
 
             {/* Geolocation Map Section */}
             <div className="section-header" style={{ marginTop: '2rem' }}>
-                <h3>Mapa de Geolocalización</h3>
+                <h3>Representantes, sucursales y productos registrados</h3>
             </div>
             <div style={{ marginTop: '1.5rem' }}>
                 <MapaGeolocalizacion />

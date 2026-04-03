@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../api';
 import 'leaflet/dist/leaflet.css';
@@ -37,10 +37,34 @@ const iconRepresentanteCentral = createSvgIcon('#DC2626', true);  // Red with st
 const iconSucursal = createSvgIcon('#DC2626', false);              // Red normal (sucursal)
 const iconProducto = createSvgIcon('#2563EB', false);              // Blue
 
+// Helper component to fly to a location and open popup
+const FlyToMarker = ({ target, onDone }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (target) {
+            map.flyTo([target.lat, target.lng], 15, { duration: 1.2 });
+            // After fly animation, open the popup
+            const timeout = setTimeout(() => {
+                if (target.markerRef && target.markerRef.current) {
+                    target.markerRef.current.openPopup();
+                }
+                onDone();
+            }, 1300);
+            return () => clearTimeout(timeout);
+        }
+    }, [target, map, onDone]);
+    return null;
+};
+
 const MapaGeolocalizacion = () => {
     const [mapData, setMapData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showResults, setShowResults] = useState(false);
+    const [flyTarget, setFlyTarget] = useState(null);
+    const searchRef = useRef(null);
+    const markerRefs = useRef({});
 
     useEffect(() => {
         const fetchMapData = async () => {
@@ -55,6 +79,100 @@ const MapaGeolocalizacion = () => {
             }
         };
         fetchMapData();
+    }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setShowResults(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Get or create a marker ref by key
+    const getMarkerRef = useCallback((key) => {
+        if (!markerRefs.current[key]) {
+            markerRefs.current[key] = React.createRef();
+        }
+        return markerRefs.current[key];
+    }, []);
+
+    // Build searchable index from map data
+    const searchIndex = useMemo(() => {
+        if (!mapData) return [];
+        const items = [];
+
+        (mapData.representantes || []).forEach(rep => {
+            items.push({
+                id: `rep-${rep._id}`,
+                type: 'central',
+                typeLabel: 'Sede Central',
+                title: rep.razonSocial,
+                subtitle: rep.nombre,
+                address: rep.direccion,
+                lat: rep.coordenadas.lat,
+                lng: rep.coordenadas.lng,
+                markerKey: `rep-${rep._id}`
+            });
+
+            (rep.sucursales || []).forEach((suc, idx) => {
+                items.push({
+                    id: `suc-${rep._id}-${idx}`,
+                    type: 'sucursal',
+                    typeLabel: 'Sucursal',
+                    title: suc.nombre,
+                    subtitle: rep.razonSocial,
+                    address: suc.direccion,
+                    lat: suc.coordenadas.lat,
+                    lng: suc.coordenadas.lng,
+                    markerKey: `suc-${rep._id}-${idx}`
+                });
+            });
+        });
+
+        (mapData.productosRegistrados || []).forEach(prod => {
+            items.push({
+                id: `prod-${prod._id}`,
+                type: 'producto',
+                typeLabel: 'Producto Registrado',
+                title: prod.nombreProducto,
+                subtitle: prod.comprador,
+                address: prod.direccion + (prod.provincia ? `, ${prod.provincia}` : ''),
+                lat: prod.coordenadas.lat,
+                lng: prod.coordenadas.lng,
+                markerKey: `prod-${prod._id}`
+            });
+        });
+
+        return items;
+    }, [mapData]);
+
+    // Filter results based on query
+    const filteredResults = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase().trim();
+        return searchIndex.filter(item =>
+            (item.title && item.title.toLowerCase().includes(q)) ||
+            (item.subtitle && item.subtitle.toLowerCase().includes(q)) ||
+            (item.address && item.address.toLowerCase().includes(q))
+        ).slice(0, 8);
+    }, [searchQuery, searchIndex]);
+
+    const handleSelectResult = useCallback((item) => {
+        setSearchQuery(item.title);
+        setShowResults(false);
+        setFlyTarget({
+            lat: item.lat,
+            lng: item.lng,
+            markerRef: markerRefs.current[item.markerKey]
+        });
+    }, []);
+
+    const handleClearFlyTarget = useCallback(() => {
+        setFlyTarget(null);
     }, []);
 
     if (loading) {
@@ -91,6 +209,60 @@ const MapaGeolocalizacion = () => {
 
     return (
         <div className="mapa-container">
+            {/* Search bar */}
+            <div className="mapa-search-wrapper" ref={searchRef}>
+                <div className="mapa-search-input-container">
+                    <svg className="mapa-search-icon" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                    </svg>
+                    <input
+                        type="text"
+                        className="mapa-search-input"
+                        placeholder="Buscar representante, sucursal, dirección o usuario..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setShowResults(true);
+                        }}
+                        onFocus={() => { if (searchQuery.trim()) setShowResults(true); }}
+                    />
+                    {searchQuery && (
+                        <button
+                            className="mapa-search-clear"
+                            onClick={() => { setSearchQuery(''); setShowResults(false); }}
+                            title="Limpiar búsqueda"
+                        >
+                            &times;
+                        </button>
+                    )}
+                </div>
+                {showResults && filteredResults.length > 0 && (
+                    <ul className="mapa-search-results">
+                        {filteredResults.map(item => (
+                            <li
+                                key={item.id}
+                                className="mapa-search-result-item"
+                                onMouseDown={() => handleSelectResult(item)}
+                            >
+                                <div className="mapa-search-result-info">
+                                    <span className="mapa-search-result-title">{item.title}</span>
+                                    <span className="mapa-search-result-subtitle">{item.subtitle}</span>
+                                    {item.address && (
+                                        <span className="mapa-search-result-address">{item.address}</span>
+                                    )}
+                                </div>
+                                <span className={`mapa-search-result-badge ${item.type}`}>{item.typeLabel}</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                {showResults && searchQuery.trim() && filteredResults.length === 0 && (
+                    <ul className="mapa-search-results">
+                        <li className="mapa-search-no-results">No se encontraron resultados</li>
+                    </ul>
+                )}
+            </div>
+
             <MapContainer
                 center={[-38.4, -63.6]}
                 zoom={4}
@@ -102,10 +274,13 @@ const MapaGeolocalizacion = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
+                <FlyToMarker target={flyTarget} onDone={handleClearFlyTarget} />
+
                 {/* Representantes - Central pins (red with star) */}
                 {mapData.representantes.map(rep => (
                     <React.Fragment key={rep._id}>
                         <Marker
+                            ref={getMarkerRef(`rep-${rep._id}`)}
                             position={[rep.coordenadas.lat, rep.coordenadas.lng]}
                             icon={iconRepresentanteCentral}
                         >
@@ -136,6 +311,7 @@ const MapaGeolocalizacion = () => {
                         {(rep.sucursales || []).map((suc, idx) => (
                             <Marker
                                 key={`${rep._id}-suc-${idx}`}
+                                ref={getMarkerRef(`suc-${rep._id}-${idx}`)}
                                 position={[suc.coordenadas.lat, suc.coordenadas.lng]}
                                 icon={iconSucursal}
                             >
@@ -159,6 +335,7 @@ const MapaGeolocalizacion = () => {
                 {mapData.productosRegistrados.map(prod => (
                     <Marker
                         key={prod._id}
+                        ref={getMarkerRef(`prod-${prod._id}`)}
                         position={[prod.coordenadas.lat, prod.coordenadas.lng]}
                         icon={iconProducto}
                     >
