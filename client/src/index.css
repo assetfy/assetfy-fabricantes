@@ -2127,6 +2127,73 @@ td .action-buttons button {
     margin-top: auto;
 }
 
+/* ===== Stock modal: serial number buttons ===== */
+.input-with-button {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.generate-serial-btn,
+.input-with-button .action-btn.delete-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    background: var(--primary-purple);
+    color: #fff;
+    border: 2px solid var(--primary-purple);
+    margin-right: 0;
+    flex-shrink: 0;
+}
+
+.generate-serial-btn:hover,
+.input-with-button .action-btn.delete-btn:hover {
+    background: #4a2275 !important;
+    color: #fff !important;
+    border-color: #4a2275;
+}
+
+/* ===== Stock modal: form action buttons ===== */
+.stock-form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+}
+
+.stock-form-actions button {
+    background: var(--primary-purple);
+    color: #fff;
+    border: 2px solid var(--primary-purple);
+    font-size: 0.85rem;
+    padding: 0.55rem 1rem;
+}
+
+.stock-form-actions button:hover {
+    background: #4a2275;
+    color: #fff;
+    border-color: #4a2275;
+}
+
+.stock-form-actions button.cancel-button {
+    background: #fff;
+    color: var(--primary-purple);
+}
+
+.stock-form-actions button.cancel-button:hover {
+    background: var(--primary-purple);
+    color: #fff;
+}
+
 .marca-actions button {
     flex: 1;
     padding: 0.5rem;
