@@ -502,7 +502,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                     +Stock
                                 </button>
                                 <button
-                                    className="remove-stock-button"
+                                    className="create-button"
                                     onClick={() => {
                                         setShowRemoveForm(true);
                                         setShowAddForm(false);
