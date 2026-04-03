@@ -9,10 +9,10 @@
   --primary-purple: #5C2D91;
   --primary-purple-light: #7B4DB4;
   --primary-purple-lighter: #9B6FD4;
-  --bg-gray: #EDE7F6;
-  --bg-purple-soft: #EDE7F6;
-  --action-green: #28A745;
-  --action-green-hover: #218838;
+  --bg-gray: #FFFFFF;
+  --bg-purple-soft: #FFFFFF;
+  --action-green: #5C2D91;
+  --action-green-hover: #4a2278;
   --card-white: #FFFFFF;
   --text-dark: #2C3E50;
   --text-gray: #6C757D;
@@ -1412,22 +1412,24 @@ table td:first-child {
 
 /* Button styling */
 .create-button {
-    background: var(--action-green);
+    background: var(--primary-purple);
     color: white;
     border: none;
-    padding: 0.6rem 1.2rem;
+    padding: 0.35rem 0.7rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    box-shadow: 0 2px 4px rgba(92, 45, 145, 0.2);
+    min-width: 32px;
+    text-align: center;
 }
 
 .create-button:hover {
-    background: var(--action-green-hover);
+    background: var(--primary-purple-light);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 8px rgba(92, 45, 145, 0.3);
 }
 
 /* Toast notification styles */
@@ -1619,30 +1621,31 @@ table td:first-child {
 }
 
 .tab-button {
-    background: linear-gradient(135deg, #e3e8f0 0%, #d1d8e0 100%);
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede0fb 100%);
     border: none;
-    padding: 12px 20px;
+    padding: 10px 16px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #495057;
     border-radius: 10px 10px 0 0;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(92, 45, 145, 0.08);
 }
 
 .tab-button:hover {
-    background: linear-gradient(135deg, #a8b2c0 0%, #8d98a8 100%);
+    background: linear-gradient(135deg, #ede0fb 0%, #ddd0f5 100%);
     color: #2c3e50;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(92, 45, 145, 0.15);
 }
 
 .tab-button.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #7B4DB4 0%, #5C2D91 100%);
     color: white;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(92, 45, 145, 0.4);
+    animation: breathe 3s ease-in-out infinite;
 }
 
 .tabs-content {
@@ -2363,10 +2366,10 @@ td .action-buttons button {
 }
 
 .dashboard-box {
-    background: var(--card-white);
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede0fb 100%);
+    border: 1px solid rgba(92, 45, 145, 0.12);
     border-radius: 8px;
-    padding: 1.25rem;
+    padding: 1rem;
     border-top: 3px solid var(--primary-purple);
     display: flex;
     flex-direction: column;
@@ -2481,57 +2484,72 @@ td .action-buttons button {
     }
 }
 
+/* Breathing animation for counter/filter boxes */
+@keyframes breathe {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(92, 45, 145, 0.10);
+    }
+    50% {
+        transform: scale(1.015);
+        box-shadow: 0 4px 16px rgba(92, 45, 145, 0.22);
+    }
+}
+
 /* Representantes Counter Boxes */
 .representantes-counters {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    gap: 1rem;
     margin-bottom: 1.5rem;
 }
 
 .representante-counter-box {
-    background: var(--card-white, #fff);
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-top: 3px solid var(--border-color, #e0e0e0);
-    padding: 1.25rem;
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede0fb 100%);
+    border: 1px solid rgba(92, 45, 145, 0.12);
+    border-top: 3px solid var(--primary-purple-lighter, #9B6FD4);
+    padding: 0.85rem;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    animation: breathe 3s ease-in-out infinite;
 }
 
 .representante-counter-box:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(92, 45, 145, 0.18);
+    animation-play-state: paused;
 }
 
 .representante-counter-box.active {
+    background: linear-gradient(135deg, #ede0fb 0%, #ddd0f5 100%);
     border-top-color: var(--primary-purple, #5C2D91);
-    box-shadow: 0 2px 8px rgba(92, 45, 145, 0.15);
+    box-shadow: 0 2px 8px rgba(92, 45, 145, 0.20);
     border-bottom: 3px solid var(--primary-purple, #5C2D91);
 }
 
 .representante-counter-title {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-dark, #333);
     text-align: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .representante-counter-number {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
     text-align: center;
 }
 
 .representante-counter-subtitle {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-gray, #888);
     text-align: center;
-    margin-top: 0.25rem;
+    margin-top: 0.2rem;
 }
 
 /* Counter box sub-details */
@@ -2936,22 +2954,22 @@ a.sidebar-sub-item.active {
 }
 
 .inventory-create-btn {
-    background: var(--action-green);
+    background: var(--primary-purple);
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.35rem 0.7rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    box-shadow: 0 2px 4px rgba(92, 45, 145, 0.2);
 }
 
 .inventory-create-btn:hover {
-    background: var(--action-green-hover);
+    background: var(--primary-purple-light);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 8px rgba(92, 45, 145, 0.3);
 }
 
 .inventory-chart-container {

@@ -400,7 +400,7 @@ const ApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreateProductModal(true)}
                                     >
-                                        Crear Producto
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -421,7 +421,7 @@ const ApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreatePiezaModal(true)}
                                     >
-                                        Crear Pieza
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -442,7 +442,7 @@ const ApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreateInventarioModal(true)}
                                     >
-                                        Agregar al Inventario
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -463,7 +463,7 @@ const ApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => { setPrefillRepresentante(null); setShowCreateRepresentanteModal(true); }}
                                     >
-                                        Crear Representante
+                                        +
                                     </button>
                                 </div>
                             </div>

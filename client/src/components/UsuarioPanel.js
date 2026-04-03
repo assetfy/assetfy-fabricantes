@@ -182,7 +182,7 @@ const UsuarioPanel = () => {
                                         className="create-button register-button"
                                         onClick={() => setShowRegisterBienModal(true)}
                                     >
-                                        Registrar Bien
+                                        +
                                     </button>
                                 </div>
                             </div>

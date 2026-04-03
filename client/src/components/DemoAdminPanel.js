@@ -408,7 +408,7 @@ const DemoAdminPanel = () => {
                                                 className="create-button"
                                                 onClick={() => setShowCreateUserModal(true)}
                                             >
-                                                Crear Usuario
+                                                +
                                             </button>
                                         </div>
                                     </div>
@@ -427,7 +427,7 @@ const DemoAdminPanel = () => {
                                                 className="create-button"
                                                 onClick={() => setShowCreateFabricanteModal(true)}
                                             >
-                                                Crear Fabricante
+                                                +
                                             </button>
                                         </div>
                                     </div>

@@ -1438,7 +1438,7 @@ const DemoApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreateProductModal(true)}
                                     >
-                                        Crear Producto
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -1463,7 +1463,7 @@ const DemoApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreateInventarioModal(true)}
                                     >
-                                        Agregar al Inventario
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -1482,7 +1482,7 @@ const DemoApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreateRepresentanteModal(true)}
                                     >
-                                        Crear Representante
+                                        +
                                     </button>
                                 </div>
                             </div>
@@ -1506,7 +1506,7 @@ const DemoApoderadoPanel = () => {
                                         className="create-button"
                                         onClick={() => setShowCreateGarantiaModal(true)}
                                     >
-                                        Crear Garantía
+                                        +
                                     </button>
                                 </div>
                             </div>
