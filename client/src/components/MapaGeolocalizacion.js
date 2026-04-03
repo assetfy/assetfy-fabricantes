@@ -141,7 +141,9 @@ const MapaGeolocalizacion = () => {
                             >
                                 <Popup>
                                     <div className="mapa-popup">
-                                        <strong>{suc.nombre}</strong>
+                                        <strong>{rep.razonSocial}</strong>
+                                        <br />
+                                        <span style={{ color: '#666' }}>{suc.nombre}</span>
                                         <br />
                                         <small>{suc.direccion}</small>
                                         <br />
