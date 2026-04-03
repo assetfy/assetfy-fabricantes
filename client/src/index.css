@@ -3130,6 +3130,11 @@ a.sidebar-sub-item.active {
     color: #991B1B;
 }
 
+.mapa-popup-badge.sucursal {
+    background: #FECACA;
+    color: #991B1B;
+}
+
 .mapa-popup-badge.producto {
     background: #DBEAFE;
     color: #2563EB;
@@ -3174,10 +3179,101 @@ a.sidebar-sub-item.active {
     color: #FFD700;
 }
 
-.mapa-leyenda-dot.cobertura {
+.mapa-leyenda-dot.sucursal {
     background: #DC2626;
 }
 
 .mapa-leyenda-dot.producto {
     background: #2563EB;
+}
+
+/* Sucursales tab styles */
+.sucursales-form-section {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.sucursales-form-section h4 {
+    margin: 0 0 0.75rem 0;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.sucursales-form-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn-add-sucursal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.btn-add-sucursal:hover {
+    opacity: 0.9;
+}
+
+.btn-cancel-sucursal {
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.btn-cancel-sucursal:hover {
+    background: #d1d5db;
+}
+
+.sucursales-list {
+    margin-top: 1rem;
+}
+
+.sucursales-list h4 {
+    margin: 0 0 0.75rem 0;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.sucursal-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.sucursal-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.85rem;
+}
+
+.sucursal-card-info strong {
+    color: #1f2937;
+    font-size: 0.9rem;
+}
+
+.sucursal-card-info span {
+    color: #6b7280;
+}
+
+.sucursal-card-actions {
+    display: flex;
+    gap: 0.25rem;
 }

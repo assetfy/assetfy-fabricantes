@@ -19,7 +19,8 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
         correoAdicional: '',
         sitioWeb: '',
         estado: 'Activo',
-        marcasRepresentadas: []
+        marcasRepresentadas: [],
+        sucursales: []
     });
     const [regions, setRegions] = useState({ provincias: [], localidades: {} });
     const [availableLocalidades, setAvailableLocalidades] = useState([]);
@@ -27,6 +28,8 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
     const [localidadSearchTerm, setLocalidadSearchTerm] = useState('');
     const [selectedFabricantes, setSelectedFabricantes] = useState([]);
     const [availableMarcas, setAvailableMarcas] = useState([]);
+    const [editingSucursalIndex, setEditingSucursalIndex] = useState(null);
+    const [sucursalForm, setSucursalForm] = useState({ nombre: '', direccion: '', telefono: '', correo: '' });
     const { showSuccess, showError } = useNotification();
 
     useEffect(() => {
@@ -110,7 +113,15 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
                 correoAdicional: representante.correoAdicional || '',
                 sitioWeb: representante.sitioWeb || '',
                 estado: representante.estado || 'Activo',
-                marcasRepresentadas: marcasIds
+                marcasRepresentadas: marcasIds,
+                sucursales: (representante.sucursales || []).map(s => ({
+                    _id: s._id,
+                    nombre: s.nombre || '',
+                    direccion: s.direccion || '',
+                    telefono: s.telefono || '',
+                    correo: s.correo || '',
+                    coordenadas: s.coordenadas || { lat: null, lng: null }
+                }))
             });
 
             // Set selected fabricantes based on existing marcas
@@ -190,6 +201,44 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
             ...formData,
             marcasRepresentadas: newMarcas
         });
+    };
+
+    const handleAddSucursal = () => {
+        if (!sucursalForm.nombre || !sucursalForm.direccion) {
+            showError('El nombre y la dirección de la sucursal son obligatorios.');
+            return;
+        }
+        if (editingSucursalIndex !== null) {
+            const updated = [...formData.sucursales];
+            updated[editingSucursalIndex] = { ...updated[editingSucursalIndex], ...sucursalForm };
+            setFormData({ ...formData, sucursales: updated });
+            setEditingSucursalIndex(null);
+        } else {
+            setFormData({ ...formData, sucursales: [...formData.sucursales, { ...sucursalForm }] });
+        }
+        setSucursalForm({ nombre: '', direccion: '', telefono: '', correo: '' });
+    };
+
+    const handleEditSucursal = (index) => {
+        const suc = formData.sucursales[index];
+        setSucursalForm({ nombre: suc.nombre, direccion: suc.direccion, telefono: suc.telefono, correo: suc.correo });
+        setEditingSucursalIndex(index);
+    };
+
+    const handleDeleteSucursal = (index) => {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar la sucursal "${formData.sucursales[index].nombre}"?`)) {
+            const updated = formData.sucursales.filter((_, i) => i !== index);
+            setFormData({ ...formData, sucursales: updated });
+            if (editingSucursalIndex === index) {
+                setEditingSucursalIndex(null);
+                setSucursalForm({ nombre: '', direccion: '', telefono: '', correo: '' });
+            }
+        }
+    };
+
+    const handleCancelEditSucursal = () => {
+        setEditingSucursalIndex(null);
+        setSucursalForm({ nombre: '', direccion: '', telefono: '', correo: '' });
     };
 
     const handleSubmit = async (e) => {
@@ -439,6 +488,86 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
                                             Seleccionadas: {formData.cobertura.localidades.join(', ')}
                                         </div>
                                     </div>
+                                </>
+                            )
+                        },
+                        {
+                            label: "Sucursales",
+                            content: (
+                                <>
+                                    <div className="sucursales-form-section">
+                                        <h4>{editingSucursalIndex !== null ? 'Editar Sucursal' : 'Agregar Sucursal'}</h4>
+                                        <div className="form-group">
+                                            <label>Nombre Sucursal *</label>
+                                            <input
+                                                type="text"
+                                                value={sucursalForm.nombre}
+                                                onChange={(e) => setSucursalForm({ ...sucursalForm, nombre: e.target.value })}
+                                                placeholder="Nombre de la sucursal"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Dirección *</label>
+                                            <input
+                                                type="text"
+                                                value={sucursalForm.direccion}
+                                                onChange={(e) => setSucursalForm({ ...sucursalForm, direccion: e.target.value })}
+                                                placeholder="Dirección de la sucursal"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Teléfono</label>
+                                            <input
+                                                type="text"
+                                                value={sucursalForm.telefono}
+                                                onChange={(e) => setSucursalForm({ ...sucursalForm, telefono: e.target.value })}
+                                                placeholder="Teléfono de la sucursal"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Correo</label>
+                                            <input
+                                                type="email"
+                                                value={sucursalForm.correo}
+                                                onChange={(e) => setSucursalForm({ ...sucursalForm, correo: e.target.value })}
+                                                placeholder="Correo de la sucursal"
+                                            />
+                                        </div>
+                                        <div className="sucursales-form-buttons">
+                                            <button type="button" onClick={handleAddSucursal} className="btn-add-sucursal">
+                                                {editingSucursalIndex !== null ? 'Guardar Cambios' : 'Agregar Sucursal'}
+                                            </button>
+                                            {editingSucursalIndex !== null && (
+                                                <button type="button" onClick={handleCancelEditSucursal} className="btn-cancel-sucursal">
+                                                    Cancelar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {formData.sucursales.length > 0 && (
+                                        <div className="sucursales-list">
+                                            <h4>Sucursales ({formData.sucursales.length})</h4>
+                                            {formData.sucursales.map((suc, idx) => (
+                                                <div key={suc._id || idx} className="sucursal-card">
+                                                    <div className="sucursal-card-info">
+                                                        <strong>{suc.nombre}</strong>
+                                                        <span>{suc.direccion}</span>
+                                                        {suc.telefono && <span>Tel: {suc.telefono}</span>}
+                                                        {suc.correo && <span>Correo: {suc.correo}</span>}
+                                                    </div>
+                                                    <div className="sucursal-card-actions">
+                                                        <button type="button" onClick={() => handleEditSucursal(idx)} className="action-btn edit-btn" title="Editar">
+                                                            ✏️
+                                                        </button>
+                                                        <button type="button" onClick={() => handleDeleteSucursal(idx)} className="action-btn delete-btn" title="Eliminar">
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </>
                             )
                         }
