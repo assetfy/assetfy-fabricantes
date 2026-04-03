@@ -34,7 +34,7 @@ const createSvgIcon = (color, hasStarOrLabel) => {
 };
 
 const iconRepresentanteCentral = createSvgIcon('#DC2626', true);  // Red with star
-const iconRepresentanteCobertura = createSvgIcon('#DC2626', false); // Red normal
+const iconSucursal = createSvgIcon('#DC2626', false);              // Red normal (sucursal)
 const iconProducto = createSvgIcon('#2563EB', false);              // Blue
 
 const MapaGeolocalizacion = () => {
@@ -118,24 +118,34 @@ const MapaGeolocalizacion = () => {
                                     <small>{rep.direccion}</small>
                                     <br />
                                     <span className="mapa-popup-badge central">Sede Central</span>
+                                    {rep.cobertura && rep.cobertura.length > 0 && (
+                                        <div style={{ marginTop: '6px', fontSize: '12px' }}>
+                                            <strong>Áreas de Cobertura:</strong>
+                                            <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                                                {rep.cobertura.map((prov, idx) => (
+                                                    <li key={idx}>{prov}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             </Popup>
                         </Marker>
 
-                        {/* Coverage pins (red normal) */}
-                        {rep.cobertura.map((cob, idx) => (
+                        {/* Sucursal pins (red normal) */}
+                        {(rep.sucursales || []).map((suc, idx) => (
                             <Marker
-                                key={`${rep._id}-cob-${idx}`}
-                                position={[cob.lat, cob.lng]}
-                                icon={iconRepresentanteCobertura}
+                                key={`${rep._id}-suc-${idx}`}
+                                position={[suc.coordenadas.lat, suc.coordenadas.lng]}
+                                icon={iconSucursal}
                             >
                                 <Popup>
                                     <div className="mapa-popup">
-                                        <strong>{rep.nombre}</strong>
+                                        <strong>{suc.nombre}</strong>
                                         <br />
-                                        <small>Cobertura: {cob.provincia}</small>
+                                        <small>{suc.direccion}</small>
                                         <br />
-                                        <span className="mapa-popup-badge cobertura">Zona de cobertura</span>
+                                        <span className="mapa-popup-badge sucursal">Sucursal</span>
                                     </div>
                                 </Popup>
                             </Marker>
@@ -169,11 +179,11 @@ const MapaGeolocalizacion = () => {
             <div className="mapa-leyenda">
                 <div className="mapa-leyenda-item">
                     <span className="mapa-leyenda-dot central-star"></span>
-                    Representante (Sede Central)
+                    Sede Central
                 </div>
                 <div className="mapa-leyenda-item">
-                    <span className="mapa-leyenda-dot cobertura"></span>
-                    Representante (Cobertura)
+                    <span className="mapa-leyenda-dot sucursal"></span>
+                    Sucursal
                 </div>
                 <div className="mapa-leyenda-item">
                     <span className="mapa-leyenda-dot producto"></span>

@@ -74,6 +74,16 @@ const representanteSchema = new Schema({
     marcasRepresentadas: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Marca'
+    }],
+    sucursales: [{
+        nombre: { type: String, required: true, trim: true },
+        direccion: { type: String, required: true, trim: true },
+        telefono: { type: String, trim: true },
+        correo: { type: String, trim: true, lowercase: true },
+        coordenadas: {
+            lat: { type: Number, default: null },
+            lng: { type: Number, default: null }
+        }
     }]
 }, {
     timestamps: true,

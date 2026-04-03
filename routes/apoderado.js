@@ -2211,28 +2211,26 @@ router.get('/mapa', auth, async (req, res) => {
                 { marcasRepresentadas: { $in: marcaIds } }
             ],
             estado: 'Activo'
-        }).select('razonSocial nombre direccion coordenadas cobertura');
+        }).select('razonSocial nombre direccion coordenadas cobertura sucursales');
 
         // Build representantes map data
         const representantesData = representantes
             .filter(rep => rep.coordenadas && rep.coordenadas.lat && rep.coordenadas.lng)
             .map(rep => {
-                // Build coverage pins from provinces
-                const coberturaPins = (rep.cobertura?.provincias || [])
-                    .map(provincia => {
-                        const coords = geocodeProvince(provincia);
-                        if (!coords) return null;
-                        return { provincia, lat: coords.lat, lng: coords.lng };
-                    })
-                    .filter(Boolean);
-
                 return {
                     _id: rep._id,
                     nombre: rep.nombre,
                     razonSocial: rep.razonSocial,
                     direccion: rep.direccion,
                     coordenadas: rep.coordenadas,
-                    cobertura: coberturaPins
+                    cobertura: rep.cobertura?.provincias || [],
+                    sucursales: (rep.sucursales || [])
+                        .filter(s => s.coordenadas && s.coordenadas.lat && s.coordenadas.lng)
+                        .map(s => ({
+                            nombre: s.nombre,
+                            direccion: s.direccion,
+                            coordenadas: s.coordenadas
+                        }))
                 };
             });
 
@@ -2338,25 +2336,41 @@ router.get('/representantes', auth, async (req, res) => {
 // @desc    Crear un nuevo representante
 // @access  Privado (Apoderado)
 router.post('/representantes/add', auth, async (req, res) => {
-    const { 
-        razonSocial, 
-        nombre, 
-        cuit, 
-        cobertura, 
-        direccion, 
-        telefono, 
-        telefonoAdicional, 
-        correo, 
-        correoAdicional, 
-        sitioWeb, 
+    const {
+        razonSocial,
+        nombre,
+        cuit,
+        cobertura,
+        direccion,
+        telefono,
+        telefonoAdicional,
+        correo,
+        correoAdicional,
+        sitioWeb,
         estado,
-        marcasRepresentadas
+        marcasRepresentadas,
+        sucursales
     } = req.body;
     const usuarioApoderado = req.usuario.id;
 
     try {
         // Geocode the address
         const coordenadas = await geocodeAddress(direccion);
+
+        // Geocode sucursales addresses
+        const sucursalesConCoordenadas = [];
+        if (sucursales && sucursales.length > 0) {
+            for (const suc of sucursales) {
+                const sucCoords = await geocodeAddress(suc.direccion);
+                sucursalesConCoordenadas.push({
+                    nombre: suc.nombre,
+                    direccion: suc.direccion,
+                    telefono: suc.telefono || '',
+                    correo: suc.correo || '',
+                    coordenadas: sucCoords || { lat: null, lng: null }
+                });
+            }
+        }
 
         const nuevoRepresentante = new Representante({
             razonSocial,
@@ -2372,7 +2386,8 @@ router.post('/representantes/add', auth, async (req, res) => {
             estado,
             usuarioApoderado,
             marcasRepresentadas: marcasRepresentadas || [],
-            coordenadas: coordenadas || { lat: null, lng: null }
+            coordenadas: coordenadas || { lat: null, lng: null },
+            sucursales: sucursalesConCoordenadas
         });
 
         await nuevoRepresentante.save();
@@ -2401,19 +2416,20 @@ router.put('/representantes/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para actualizar este representante.');
         }
 
-        const { 
-            razonSocial, 
-            nombre, 
-            cuit, 
-            cobertura, 
-            direccion, 
-            telefono, 
-            telefonoAdicional, 
-            correo, 
-            correoAdicional, 
-            sitioWeb, 
+        const {
+            razonSocial,
+            nombre,
+            cuit,
+            cobertura,
+            direccion,
+            telefono,
+            telefonoAdicional,
+            correo,
+            correoAdicional,
+            sitioWeb,
             estado,
-            marcasRepresentadas
+            marcasRepresentadas,
+            sucursales
         } = req.body;
 
         // Re-geocode if address changed
@@ -2421,6 +2437,28 @@ router.put('/representantes/:id', auth, async (req, res) => {
             const coordenadas = await geocodeAddress(direccion);
             if (coordenadas) {
                 representante.coordenadas = coordenadas;
+            }
+        }
+
+        // Process sucursales - geocode new/changed addresses
+        const sucursalesConCoordenadas = [];
+        if (sucursales && sucursales.length > 0) {
+            for (const suc of sucursales) {
+                const existingSuc = (representante.sucursales || []).find(
+                    s => s._id && suc._id && s._id.toString() === suc._id.toString()
+                );
+                let sucCoords = suc.coordenadas || { lat: null, lng: null };
+                if (!existingSuc || existingSuc.direccion !== suc.direccion) {
+                    const geocoded = await geocodeAddress(suc.direccion);
+                    if (geocoded) sucCoords = geocoded;
+                }
+                sucursalesConCoordenadas.push({
+                    nombre: suc.nombre,
+                    direccion: suc.direccion,
+                    telefono: suc.telefono || '',
+                    correo: suc.correo || '',
+                    coordenadas: sucCoords
+                });
             }
         }
 
@@ -2436,6 +2474,7 @@ router.put('/representantes/:id', auth, async (req, res) => {
         representante.sitioWeb = sitioWeb;
         representante.estado = estado;
         representante.marcasRepresentadas = marcasRepresentadas || [];
+        representante.sucursales = sucursalesConCoordenadas;
 
         await representante.save();
         res.json('Representante actualizado!');
