@@ -2357,7 +2357,8 @@ router.post('/representantes/add', auth, async (req, res) => {
         sitioWeb,
         estado,
         marcasRepresentadas,
-        sucursales
+        sucursales,
+        checklistData
     } = req.body;
     const usuarioApoderado = req.usuario.id;
 
@@ -2395,7 +2396,8 @@ router.post('/representantes/add', auth, async (req, res) => {
             usuarioApoderado,
             marcasRepresentadas: marcasRepresentadas || [],
             coordenadas: coordenadas || { lat: null, lng: null },
-            sucursales: sucursalesConCoordenadas
+            sucursales: sucursalesConCoordenadas,
+            checklistData: checklistData || []
         });
 
         await nuevoRepresentante.save();
@@ -2437,7 +2439,8 @@ router.put('/representantes/:id', auth, async (req, res) => {
             sitioWeb,
             estado,
             marcasRepresentadas,
-            sucursales
+            sucursales,
+            checklistData
         } = req.body;
 
         // Re-geocode if address changed
@@ -2483,6 +2486,9 @@ router.put('/representantes/:id', auth, async (req, res) => {
         representante.estado = estado;
         representante.marcasRepresentadas = marcasRepresentadas || [];
         representante.sucursales = sucursalesConCoordenadas;
+        if (checklistData !== undefined) {
+            representante.checklistData = checklistData;
+        }
 
         await representante.save();
         res.json('Representante actualizado!');
@@ -4563,6 +4569,137 @@ router.post('/solicitudes-representacion/:id/mensaje', auth, async (req, res) =>
         ).catch(err => console.error('Error sending solicitud mensaje email:', err));
 
         res.json({ msg: 'Mensaje enviado', solicitud });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// ==========================================
+// CHECKLIST CONFIG ROUTES
+// ==========================================
+
+// @route   GET /api/apoderado/checklist-config
+// @desc    Get checklist items for all fabricantes the user has access to
+// @access  Privado (Apoderado)
+router.get('/checklist-config', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id))
+            .select('razonSocial checklistItems');
+
+        if (!fabricantes || fabricantes.length === 0) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        res.json({
+            fabricantes: fabricantes.map(f => ({
+                _id: f._id,
+                razonSocial: f.razonSocial,
+                checklistItems: f.checklistItems || []
+            }))
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/apoderado/checklist-config/add
+// @desc    Add a checklist item to a fabricante
+// @access  Privado (Apoderado)
+router.post('/checklist-config/add', auth, async (req, res) => {
+    try {
+        const { fabricanteId, nombre, requiereFecha } = req.body;
+
+        if (!nombre || !nombre.trim()) {
+            return res.status(400).json({ msg: 'El nombre del item es requerido.' });
+        }
+
+        const query = fabricanteId
+            ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
+            : getFabricantesQuery(req.usuario.id);
+
+        const fabricante = await Fabricante.findOne(query);
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        fabricante.checklistItems.push({
+            nombre: nombre.trim(),
+            requiereFecha: !!requiereFecha
+        });
+
+        await fabricante.save();
+        res.status(201).json({ msg: 'Item de checklist creado', checklistItems: fabricante.checklistItems });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/checklist-config/:itemId
+// @desc    Update a checklist item
+// @access  Privado (Apoderado)
+router.put('/checklist-config/:itemId', auth, async (req, res) => {
+    try {
+        const { fabricanteId, nombre, requiereFecha } = req.body;
+
+        if (!nombre || !nombre.trim()) {
+            return res.status(400).json({ msg: 'El nombre del item es requerido.' });
+        }
+
+        const query = fabricanteId
+            ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
+            : getFabricantesQuery(req.usuario.id);
+
+        const fabricante = await Fabricante.findOne(query);
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        const item = fabricante.checklistItems.id(req.params.itemId);
+        if (!item) {
+            return res.status(404).json({ msg: 'Item de checklist no encontrado' });
+        }
+
+        item.nombre = nombre.trim();
+        item.requiereFecha = !!requiereFecha;
+
+        await fabricante.save();
+        res.json({ msg: 'Item de checklist actualizado', checklistItems: fabricante.checklistItems });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   DELETE /api/apoderado/checklist-config/:itemId
+// @desc    Delete a checklist item
+// @access  Privado (Apoderado)
+router.delete('/checklist-config/:itemId', auth, async (req, res) => {
+    try {
+        const { fabricanteId } = req.query;
+
+        const query = fabricanteId
+            ? getFabricantesQuery(req.usuario.id, { _id: fabricanteId })
+            : getFabricantesQuery(req.usuario.id);
+
+        const fabricante = await Fabricante.findOne(query);
+
+        if (!fabricante) {
+            return res.status(404).json({ msg: 'Fabricante no encontrado' });
+        }
+
+        const item = fabricante.checklistItems.id(req.params.itemId);
+        if (!item) {
+            return res.status(404).json({ msg: 'Item de checklist no encontrado' });
+        }
+
+        item.deleteOne();
+        await fabricante.save();
+        res.json({ msg: 'Item de checklist eliminado', checklistItems: fabricante.checklistItems });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');

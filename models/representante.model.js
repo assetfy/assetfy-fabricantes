@@ -84,6 +84,11 @@ const representanteSchema = new Schema({
             lat: { type: Number, default: null },
             lng: { type: Number, default: null }
         }
+    }],
+    checklistData: [{
+        checklistItemId: { type: mongoose.Schema.Types.ObjectId, required: true },
+        completado: { type: Boolean, default: false },
+        fecha: { type: Date, default: null }
     }]
 }, {
     timestamps: true,

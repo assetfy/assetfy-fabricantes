@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useNotification } from './NotificationProvider';
 import Tabs from './Tabs';
+import ChecklistRepresentante from './ChecklistRepresentante';
 
 const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fabricantes, marcas }) => {
     const [formData, setFormData] = useState({
@@ -20,7 +21,8 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
         sitioWeb: '',
         estado: 'Activo',
         marcasRepresentadas: [],
-        sucursales: []
+        sucursales: [],
+        checklistData: []
     });
     const [regions, setRegions] = useState({ provincias: [], localidades: {} });
     const [availableLocalidades, setAvailableLocalidades] = useState([]);
@@ -30,6 +32,7 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
     const [availableMarcas, setAvailableMarcas] = useState([]);
     const [editingSucursalIndex, setEditingSucursalIndex] = useState(null);
     const [sucursalForm, setSucursalForm] = useState({ nombre: '', direccion: '', telefono: '', correo: '' });
+    const [checklistItems, setChecklistItems] = useState([]);
     const { showSuccess, showError } = useNotification();
 
     useEffect(() => {
@@ -46,6 +49,19 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
             }
         };
         fetchRegions();
+
+        const fetchChecklistConfig = async () => {
+            try {
+                const res = await api.get('/apoderado/checklist-config');
+                if (res && res.data && res.data.fabricantes) {
+                    const allItems = res.data.fabricantes.flatMap(f => f.checklistItems || []);
+                    setChecklistItems(allItems);
+                }
+            } catch (err) {
+                console.error('Error al obtener checklist config:', err);
+            }
+        };
+        fetchChecklistConfig();
     }, []);
 
     // Update available marcas based on selected fabricantes
@@ -121,6 +137,11 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
                     telefono: s.telefono || '',
                     correo: s.correo || '',
                     coordenadas: s.coordenadas || { lat: null, lng: null }
+                })),
+                checklistData: (representante.checklistData || []).map(d => ({
+                    checklistItemId: d.checklistItemId,
+                    completado: d.completado || false,
+                    fecha: d.fecha || null
                 }))
             });
 
@@ -569,6 +590,16 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
                                         </div>
                                     )}
                                 </>
+                            )
+                        },
+                        {
+                            label: "Checklist",
+                            content: (
+                                <ChecklistRepresentante
+                                    checklistItems={checklistItems}
+                                    checklistData={formData.checklistData}
+                                    onChange={(data) => setFormData(prev => ({ ...prev, checklistData: data }))}
+                                />
                             )
                         }
                     ]}

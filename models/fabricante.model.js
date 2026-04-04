@@ -41,7 +41,11 @@ const fabricanteSchema = new Schema({
     enum: ['ultima_semana', 'ultimas_2_semanas', 'ultimo_mes', 'ultimos_2_meses', 'ultimos_3_meses', 'ultimos_6_meses'],
     default: 'ultimo_mes'
   },
-  estado: { type: String, enum: ['Habilitado', 'Deshabilitado'], default: 'Habilitado' }
+  estado: { type: String, enum: ['Habilitado', 'Deshabilitado'], default: 'Habilitado' },
+  checklistItems: [{
+    nombre: { type: String, required: true, trim: true },
+    requiereFecha: { type: Boolean, default: false }
+  }]
 }, {
   timestamps: true,
 });
