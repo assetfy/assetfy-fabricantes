@@ -7,6 +7,7 @@ const FabricanteForm = ({ onFabricanteAdded }) => {
   const [formData, setFormData] = useState({
     razonSocial: '',
     cuit: '',
+    direccion: '',
     usuarioApoderado: '',
     administradores: []
   });
@@ -56,6 +57,7 @@ const FabricanteForm = ({ onFabricanteAdded }) => {
         setFormData({
           razonSocial: '',
           cuit: '',
+          direccion: '',
           usuarioApoderado: '',
           administradores: []
         });
@@ -80,6 +82,10 @@ const FabricanteForm = ({ onFabricanteAdded }) => {
         <div className="form-group">
           <label>CUIT</label>
           <input type="text" name="cuit" value={formData.cuit} onChange={handleChange} required />
+        </div>
+        <div className="form-group">
+          <label>Direcci&oacute;n</label>
+          <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} placeholder="Ej: Av. Corrientes 1234, CABA" />
         </div>
         <div className="form-group">
           <label>Apoderado Principal</label>

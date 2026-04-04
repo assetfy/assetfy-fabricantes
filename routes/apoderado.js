@@ -2261,9 +2261,20 @@ router.get('/mapa', auth, async (req, res) => {
             coordenadas: inv.comprador?.coordenadas
         }));
 
+        // Build fabricantes map data (only those with valid coordinates)
+        const fabricantesData = fabricantes
+            .filter(fab => fab.coordenadas && fab.coordenadas.lat && fab.coordenadas.lng)
+            .map(fab => ({
+                _id: fab._id,
+                razonSocial: fab.razonSocial,
+                direccion: fab.direccion || '',
+                coordenadas: fab.coordenadas
+            }));
+
         res.json({
             representantes: representantesData,
-            productosRegistrados: productosData
+            productosRegistrados: productosData,
+            fabricantes: fabricantesData
         });
     } catch (err) {
         console.error('Error al obtener datos del mapa:', err.message);

@@ -41,6 +41,11 @@ const fabricanteSchema = new Schema({
     enum: ['ultima_semana', 'ultimas_2_semanas', 'ultimo_mes', 'ultimos_2_meses', 'ultimos_3_meses', 'ultimos_6_meses'],
     default: 'ultimo_mes'
   },
+  direccion: { type: String, trim: true },
+  coordenadas: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null }
+  },
   estado: { type: String, enum: ['Habilitado', 'Deshabilitado'], default: 'Habilitado' },
   checklistItems: [{
     nombre: { type: String, required: true, trim: true },

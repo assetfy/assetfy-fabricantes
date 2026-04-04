@@ -10,6 +10,7 @@ const Usuario = require('../models/usuario.model');
 const Fabricante = require('../models/fabricante.model');
 const Marca = require('../models/marca.model');
 const Producto = require('../models/producto.model');
+const { geocodeAddress } = require('../utils/geocoding');
 
 // @route   POST /api/admin/login
 // @desc    Autenticar un usuario y obtener un token
@@ -447,18 +448,25 @@ router.route('/fabricantes').get(auth, async (req, res) => {
 // @desc    Crear un nuevo fabricante
 // @access  Privado (Admin)
 router.route('/fabricantes/add').post(auth, async (req, res) => {
-  const { razonSocial, cuit, usuarioApoderado, administradores } = req.body;
-  
+  const { razonSocial, cuit, usuarioApoderado, administradores, direccion } = req.body;
+
   if (!razonSocial || !cuit || !usuarioApoderado) {
     return res.status(400).json('Faltan campos obligatorios.');
   }
 
   try {
+    let coordenadas = null;
+    if (direccion) {
+      coordenadas = await geocodeAddress(direccion);
+    }
+
     const nuevoFabricante = new Fabricante({
       razonSocial,
       cuit,
       usuarioApoderado,
       administradores: administradores || [],
+      direccion: direccion || '',
+      coordenadas: coordenadas || { lat: null, lng: null },
     });
 
     await nuevoFabricante.save();
@@ -557,8 +565,8 @@ router.route('/usuarios/:id').delete(auth, async (req, res) => {
 // @desc    Actualizar un fabricante
 // @access  Privado (Admin)
 router.route('/fabricantes/:id').put(auth, async (req, res) => {
-  const { razonSocial, cuit, usuarioApoderado, administradores, logo, estado } = req.body;
-  
+  const { razonSocial, cuit, usuarioApoderado, administradores, logo, estado, direccion } = req.body;
+
   if (!razonSocial || !cuit || !usuarioApoderado) {
     return res.status(400).json({ msg: 'Faltan campos obligatorios.' });
   }
@@ -576,6 +584,17 @@ router.route('/fabricantes/:id').put(auth, async (req, res) => {
     fabricante.logo = logo || '';
     if (estado) {
       fabricante.estado = estado;
+    }
+
+    // Update address and re-geocode if changed
+    if (direccion !== undefined && direccion !== fabricante.direccion) {
+      fabricante.direccion = direccion;
+      if (direccion) {
+        const coordenadas = await geocodeAddress(direccion);
+        fabricante.coordenadas = coordenadas || { lat: null, lng: null };
+      } else {
+        fabricante.coordenadas = { lat: null, lng: null };
+      }
     }
 
     await fabricante.save();

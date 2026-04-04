@@ -36,6 +36,7 @@ const createSvgIcon = (color, hasStarOrLabel) => {
 const iconRepresentanteCentral = createSvgIcon('#DC2626', true);  // Red with star
 const iconSucursal = createSvgIcon('#DC2626', false);              // Red normal (sucursal)
 const iconProducto = createSvgIcon('#2563EB', false);              // Blue
+const iconFabricante = createSvgIcon('#16A34A', false);            // Green
 
 // Helper component to fly to a location and open popup
 const FlyToMarker = ({ target, onDone }) => {
@@ -147,6 +148,20 @@ const MapaGeolocalizacion = () => {
             });
         });
 
+        (mapData.fabricantes || []).forEach(fab => {
+            items.push({
+                id: `fab-${fab._id}`,
+                type: 'fabricante',
+                typeLabel: 'Fabricante',
+                title: fab.razonSocial,
+                subtitle: '',
+                address: fab.direccion,
+                lat: fab.coordenadas.lat,
+                lng: fab.coordenadas.lng,
+                markerKey: `fab-${fab._id}`
+            });
+        });
+
         return items;
     }, [mapData]);
 
@@ -193,7 +208,8 @@ const MapaGeolocalizacion = () => {
 
     const hasData = mapData &&
         ((mapData.representantes && mapData.representantes.length > 0) ||
-         (mapData.productosRegistrados && mapData.productosRegistrados.length > 0));
+         (mapData.productosRegistrados && mapData.productosRegistrados.length > 0) ||
+         (mapData.fabricantes && mapData.fabricantes.length > 0));
 
     if (!hasData) {
         return (
@@ -352,6 +368,26 @@ const MapaGeolocalizacion = () => {
                         </Popup>
                     </Marker>
                 ))}
+
+                {/* Fabricantes - Green pins */}
+                {(mapData.fabricantes || []).map(fab => (
+                    <Marker
+                        key={fab._id}
+                        ref={getMarkerRef(`fab-${fab._id}`)}
+                        position={[fab.coordenadas.lat, fab.coordenadas.lng]}
+                        icon={iconFabricante}
+                    >
+                        <Popup>
+                            <div className="mapa-popup">
+                                <strong>{fab.razonSocial}</strong>
+                                <br />
+                                <small>{fab.direccion}</small>
+                                <br />
+                                <span className="mapa-popup-badge fabricante">Fabricante</span>
+                            </div>
+                        </Popup>
+                    </Marker>
+                ))}
             </MapContainer>
 
             {/* Legend */}
@@ -367,6 +403,10 @@ const MapaGeolocalizacion = () => {
                 <div className="mapa-leyenda-item">
                     <span className="mapa-leyenda-dot producto"></span>
                     Producto Registrado
+                </div>
+                <div className="mapa-leyenda-item">
+                    <span className="mapa-leyenda-dot fabricante"></span>
+                    Fabricante
                 </div>
             </div>
         </div>

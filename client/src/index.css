@@ -3225,6 +3225,11 @@ a.sidebar-sub-item.active {
     color: #2563EB;
 }
 
+.mapa-popup-badge.fabricante {
+    background: #DCFCE7;
+    color: #16A34A;
+}
+
 /* Search bar styles */
 .mapa-search-wrapper {
     position: relative;
@@ -3378,6 +3383,11 @@ a.sidebar-sub-item.active {
     color: #2563EB;
 }
 
+.mapa-search-result-badge.fabricante {
+    background: #DCFCE7;
+    color: #16A34A;
+}
+
 .mapa-search-no-results {
     padding: 0.75rem 1rem;
     color: #9ca3af;
@@ -3430,6 +3440,10 @@ a.sidebar-sub-item.active {
 
 .mapa-leyenda-dot.producto {
     background: #2563EB;
+}
+
+.mapa-leyenda-dot.fabricante {
+    background: #16A34A;
 }
 
 /* Sucursales tab styles */
