@@ -5391,6 +5391,10 @@ router.get('/audit-log/:id', auth, async (req, res) => {
         res.json(log);
     } catch (err) {
         console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // @route   GET /api/apoderado/reportes/ventas
 // @desc    Obtener datos de ventas agrupados por fabricante/provincia/ciudad/representante
 // @access  Privado (Apoderado)
