@@ -2283,6 +2283,123 @@ router.get('/mapa', auth, async (req, res) => {
     }
 });
 
+// @route   GET /api/apoderado/distribucion-provincias
+// @desc    Obtener distribución por provincia de representantes, clientes y garantías activas
+// @access  Privado (Apoderado)
+router.get('/distribucion-provincias', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        const marcas = await Marca.find({
+            $or: [
+                { fabricante: { $in: fabricanteIds } },
+                { usuarioApoderado: usuarioApoderado }
+            ]
+        });
+        const marcaIds = marcas.map(m => m._id);
+
+        // 1. Representantes por provincia (from cobertura.provincias)
+        const representantes = await Representante.find({
+            $or: [
+                { usuarioApoderado: usuarioApoderado },
+                { marcasRepresentadas: { $in: marcaIds } }
+            ],
+            estado: 'Activo'
+        }).select('cobertura');
+
+        const repsPorProvincia = {};
+        representantes.forEach(rep => {
+            const provs = rep.cobertura?.provincias || [];
+            provs.forEach(prov => {
+                if (prov) {
+                    repsPorProvincia[prov] = (repsPorProvincia[prov] || 0) + 1;
+                }
+            });
+        });
+
+        // 2. Clientes por provincia (from inventario.comprador.provincia)
+        const clientesProv = await Inventario.aggregate([
+            {
+                $match: {
+                    usuarioApoderado: new (require('mongoose').Types.ObjectId)(usuarioApoderado),
+                    registrado: 'Si',
+                    'comprador.provincia': { $exists: true, $ne: '' }
+                }
+            },
+            {
+                $group: {
+                    _id: { provincia: '$comprador.provincia', usuario: '$comprador.nombreCompleto' }
+                }
+            },
+            {
+                $group: {
+                    _id: '$_id.provincia',
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } }
+        ]);
+
+        const clientesPorProvincia = {};
+        clientesProv.forEach(item => {
+            if (item._id) clientesPorProvincia[item._id] = item.count;
+        });
+
+        // 3. Garantías activas por provincia
+        const garantiasProv = await PedidoGarantia.aggregate([
+            {
+                $match: {
+                    fabricante: { $in: fabricanteIds },
+                    estado: { $in: ['Nuevo', 'En Análisis'] }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'biens',
+                    localField: 'bien',
+                    foreignField: '_id',
+                    as: 'bienData'
+                }
+            },
+            { $unwind: { path: '$bienData', preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: 'inventarios',
+                    localField: 'bienData.inventario',
+                    foreignField: '_id',
+                    as: 'invData'
+                }
+            },
+            { $unwind: { path: '$invData', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: '$invData.comprador.provincia',
+                    count: { $sum: 1 }
+                }
+            },
+            { $match: { _id: { $ne: null, $ne: '' } } },
+            { $sort: { count: -1 } }
+        ]);
+
+        const garantiasPorProvincia = {};
+        garantiasProv.forEach(item => {
+            if (item._id) garantiasPorProvincia[item._id] = item.count;
+        });
+
+        res.json({
+            representantes: repsPorProvincia,
+            clientes: clientesPorProvincia,
+            garantias: garantiasPorProvincia
+        });
+    } catch (err) {
+        console.error('Error al obtener distribución por provincia:', err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // @route   GET /api/apoderado/representantes
 // @desc    Obtener todos los representantes del apoderado
 // @access  Privado (Apoderado)
