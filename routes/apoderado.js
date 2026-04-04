@@ -39,29 +39,8 @@ const transformMarcaLegacyUrls = (marca) => {
 const XLSX = require('xlsx');
 
 // Utility function to calculate warranty expiration date
-const calculateWarrantyExpiration = (fechaVenta, plazoNumero, plazoUnidad) => {
-    if (!fechaVenta || !plazoNumero || !plazoUnidad) {
-        return null;
-    }
-    
-    const fecha = new Date(fechaVenta);
-    
-    switch (plazoUnidad) {
-        case 'dias':
-            fecha.setDate(fecha.getDate() + plazoNumero);
-            break;
-        case 'meses':
-            fecha.setMonth(fecha.getMonth() + plazoNumero);
-            break;
-        case 'años':
-            fecha.setFullYear(fecha.getFullYear() + plazoNumero);
-            break;
-        default:
-            return null;
-    }
-    
-    return fecha;
-};
+const { calculateWarrantyExpiration } = require('../utils/warrantyUtils');
+const GarantiaAsignada = require('../models/garantiaAsignada.model');
 
 // Utility function to generate alphanumeric serial numbers
 const generateSerialNumber = () => {
@@ -2253,6 +2232,13 @@ router.get('/metricas', auth, async (req, res) => {
         ]);
         const clientesRequierenAtencion = clientesConReclamosAbiertos.length;
 
+        // Contar garantías asignadas
+        const garantiasAsignadasQuery = { fabricante: { $in: fabricanteIds } };
+        const garantiasAsignadasTotal = await GarantiaAsignada.countDocuments(garantiasAsignadasQuery);
+        const garantiasAsignadasPendientes = await GarantiaAsignada.countDocuments({ ...garantiasAsignadasQuery, estado: 'Pendiente' });
+        const garantiasAsignadasValidadas = await GarantiaAsignada.countDocuments({ ...garantiasAsignadasQuery, estado: 'Validada' });
+        const garantiasAsignadasRechazadas = await GarantiaAsignada.countDocuments({ ...garantiasAsignadasQuery, estado: 'Rechazada' });
+
         // Products descontinuados count
         const productosDescontinuados = await Producto.countDocuments({
             fabricante: { $in: fabricanteIds },
@@ -2291,6 +2277,12 @@ router.get('/metricas', auth, async (req, res) => {
                 nuevos: clientesNuevos,
                 nuevosProductosRegistrados,
                 requierenAtencion: clientesRequierenAtencion
+            },
+            garantiasAsignadas: {
+                total: garantiasAsignadasTotal,
+                pendientes: garantiasAsignadasPendientes,
+                validadas: garantiasAsignadasValidadas,
+                rechazadas: garantiasAsignadasRechazadas
             },
             productosDescontinuados,
             piezasActivas,
@@ -2399,6 +2391,123 @@ router.get('/mapa', auth, async (req, res) => {
         });
     } catch (err) {
         console.error('Error al obtener datos del mapa:', err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/distribucion-provincias
+// @desc    Obtener distribución por provincia de representantes, clientes y garantías activas
+// @access  Privado (Apoderado)
+router.get('/distribucion-provincias', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        const marcas = await Marca.find({
+            $or: [
+                { fabricante: { $in: fabricanteIds } },
+                { usuarioApoderado: usuarioApoderado }
+            ]
+        });
+        const marcaIds = marcas.map(m => m._id);
+
+        // 1. Representantes por provincia (from cobertura.provincias)
+        const representantes = await Representante.find({
+            $or: [
+                { usuarioApoderado: usuarioApoderado },
+                { marcasRepresentadas: { $in: marcaIds } }
+            ],
+            estado: 'Activo'
+        }).select('cobertura');
+
+        const repsPorProvincia = {};
+        representantes.forEach(rep => {
+            const provs = rep.cobertura?.provincias || [];
+            provs.forEach(prov => {
+                if (prov) {
+                    repsPorProvincia[prov] = (repsPorProvincia[prov] || 0) + 1;
+                }
+            });
+        });
+
+        // 2. Clientes por provincia (from inventario.comprador.provincia)
+        const clientesProv = await Inventario.aggregate([
+            {
+                $match: {
+                    usuarioApoderado: new (require('mongoose').Types.ObjectId)(usuarioApoderado),
+                    registrado: 'Si',
+                    'comprador.provincia': { $exists: true, $ne: '' }
+                }
+            },
+            {
+                $group: {
+                    _id: { provincia: '$comprador.provincia', usuario: '$comprador.nombreCompleto' }
+                }
+            },
+            {
+                $group: {
+                    _id: '$_id.provincia',
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } }
+        ]);
+
+        const clientesPorProvincia = {};
+        clientesProv.forEach(item => {
+            if (item._id) clientesPorProvincia[item._id] = item.count;
+        });
+
+        // 3. Garantías activas por provincia
+        const garantiasProv = await PedidoGarantia.aggregate([
+            {
+                $match: {
+                    fabricante: { $in: fabricanteIds },
+                    estado: { $in: ['Nuevo', 'En Análisis'] }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'biens',
+                    localField: 'bien',
+                    foreignField: '_id',
+                    as: 'bienData'
+                }
+            },
+            { $unwind: { path: '$bienData', preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: 'inventarios',
+                    localField: 'bienData.inventario',
+                    foreignField: '_id',
+                    as: 'invData'
+                }
+            },
+            { $unwind: { path: '$invData', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: '$invData.comprador.provincia',
+                    count: { $sum: 1 }
+                }
+            },
+            { $match: { _id: { $ne: null, $ne: '' } } },
+            { $sort: { count: -1 } }
+        ]);
+
+        const garantiasPorProvincia = {};
+        garantiasProv.forEach(item => {
+            if (item._id) garantiasPorProvincia[item._id] = item.count;
+        });
+
+        res.json({
+            representantes: repsPorProvincia,
+            clientes: clientesPorProvincia,
+            garantias: garantiasPorProvincia
+        });
+    } catch (err) {
+        console.error('Error al obtener distribución por provincia:', err.message);
         res.status(500).send('Error del servidor');
     }
 });
@@ -3531,6 +3640,144 @@ router.delete('/garantias/:id', auth, async (req, res) => {
             });
         }
         res.json('Garantía eliminada!');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// ================== GARANTÍAS ASIGNADAS ROUTES ==================
+
+// @route   GET /api/apoderado/garantias-asignadas
+// @desc    Listar garantías asignadas con filtros
+// @access  Privado (Apoderado)
+router.get('/garantias-asignadas', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+        const { search, estado } = req.query;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        let query = {
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        };
+
+        if (estado) {
+            query.estado = estado;
+        }
+
+        let garantias = await GarantiaAsignada.find(query)
+            .sort({ createdAt: -1 })
+            .lean();
+
+        if (search) {
+            const s = search.toLowerCase();
+            garantias = garantias.filter(g =>
+                (g.idGarantia && g.idGarantia.toLowerCase().includes(s)) ||
+                (g.clienteFinal?.nombreCompleto && g.clienteFinal.nombreCompleto.toLowerCase().includes(s)) ||
+                (g.clienteFinal?.correoElectronico && g.clienteFinal.correoElectronico.toLowerCase().includes(s)) ||
+                (g.productoRepuesto?.modelo && g.productoRepuesto.modelo.toLowerCase().includes(s)) ||
+                (g.numeroSerie && g.numeroSerie.toLowerCase().includes(s))
+            );
+        }
+
+        res.json(garantias);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/garantias-asignadas/:id
+// @desc    Obtener detalle de una garantía asignada
+// @access  Privado (Apoderado)
+router.get('/garantias-asignadas/:id', auth, async (req, res) => {
+    try {
+        const garantia = await GarantiaAsignada.findById(req.params.id)
+            .populate('inventario', 'idInventario numeroSerie')
+            .populate('garantiaOrigen', 'nombre')
+            .populate('extensiones.usuarioExtension', 'nombreCompleto');
+
+        if (!garantia) {
+            return res.status(404).json({ message: 'Garantía asignada no encontrada.' });
+        }
+
+        res.json(garantia);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/garantias-asignadas/:id/estado
+// @desc    Cambiar estado de garantía asignada (Pendiente -> Validada o Rechazada)
+// @access  Privado (Apoderado)
+router.put('/garantias-asignadas/:id/estado', auth, async (req, res) => {
+    try {
+        const { estado } = req.body;
+
+        if (!['Validada', 'Rechazada'].includes(estado)) {
+            return res.status(400).json({ message: 'Estado inválido. Debe ser Validada o Rechazada.' });
+        }
+
+        const garantia = await GarantiaAsignada.findById(req.params.id);
+
+        if (!garantia) {
+            return res.status(404).json({ message: 'Garantía asignada no encontrada.' });
+        }
+
+        if (garantia.estado !== 'Pendiente') {
+            return res.status(400).json({ message: `No se puede cambiar el estado desde ${garantia.estado}.` });
+        }
+
+        garantia.estado = estado;
+        await garantia.save();
+
+        res.json(garantia);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/apoderado/garantias-asignadas/:id/extender
+// @desc    Extender una garantía asignada
+// @access  Privado (Apoderado)
+router.post('/garantias-asignadas/:id/extender', auth, async (req, res) => {
+    try {
+        const { nuevaFechaExpiracion, comentarios } = req.body;
+
+        if (!nuevaFechaExpiracion) {
+            return res.status(400).json({ message: 'La nueva fecha de expiración es obligatoria.' });
+        }
+
+        const garantia = await GarantiaAsignada.findById(req.params.id);
+
+        if (!garantia) {
+            return res.status(404).json({ message: 'Garantía asignada no encontrada.' });
+        }
+
+        const nuevaFecha = new Date(nuevaFechaExpiracion);
+        if (nuevaFecha <= garantia.fechaExpiracion) {
+            return res.status(400).json({ message: 'La nueva fecha debe ser posterior a la fecha de expiración actual.' });
+        }
+
+        garantia.extensiones.push({
+            fechaAnterior: garantia.fechaExpiracion,
+            nuevaFechaExpiracion: nuevaFecha,
+            comentarios: comentarios || '',
+            fechaExtension: new Date(),
+            usuarioExtension: req.usuario.id
+        });
+
+        garantia.fechaExpiracion = nuevaFecha;
+        await garantia.save();
+
+        res.json(garantia);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');
@@ -5144,6 +5391,103 @@ router.get('/audit-log/:id', auth, async (req, res) => {
         res.json(log);
     } catch (err) {
         console.error(err.message);
+// @route   GET /api/apoderado/reportes/ventas
+// @desc    Obtener datos de ventas agrupados por fabricante/provincia/ciudad/representante
+// @access  Privado (Apoderado)
+router.get('/reportes/ventas', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+        const { desde, hasta } = req.query;
+
+        // Build date filter
+        const dateFilter = {};
+        if (desde) dateFilter.$gte = new Date(desde);
+        if (hasta) {
+            const hastaDate = new Date(hasta);
+            hastaDate.setHours(23, 59, 59, 999);
+            dateFilter.$lte = hastaDate;
+        }
+
+        // Base match: items sold by this apoderado
+        const matchStage = {
+            usuarioApoderado: new (require('mongoose').Types.ObjectId)(usuarioApoderado),
+            estado: 'vendido'
+        };
+        if (desde || hasta) {
+            matchStage.fechaVenta = dateFilter;
+        }
+
+        // Get fabricante IDs for this apoderado
+        const fabricantes = await Fabricante.find({
+            $or: [
+                { usuarioApoderado },
+                { administradores: usuarioApoderado }
+            ]
+        }).select('_id nombre');
+        const fabricanteIds = fabricantes.map(f => f._id);
+        const fabricanteMap = {};
+        fabricantes.forEach(f => { fabricanteMap[f._id.toString()] = f.nombre; });
+
+        // Get all sold items with populated references
+        const ventas = await Inventario.find(matchStage)
+            .populate({
+                path: 'producto',
+                select: 'fabricante modelo',
+                populate: { path: 'fabricante', select: 'nombre' }
+            })
+            .populate({
+                path: 'pieza',
+                select: 'fabricante nombre',
+                populate: { path: 'fabricante', select: 'nombre' }
+            })
+            .populate('representante', 'razonSocial nombre')
+            .lean();
+
+        // Filter only items belonging to this apoderado's fabricantes
+        const ventasFiltradas = ventas.filter(v => {
+            const fab = v.producto?.fabricante || v.pieza?.fabricante;
+            return fab && fabricanteIds.some(id => id.toString() === fab._id.toString());
+        });
+
+        // --- Aggregate: ventas por fabricante por provincia ---
+        const porProvincia = {};
+        const porCiudad = {};
+        const porRepresentante = {};
+
+        ventasFiltradas.forEach(v => {
+            const fab = v.producto?.fabricante || v.pieza?.fabricante;
+            const fabNombre = fab?.nombre || 'Sin fabricante';
+            const provincia = v.comprador?.provincia || 'Sin provincia';
+            const ciudad = v.comprador?.direccion || 'Sin ciudad';
+            const rep = v.representante;
+            const repNombre = rep ? (rep.razonSocial || rep.nombre) : 'Venta directa (particular)';
+
+            // Por provincia
+            const keyProv = `${fabNombre}|||${provincia}`;
+            porProvincia[keyProv] = (porProvincia[keyProv] || 0) + 1;
+
+            // Por ciudad
+            const keyCiudad = `${fabNombre}|||${ciudad}`;
+            porCiudad[keyCiudad] = (porCiudad[keyCiudad] || 0) + 1;
+
+            // Por representante
+            const keyRep = `${fabNombre}|||${repNombre}`;
+            porRepresentante[keyRep] = (porRepresentante[keyRep] || 0) + 1;
+        });
+
+        const toArray = (obj) => Object.entries(obj).map(([key, count]) => {
+            const [fabricante, dimension] = key.split('|||');
+            return { fabricante, dimension, count };
+        }).sort((a, b) => b.count - a.count);
+
+        res.json({
+            porProvincia: toArray(porProvincia),
+            porCiudad: toArray(porCiudad),
+            porRepresentante: toArray(porRepresentante),
+            totalVentas: ventasFiltradas.length
+        });
+    } catch (err) {
+        console.error('Error en reportes de ventas:', err.message);
         res.status(500).send('Error del servidor');
     }
 });

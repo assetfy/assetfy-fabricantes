@@ -21,6 +21,7 @@ import AdministracionPanel from './AdministracionPanel';
 import MetricasPanel from './MetricasPanel';
 import AlertasPanel from './AlertasPanel';
 import ReportesPanel from './ReportesPanel';
+import VentasReportPanel from './VentasReportPanel';
 import Sidebar from './Sidebar';
 import { useNotification } from './NotificationProvider';
 import { useTour } from './TourProvider';
@@ -379,6 +380,12 @@ const ApoderadoPanel = () => {
                                         path: '/reportes',
                                         icon: '↗',
                                         tourId: 'tour-reportes'
+                                    },
+                                    {
+                                        label: 'Ventas',
+                                        path: '/reportes/ventas',
+                                        icon: '◩',
+                                        tourId: 'tour-reportes-ventas'
                                     }
                                 ]
                             },
@@ -500,6 +507,7 @@ const ApoderadoPanel = () => {
                         <ClientesGarantiasView onOpenInventarioItem={handleOpenInventarioItem} />
                     } />
                     <Route path="reportes" element={<ReportesPanel />} />
+                    <Route path="reportes/ventas" element={<VentasReportPanel />} />
                     <Route path="administracion" element={<AdministracionPanel fabricantes={fabricantes} allMarcas={allMarcas} garantias={garantias} onRefresh={handleRefresh} />} />
                 </Routes>
                 )}
