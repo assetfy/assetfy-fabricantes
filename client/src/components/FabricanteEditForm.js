@@ -6,6 +6,7 @@ const FabricanteEditForm = ({ fabricante, onEditFinished, onCancelEdit }) => {
     const [formData, setFormData] = useState({
         razonSocial: '',
         cuit: '',
+        direccion: '',
         usuarioApoderado: '',
         administradores: [],
         estado: 'Habilitado'
@@ -29,11 +30,12 @@ const FabricanteEditForm = ({ fabricante, onEditFinished, onCancelEdit }) => {
             setFormData({
                 razonSocial: fabricante.razonSocial || '',
                 cuit: fabricante.cuit || '',
-                usuarioApoderado: fabricante.usuarioApoderado ? 
-                    (typeof fabricante.usuarioApoderado === 'object' ? 
+                direccion: fabricante.direccion || '',
+                usuarioApoderado: fabricante.usuarioApoderado ?
+                    (typeof fabricante.usuarioApoderado === 'object' ?
                         fabricante.usuarioApoderado._id : fabricante.usuarioApoderado) : '',
-                administradores: fabricante.administradores ? 
-                    fabricante.administradores.map(admin => 
+                administradores: fabricante.administradores ?
+                    fabricante.administradores.map(admin =>
                         typeof admin === 'object' ? admin._id : admin) : [],
                 estado: fabricante.estado || 'Habilitado'
             });
@@ -97,6 +99,16 @@ const FabricanteEditForm = ({ fabricante, onEditFinished, onCancelEdit }) => {
                         value={formData.cuit} 
                         onChange={handleChange} 
                         required 
+                    />
+                </div>
+                <div className="form-group">
+                    <label>Direcci&oacute;n</label>
+                    <input
+                        type="text"
+                        name="direccion"
+                        value={formData.direccion}
+                        onChange={handleChange}
+                        placeholder="Ej: Av. Corrientes 1234, CABA"
                     />
                 </div>
                 <div className="form-group">
