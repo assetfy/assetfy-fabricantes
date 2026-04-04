@@ -5423,22 +5423,22 @@ router.get('/reportes/ventas', auth, async (req, res) => {
                 { usuarioApoderado },
                 { administradores: usuarioApoderado }
             ]
-        }).select('_id nombre');
+        }).select('_id razonSocial');
         const fabricanteIds = fabricantes.map(f => f._id);
         const fabricanteMap = {};
-        fabricantes.forEach(f => { fabricanteMap[f._id.toString()] = f.nombre; });
+        fabricantes.forEach(f => { fabricanteMap[f._id.toString()] = f.razonSocial; });
 
         // Get all sold items with populated references
         const ventas = await Inventario.find(matchStage)
             .populate({
                 path: 'producto',
                 select: 'fabricante modelo',
-                populate: { path: 'fabricante', select: 'nombre' }
+                populate: { path: 'fabricante', select: 'razonSocial' }
             })
             .populate({
                 path: 'pieza',
                 select: 'fabricante nombre',
-                populate: { path: 'fabricante', select: 'nombre' }
+                populate: { path: 'fabricante', select: 'razonSocial' }
             })
             .populate('representante', 'razonSocial nombre')
             .lean();
@@ -5456,7 +5456,7 @@ router.get('/reportes/ventas', auth, async (req, res) => {
 
         ventasFiltradas.forEach(v => {
             const fab = v.producto?.fabricante || v.pieza?.fabricante;
-            const fabNombre = fab?.nombre || 'Sin fabricante';
+            const fabNombre = fab?.razonSocial || 'Sin fabricante';
             const provincia = v.comprador?.provincia || 'Sin provincia';
             const ciudad = v.comprador?.direccion || 'Sin ciudad';
             const rep = v.representante;

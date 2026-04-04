@@ -376,16 +376,16 @@ const ApoderadoPanel = () => {
                                 tourId: 'tour-reportes-group',
                                 subItems: [
                                     {
-                                        label: 'Exportación',
-                                        path: '/reportes',
-                                        icon: '↗',
-                                        tourId: 'tour-reportes'
-                                    },
-                                    {
                                         label: 'Ventas',
                                         path: '/reportes/ventas',
                                         icon: '◩',
                                         tourId: 'tour-reportes-ventas'
+                                    },
+                                    {
+                                        label: 'Exportación',
+                                        path: '/reportes',
+                                        icon: '↗',
+                                        tourId: 'tour-reportes'
                                     }
                                 ]
                             },
