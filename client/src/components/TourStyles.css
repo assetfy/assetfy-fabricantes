@@ -1,0 +1,481 @@
+/* ========== TOUR OVERLAY ========== */
+.tour-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: all;
+}
+
+.tour-overlay svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* ========== TOUR TOOLTIP ========== */
+.tour-tooltip {
+    position: fixed;
+    z-index: 10000;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    padding: 1.5rem;
+    max-width: 360px;
+    min-width: 300px;
+    border-top: 3px solid var(--primary-purple, #5C2D91);
+    animation: tourTooltipIn 0.3s ease-out;
+    pointer-events: all;
+}
+
+@keyframes tourTooltipIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tour-tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.tour-tooltip-title {
+    color: var(--primary-purple, #5C2D91);
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.tour-tooltip-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    line-height: 1;
+    margin-left: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.tour-tooltip-close:hover {
+    color: #333;
+}
+
+.tour-tooltip-description {
+    color: var(--text-gray, #6C757D);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+}
+
+/* ========== ANIMATION CONTAINER ========== */
+.tour-animation-container {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0.75rem 0;
+    background: #F8F7FC;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tour-animation-svg {
+    width: 140px;
+    height: 80px;
+}
+
+/* ========== STEP INDICATOR ========== */
+.tour-step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+}
+
+.tour-step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #E0E0E0;
+    transition: all 0.3s ease;
+}
+
+.tour-step-dot.active {
+    background: var(--primary-purple, #5C2D91);
+    transform: scale(1.2);
+}
+
+.tour-step-dot.completed {
+    background: var(--primary-purple-light, #7B4DB4);
+}
+
+.tour-step-text {
+    color: var(--text-gray, #6C757D);
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+/* ========== NAV BUTTONS ========== */
+.tour-nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tour-btn-skip {
+    background: transparent;
+    border: none;
+    color: var(--text-gray, #6C757D);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    transition: color 0.2s ease;
+}
+
+.tour-btn-skip:hover {
+    color: var(--text-dark, #2C3E50);
+}
+
+.tour-nav-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tour-btn-prev {
+    background: transparent;
+    border: 1px solid var(--border-light, #E0E0E0);
+    color: var(--text-dark, #2C3E50);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.tour-btn-prev:hover {
+    border-color: var(--primary-purple, #5C2D91);
+    color: var(--primary-purple, #5C2D91);
+}
+
+.tour-btn-next {
+    background: var(--primary-purple, #5C2D91);
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tour-btn-next:hover {
+    background: var(--primary-purple-light, #7B4DB4);
+    transform: translateY(-1px);
+}
+
+/* ========== TOOLTIP ARROW ========== */
+.tour-tooltip-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: white;
+    transform: rotate(45deg);
+    border-left: 3px solid transparent;
+    border-top: 3px solid transparent;
+}
+
+.tour-tooltip-arrow.arrow-left {
+    left: -7px;
+    top: 24px;
+    border-left: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.tour-tooltip-arrow.arrow-top {
+    top: -7px;
+    left: 24px;
+    border-left: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.tour-tooltip-arrow.arrow-right {
+    right: -7px;
+    top: 24px;
+    border-right: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.tour-tooltip-arrow.arrow-bottom {
+    bottom: -7px;
+    left: 24px;
+    border-right: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* ========== SVG ANIMATIONS ========== */
+
+/* Welcome - Stars twinkling */
+.tour-anim-welcome-text {
+    animation: tourFadeIn 0.8s ease-out;
+}
+
+.tour-anim-welcome-line {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: tourDrawLine 1s ease-out 0.3s forwards;
+}
+
+.tour-anim-star {
+    opacity: 0;
+}
+
+.tour-anim-star-1 { animation: tourStarPulse 2s ease-in-out 0.5s infinite; }
+.tour-anim-star-2 { animation: tourStarPulse 2s ease-in-out 0.8s infinite; }
+.tour-anim-star-3 { animation: tourStarPulse 2s ease-in-out 1.1s infinite; }
+.tour-anim-star-4 { animation: tourStarPulse 2s ease-in-out 1.4s infinite; }
+
+@keyframes tourStarPulse {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes tourDrawLine {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes tourFadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Bar Chart - Bars growing */
+.tour-anim-bar {
+    transform-origin: bottom;
+}
+
+.tour-anim-bar-1 { animation: tourGrowBar 0.6s ease-out 0.2s forwards; --bar-height: 30; }
+.tour-anim-bar-2 { animation: tourGrowBar 0.6s ease-out 0.4s forwards; --bar-height: 45; }
+.tour-anim-bar-3 { animation: tourGrowBar 0.6s ease-out 0.6s forwards; --bar-height: 25; }
+.tour-anim-bar-4 { animation: tourGrowBar 0.6s ease-out 0.8s forwards; --bar-height: 50; }
+.tour-anim-bar-5 { animation: tourGrowBar 0.6s ease-out 1.0s forwards; --bar-height: 35; }
+
+@keyframes tourGrowBar {
+    to { height: var(--bar-height); y: calc(60 - var(--bar-height)); }
+}
+
+/* Need explicit keyframes per bar since CSS custom properties in @keyframes have limited support */
+.tour-anim-bar-1 { animation: tourBar1 0.6s ease-out 0.2s forwards; }
+.tour-anim-bar-2 { animation: tourBar2 0.6s ease-out 0.4s forwards; }
+.tour-anim-bar-3 { animation: tourBar3 0.6s ease-out 0.6s forwards; }
+.tour-anim-bar-4 { animation: tourBar4 0.6s ease-out 0.8s forwards; }
+.tour-anim-bar-5 { animation: tourBar5 0.6s ease-out 1.0s forwards; }
+
+@keyframes tourBar1 { to { height: 30px; y: 30; } }
+@keyframes tourBar2 { to { height: 45px; y: 15; } }
+@keyframes tourBar3 { to { height: 25px; y: 35; } }
+@keyframes tourBar4 { to { height: 50px; y: 10; } }
+@keyframes tourBar5 { to { height: 35px; y: 25; } }
+
+/* Add Card - Plus button pulsing */
+.tour-anim-card {
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: tourDrawCard 1s ease-out forwards;
+}
+
+.tour-anim-card-line-1 {
+    opacity: 0;
+    animation: tourFadeIn 0.4s ease-out 0.6s forwards;
+}
+
+.tour-anim-card-line-2 {
+    opacity: 0;
+    animation: tourFadeIn 0.4s ease-out 0.8s forwards;
+}
+
+.tour-anim-plus {
+    opacity: 0;
+    animation: tourPlusPop 0.5s ease-out 1s forwards;
+}
+
+@keyframes tourDrawCard {
+    to { stroke-dashoffset: 0; stroke: #5C2D91; }
+}
+
+@keyframes tourPlusPop {
+    0% { opacity: 0; transform: scale(0); }
+    70% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Gear - Rotating */
+.tour-anim-gear-rotate {
+    animation: tourRotateGear 3s linear infinite;
+    transform-origin: center;
+}
+
+@keyframes tourRotateGear {
+    from { transform: translate(70px, 40px) rotate(0deg); }
+    to { transform: translate(70px, 40px) rotate(360deg); }
+}
+
+/* Network - Nodes connecting */
+.tour-anim-node {
+    opacity: 0;
+}
+
+.tour-anim-node-1 { animation: tourNodePop 0.4s ease-out 0.2s forwards; }
+.tour-anim-node-2 { animation: tourNodePop 0.4s ease-out 0.6s forwards; }
+.tour-anim-node-3 { animation: tourNodePop 0.4s ease-out 1.0s forwards; }
+
+.tour-anim-network-line {
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+}
+
+.tour-anim-network-line-1 { animation: tourDrawNetLine 0.5s ease-out 0.8s forwards; }
+.tour-anim-network-line-2 { animation: tourDrawNetLine 0.5s ease-out 1.2s forwards; }
+.tour-anim-network-line-3 { animation: tourDrawNetLine 0.5s ease-out 1.5s forwards; }
+
+@keyframes tourNodePop {
+    0% { opacity: 0; transform: scale(0); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes tourDrawNetLine {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Bell - Shaking */
+.tour-anim-bell-shake {
+    transform-origin: center top;
+    animation: tourShakeBell 0.5s ease-in-out 0.3s 3;
+}
+
+@keyframes tourShakeBell {
+    0%, 100% { transform: translate(70px, 40px) rotate(0deg); }
+    25% { transform: translate(70px, 40px) rotate(12deg); }
+    75% { transform: translate(70px, 40px) rotate(-12deg); }
+}
+
+.tour-anim-badge-pop {
+    opacity: 0;
+    animation: tourBadgePop 0.4s ease-out 1.5s forwards;
+}
+
+.tour-anim-badge-text {
+    opacity: 0;
+    animation: tourFadeIn 0.3s ease-out 1.7s forwards;
+}
+
+@keyframes tourBadgePop {
+    0% { opacity: 0; r: 0; }
+    70% { opacity: 1; r: 7; }
+    100% { opacity: 1; r: 6; }
+}
+
+/* Shield - Drawing */
+.tour-anim-shield-draw {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    animation: tourDrawShield 1.2s ease-out forwards;
+}
+
+.tour-anim-check-draw {
+    stroke-dasharray: 40;
+    stroke-dashoffset: 40;
+    animation: tourDrawCheck 0.5s ease-out 1.2s forwards;
+}
+
+@keyframes tourDrawShield {
+    to { stroke-dashoffset: 0; fill: rgba(92, 45, 145, 0.08); }
+}
+
+@keyframes tourDrawCheck {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Download - Arrow bouncing */
+.tour-anim-download-arrow {
+    animation: tourBounceDown 1.5s ease-in-out infinite;
+}
+
+@keyframes tourBounceDown {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(5px); opacity: 0.7; }
+}
+
+/* Settings - Slow rotate + items fade in */
+.tour-anim-settings-rotate {
+    animation: tourSettingsRotate 4s linear infinite;
+    transform-origin: center;
+}
+
+@keyframes tourSettingsRotate {
+    from { transform: translate(70px, 35px) rotate(0deg); }
+    to { transform: translate(70px, 35px) rotate(360deg); }
+}
+
+.tour-anim-setting-item {
+    opacity: 0;
+}
+
+.tour-anim-setting-1 { animation: tourFadeIn 0.4s ease-out 0.3s forwards; }
+.tour-anim-setting-2 { animation: tourFadeIn 0.4s ease-out 0.6s forwards; }
+.tour-anim-setting-3 { animation: tourFadeIn 0.4s ease-out 0.9s forwards; }
+.tour-anim-setting-4 { animation: tourFadeIn 0.4s ease-out 1.2s forwards; }
+.tour-anim-setting-5 { animation: tourFadeIn 0.4s ease-out 1.5s forwards; }
+
+/* ========== SIDEBAR FOOTER ========== */
+.sidebar-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-light, #E0E0E0);
+}
+
+.tour-trigger-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--border-light, #E0E0E0);
+    color: var(--text-gray, #6C757D);
+    cursor: pointer;
+    font-size: 0.82rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.tour-trigger-btn:hover {
+    border-color: var(--primary-purple, #5C2D91);
+    color: var(--primary-purple, #5C2D91);
+    background: rgba(92, 45, 145, 0.04);
+}
+
+.tour-trigger-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary-purple, #5C2D91);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}

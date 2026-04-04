@@ -13,6 +13,7 @@ import RegistroFabricante from './components/RegistroFabricante';
 import SolicitudRepresentacionForm from './components/SolicitudRepresentacionForm';
 import ActivateAccount from './components/ActivateAccount';
 import { NotificationProvider } from './components/NotificationProvider';
+import TourProvider from './components/TourProvider';
 
 function App() {
   const token = localStorage.getItem('token');
@@ -33,6 +34,7 @@ function App() {
   return (
     <NotificationProvider>
       <Router>
+        <TourProvider>
         <div className="App">
           <Routes>
             {/* Public routes */}
@@ -82,6 +84,7 @@ function App() {
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
         </div>
+        </TourProvider>
       </Router>
     </NotificationProvider>
   );
