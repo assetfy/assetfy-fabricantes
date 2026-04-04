@@ -57,6 +57,11 @@ const representanteSchema = new Schema({
         type: String,
         trim: true
     },
+    tipoRepresentante: {
+        type: String,
+        enum: ['Re-Venta', 'Pos-Venta', 'Re-Venta / Pos-Venta'],
+        default: null
+    },
     estado: {
         type: String,
         enum: ['Activo', 'Inactivo'],
