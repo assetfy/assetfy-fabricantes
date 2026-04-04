@@ -22,6 +22,8 @@ const { geocodeAddress, geocodeProvince, PROVINCE_COORDS } = require('../utils/g
 const Notificacion = require('../models/notificacion.model');
 const SolicitudRepresentacion = require('../models/solicitudRepresentacion.model');
 const { obtenerContadores, verificarGarantiasPorVencer } = require('../utils/alertEngine');
+const AuditLog = require('../models/auditLog.model');
+const { logAuditEvent, sanitizeForAudit, getChangedFields, ENTITY_LABELS, ACCION_LABELS } = require('../utils/auditLogger');
 
 // Helper function to transform legacy S3 URLs to proxy URLs
 const transformMarcaLegacyUrls = (marca) => {
@@ -463,6 +465,11 @@ router.post('/productos/add', auth, async (req, res) => {
         });
 
         await nuevoProducto.save();
+        logAuditEvent({
+            usuarioId: usuarioApoderado, fabricanteId: fabricante, accion: 'creacion',
+            tipoEntidad: 'producto', entidadId: nuevoProducto._id, descripcionEntidad: modelo,
+            detalles: { modelo, descripcion, precio, marca, atributos, garantia }
+        });
         res.status(201).json({ mensaje: 'Producto creado con éxito!', producto: nuevoProducto });
     } catch (err) {
         console.error(err.message);
@@ -492,12 +499,14 @@ router.put('/productos/:id', auth, async (req, res) => {
         }
         
         const { modelo, descripcion, precio, fabricante, marca, atributos, garantia } = req.body;
-        
+
         // Verifica si la marca es válida antes de guardar
         const marcaAsociada = await Marca.findOne({ _id: marca, fabricante });
         if (!marcaAsociada) {
             return res.status(403).json('La marca no pertenece a este fabricante.');
         }
+
+        const anteriorProducto = { modelo: producto.modelo, descripcion: producto.descripcion, precio: producto.precio, fabricante: producto.fabricante, marca: producto.marca, atributos: producto.atributos, garantia: producto.garantia };
 
         producto.modelo = modelo;
         producto.descripcion = descripcion;
@@ -508,6 +517,14 @@ router.put('/productos/:id', auth, async (req, res) => {
         producto.garantia = garantia || null;
 
         await producto.save();
+        const { valorAnterior, valorNuevo } = getChangedFields(anteriorProducto, { modelo, descripcion, precio, fabricante, marca, atributos: atributos || [], garantia: garantia || null });
+        if (Object.keys(valorAnterior).length > 0) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: fabricante, accion: 'actualizacion',
+                tipoEntidad: 'producto', entidadId: producto._id, descripcionEntidad: modelo,
+                valorAnterior, valorNuevo
+            });
+        }
         res.json('Producto actualizado!');
     } catch (err) {
         console.error(err.message);
@@ -536,7 +553,13 @@ router.delete('/productos/:id', auth, async (req, res) => {
             return res.status(400).json('No se puede eliminar por referencias');
         }
 
+        const prodFabricanteId = producto.fabricante;
+        const prodModelo = producto.modelo;
         await producto.deleteOne();
+        logAuditEvent({
+            usuarioId: req.usuario.id, fabricanteId: prodFabricanteId, accion: 'eliminacion',
+            tipoEntidad: 'producto', entidadId: req.params.id, descripcionEntidad: prodModelo
+        });
         res.json('Producto eliminado.');
     } catch (err) {
         console.error(err.message);
@@ -1212,6 +1235,11 @@ router.post('/marcas/add', auth, async (req, res) => {
         });
 
         await nuevaMarca.save();
+        logAuditEvent({
+            usuarioId: usuarioApoderado, fabricanteId: fabricante, accion: 'creacion',
+            tipoEntidad: 'marca', entidadId: nuevaMarca._id, descripcionEntidad: nombre,
+            detalles: { nombre, estado }
+        });
         res.status(201).json('Marca creada con éxito!');
     } catch (err) {
         console.error(err.message);
@@ -1255,7 +1283,13 @@ router.delete('/marcas/:id', auth, async (req, res) => {
             }
         }
 
+        const marcaFabricanteId = marca.fabricante;
+        const marcaNombre = marca.nombre;
         await marca.deleteOne();
+        logAuditEvent({
+            usuarioId: req.usuario.id, fabricanteId: marcaFabricanteId, accion: 'eliminacion',
+            tipoEntidad: 'marca', entidadId: req.params.id, descripcionEntidad: marcaNombre
+        });
         res.json('Marca eliminada.');
     } catch (err) {
         console.error(err.message);
@@ -1278,11 +1312,20 @@ router.put('/marcas/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para actualizar esta marca.');
         }
 
+        const anteriorMarca = { nombre: marca.nombre, estado: marca.estado };
         marca.nombre = req.body.nombre;
         marca.fabricante = req.body.fabricante;
         marca.estado = req.body.estado;
 
         await marca.save();
+        const marcaChanges = getChangedFields(anteriorMarca, { nombre: req.body.nombre, estado: req.body.estado });
+        if (Object.keys(marcaChanges.valorAnterior).length > 0) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: req.body.fabricante, accion: 'actualizacion',
+                tipoEntidad: 'marca', entidadId: marca._id, descripcionEntidad: req.body.nombre,
+                valorAnterior: marcaChanges.valorAnterior, valorNuevo: marcaChanges.valorNuevo
+            });
+        }
         res.json('Marca actualizada!');
     } catch (err) {
         console.error(err.message);
@@ -1466,6 +1509,13 @@ router.post('/ubicaciones/add', auth, async (req, res) => {
         });
 
         await nuevaUbicacion.save();
+        if (fabricante) {
+            logAuditEvent({
+                usuarioId: usuarioApoderado, fabricanteId: fabricante, accion: 'creacion',
+                tipoEntidad: 'ubicacion', entidadId: nuevaUbicacion._id, descripcionEntidad: nombre,
+                detalles: { nombre, direccion, telefono }
+            });
+        }
         res.status(201).json('Ubicación creada con éxito!');
     } catch (err) {
         console.error(err.message);
@@ -1490,12 +1540,24 @@ router.put('/ubicaciones/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para actualizar esta ubicación.');
         }
 
+        const anteriorUbicacion = { nombre: ubicacion.nombre, direccion: ubicacion.direccion, telefono: ubicacion.telefono };
         ubicacion.nombre = nombre;
         ubicacion.direccion = direccion;
         ubicacion.telefono = telefono;
         ubicacion.fabricante = fabricante || null;
 
         await ubicacion.save();
+        const fabIdUbicacion = fabricante || ubicacion.fabricante;
+        if (fabIdUbicacion) {
+            const ubicChanges = getChangedFields(anteriorUbicacion, { nombre, direccion, telefono });
+            if (Object.keys(ubicChanges.valorAnterior).length > 0) {
+                logAuditEvent({
+                    usuarioId: req.usuario.id, fabricanteId: fabIdUbicacion, accion: 'actualizacion',
+                    tipoEntidad: 'ubicacion', entidadId: ubicacion._id, descripcionEntidad: nombre,
+                    valorAnterior: ubicChanges.valorAnterior, valorNuevo: ubicChanges.valorNuevo
+                });
+            }
+        }
         res.json('Ubicación actualizada con éxito!');
     } catch (err) {
         console.error(err.message);
@@ -1524,7 +1586,15 @@ router.delete('/ubicaciones/:id', auth, async (req, res) => {
             return res.status(400).json('No se puede eliminar la ubicación porque tiene artículos de inventario asociados.');
         }
 
+        const ubicFabricanteId = ubicacion.fabricante;
+        const ubicNombre = ubicacion.nombre;
         await Ubicacion.findByIdAndDelete(req.params.id);
+        if (ubicFabricanteId) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: ubicFabricanteId, accion: 'eliminacion',
+                tipoEntidad: 'ubicacion', entidadId: req.params.id, descripcionEntidad: ubicNombre
+            });
+        }
         res.json('Ubicación eliminada con éxito!');
     } catch (err) {
         console.error(err.message);
@@ -1736,6 +1806,22 @@ router.post('/inventario/add', auth, async (req, res) => {
         });
 
         await nuevoItem.save();
+        // Determine fabricanteId for audit
+        let invFabricanteId = null;
+        if (producto) {
+            const prodForAudit = await Producto.findById(producto).select('fabricante').lean();
+            if (prodForAudit) invFabricanteId = prodForAudit.fabricante;
+        } else if (pieza) {
+            const piezaForAudit = await Pieza.findById(pieza).select('fabricante').lean();
+            if (piezaForAudit) invFabricanteId = piezaForAudit.fabricante;
+        }
+        if (invFabricanteId) {
+            logAuditEvent({
+                usuarioId: usuarioApoderado, fabricanteId: invFabricanteId, accion: 'creacion',
+                tipoEntidad: 'inventario', entidadId: nuevoItem._id, descripcionEntidad: numeroSerie,
+                detalles: { numeroSerie, estado, producto, pieza, ubicacion }
+            });
+        }
         res.status(201).json('Artículo de inventario creado con éxito!');
     } catch (err) {
         console.error(err.message);
@@ -1803,6 +1889,8 @@ router.put('/inventario/:id', auth, async (req, res) => {
             }
         }
 
+        const anteriorItem = { numeroSerie: item.numeroSerie, estado: item.estado, producto: item.producto, pieza: item.pieza, ubicacion: item.ubicacion, representante: item.representante };
+
         item.numeroSerie = numeroSerie;
         item.estado = estado;
         item.producto = producto || undefined;
@@ -1816,10 +1904,8 @@ router.put('/inventario/:id', auth, async (req, res) => {
         if (fechaVenta) {
             item.fechaVenta = fechaVenta;
         } else if (estado === 'vendido' && !item.fechaVenta) {
-            // Will be set by pre-save middleware
             item.fechaVenta = undefined;
         } else if (estado !== 'vendido') {
-            // Clear fechaVenta if not vendido
             item.fechaVenta = undefined;
         }
 
@@ -1830,6 +1916,25 @@ router.put('/inventario/:id', auth, async (req, res) => {
         }
 
         await item.save();
+        // Audit log for inventory update
+        let invUpdFabId = null;
+        if (producto) {
+            const pAudit = await Producto.findById(producto).select('fabricante').lean();
+            if (pAudit) invUpdFabId = pAudit.fabricante;
+        } else if (pieza) {
+            const pzAudit = await Pieza.findById(pieza).select('fabricante').lean();
+            if (pzAudit) invUpdFabId = pzAudit.fabricante;
+        }
+        if (invUpdFabId) {
+            const invChanges = getChangedFields(anteriorItem, { numeroSerie, estado, producto, pieza, ubicacion, representante });
+            if (Object.keys(invChanges.valorAnterior).length > 0) {
+                logAuditEvent({
+                    usuarioId: req.usuario.id, fabricanteId: invUpdFabId, accion: 'actualizacion',
+                    tipoEntidad: 'inventario', entidadId: item._id, descripcionEntidad: numeroSerie,
+                    valorAnterior: invChanges.valorAnterior, valorNuevo: invChanges.valorNuevo
+                });
+            }
+        }
         res.json('Artículo de inventario actualizado!');
     } catch (err) {
         console.error(err.message);
@@ -1852,7 +1957,22 @@ router.delete('/inventario/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para eliminar este artículo.');
         }
 
+        const invDelSerie = item.numeroSerie;
+        let invDelFabId = null;
+        if (item.producto) {
+            const pDel = await Producto.findById(item.producto).select('fabricante').lean();
+            if (pDel) invDelFabId = pDel.fabricante;
+        } else if (item.pieza) {
+            const pzDel = await Pieza.findById(item.pieza).select('fabricante').lean();
+            if (pzDel) invDelFabId = pzDel.fabricante;
+        }
         await item.deleteOne();
+        if (invDelFabId) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: invDelFabId, accion: 'eliminacion',
+                tipoEntidad: 'inventario', entidadId: req.params.id, descripcionEntidad: invDelSerie
+            });
+        }
         res.json('Artículo de inventario eliminado.');
     } catch (err) {
         console.error(err.message);
@@ -2413,6 +2533,17 @@ router.post('/representantes/add', auth, async (req, res) => {
         });
 
         await nuevoRepresentante.save();
+        // Get fabricante from marcasRepresentadas for audit
+        if (marcasRepresentadas && marcasRepresentadas.length > 0) {
+            const marcaForAudit = await Marca.findById(marcasRepresentadas[0]).select('fabricante').lean();
+            if (marcaForAudit && marcaForAudit.fabricante) {
+                logAuditEvent({
+                    usuarioId: usuarioApoderado, fabricanteId: marcaForAudit.fabricante, accion: 'creacion',
+                    tipoEntidad: 'representante', entidadId: nuevoRepresentante._id, descripcionEntidad: razonSocial || nombre,
+                    detalles: { razonSocial, nombre, cuit, direccion, telefono, correo, estado }
+                });
+            }
+        }
         res.status(201).json('Representante creado con éxito!');
     } catch (err) {
         console.error(err.message);
@@ -2485,6 +2616,8 @@ router.put('/representantes/:id', auth, async (req, res) => {
             }
         }
 
+        const anteriorRep = { razonSocial: representante.razonSocial, nombre: representante.nombre, cuit: representante.cuit, direccion: representante.direccion, telefono: representante.telefono, correo: representante.correo, estado: representante.estado };
+
         representante.razonSocial = razonSocial;
         representante.nombre = nombre;
         representante.cuit = cuit;
@@ -2503,6 +2636,21 @@ router.put('/representantes/:id', auth, async (req, res) => {
         }
 
         await representante.save();
+        // Audit log for representante update
+        const repMarcas = marcasRepresentadas && marcasRepresentadas.length > 0 ? marcasRepresentadas : representante.marcasRepresentadas;
+        if (repMarcas && repMarcas.length > 0) {
+            const repMarcaAudit = await Marca.findById(repMarcas[0]).select('fabricante').lean();
+            if (repMarcaAudit && repMarcaAudit.fabricante) {
+                const repChanges = getChangedFields(anteriorRep, { razonSocial, nombre, cuit, direccion, telefono, correo, estado });
+                if (Object.keys(repChanges.valorAnterior).length > 0) {
+                    logAuditEvent({
+                        usuarioId: req.usuario.id, fabricanteId: repMarcaAudit.fabricante, accion: 'actualizacion',
+                        tipoEntidad: 'representante', entidadId: representante._id, descripcionEntidad: razonSocial || nombre,
+                        valorAnterior: repChanges.valorAnterior, valorNuevo: repChanges.valorNuevo
+                    });
+                }
+            }
+        }
         res.json('Representante actualizado!');
     } catch (err) {
         console.error(err.message);
@@ -2528,7 +2676,19 @@ router.delete('/representantes/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para eliminar este representante.');
         }
 
+        const repNombre = representante.razonSocial || representante.nombre;
+        let repDelFabId = null;
+        if (representante.marcasRepresentadas && representante.marcasRepresentadas.length > 0) {
+            const repDelMarca = await Marca.findById(representante.marcasRepresentadas[0]).select('fabricante').lean();
+            if (repDelMarca) repDelFabId = repDelMarca.fabricante;
+        }
         await representante.deleteOne();
+        if (repDelFabId) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: repDelFabId, accion: 'eliminacion',
+                tipoEntidad: 'representante', entidadId: req.params.id, descripcionEntidad: repNombre
+            });
+        }
         res.json('Representante eliminado.');
     } catch (err) {
         console.error(err.message);
@@ -3223,7 +3383,19 @@ router.post('/garantias/add', auth, async (req, res) => {
         });
 
         const garantia = await nuevaGarantia.save();
-
+        // Determine fabricanteId for audit: from fabricante directly or via marca
+        let garFabId = fabricante;
+        if (!garFabId && marca) {
+            const garMarca = await Marca.findById(marca).select('fabricante').lean();
+            if (garMarca) garFabId = garMarca.fabricante;
+        }
+        if (garFabId) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: garFabId, accion: 'creacion',
+                tipoEntidad: 'garantia', entidadId: garantia._id, descripcionEntidad: nombre,
+                detalles: { nombre, duracionNumero, duracionUnidad, tipoCobertura, estado: estado || 'Activa' }
+            });
+        }
         res.json({
             message: 'Garantía creada con éxito!',
             garantia: garantia
@@ -3277,6 +3449,8 @@ router.put('/garantias/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para actualizar esta garantía.');
         }
 
+        const anteriorGarantia = { nombre: garantia.nombre, duracionNumero: garantia.duracionNumero, duracionUnidad: garantia.duracionUnidad, tipoCobertura: garantia.tipoCobertura, estado: garantia.estado };
+
         // Actualizar campos
         garantia.fabricante = fabricante || null;
         garantia.marca = marca || null;
@@ -3304,6 +3478,22 @@ router.put('/garantias/:id', auth, async (req, res) => {
         garantia.estado = estado || 'Activa';
 
         await garantia.save();
+        let garUpdFabId = fabricante;
+        if (!garUpdFabId && garantia.fabricante) garUpdFabId = garantia.fabricante._id || garantia.fabricante;
+        if (!garUpdFabId && marca) {
+            const garUpdMarca = await Marca.findById(marca).select('fabricante').lean();
+            if (garUpdMarca) garUpdFabId = garUpdMarca.fabricante;
+        }
+        if (garUpdFabId) {
+            const garChanges = getChangedFields(anteriorGarantia, { nombre, duracionNumero, duracionUnidad, tipoCobertura: tipoCobertura || [], estado: estado || 'Activa' });
+            if (Object.keys(garChanges.valorAnterior).length > 0) {
+                logAuditEvent({
+                    usuarioId: req.usuario.id, fabricanteId: garUpdFabId, accion: 'actualizacion',
+                    tipoEntidad: 'garantia', entidadId: garantia._id, descripcionEntidad: nombre,
+                    valorAnterior: garChanges.valorAnterior, valorNuevo: garChanges.valorNuevo
+                });
+            }
+        }
         res.json('Garantía actualizada!');
     } catch (err) {
         console.error(err.message);
@@ -3327,7 +3517,19 @@ router.delete('/garantias/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para eliminar esta garantía.');
         }
 
+        const garDelNombre = garantia.nombre;
+        let garDelFabId = garantia.fabricante ? (garantia.fabricante._id || garantia.fabricante) : null;
+        if (!garDelFabId && garantia.marca) {
+            const garDelMarca = await Marca.findById(garantia.marca).select('fabricante').lean();
+            if (garDelMarca) garDelFabId = garDelMarca.fabricante;
+        }
         await Garantia.findByIdAndDelete(req.params.id);
+        if (garDelFabId) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: garDelFabId, accion: 'eliminacion',
+                tipoEntidad: 'garantia', entidadId: req.params.id, descripcionEntidad: garDelNombre
+            });
+        }
         res.json('Garantía eliminada!');
     } catch (err) {
         console.error(err.message);
@@ -3517,6 +3719,13 @@ router.post('/piezas/add', auth, async (req, res) => {
         });
 
         await nuevaPieza.save();
+        if (fabricante) {
+            logAuditEvent({
+                usuarioId: usuarioApoderado, fabricanteId: fabricante, accion: 'creacion',
+                tipoEntidad: 'pieza', entidadId: nuevaPieza._id, descripcionEntidad: nombre,
+                detalles: { nombre, idPieza: finalIdPieza, fabricante, marca }
+            });
+        }
         res.status(201).json({ mensaje: 'Pieza creada con éxito!', pieza: nuevaPieza });
     } catch (err) {
         console.error(err.message);
@@ -3563,6 +3772,7 @@ router.put('/piezas/:id', auth, async (req, res) => {
             }
         }
 
+        const anteriorPieza = { nombre: pieza.nombre, fabricante: pieza.fabricante, marca: pieza.marca };
         pieza.nombre = nombre;
         pieza.fabricante = fabricante || null;
         pieza.marca = marca || null;
@@ -3571,6 +3781,17 @@ router.put('/piezas/:id', auth, async (req, res) => {
         pieza.garantia = garantia || null;
 
         await pieza.save();
+        const piezaFabId = fabricante || (pieza.fabricante ? (pieza.fabricante._id || pieza.fabricante) : null);
+        if (piezaFabId) {
+            const piezaChanges = getChangedFields(anteriorPieza, { nombre, fabricante: fabricante || null, marca: marca || null });
+            if (Object.keys(piezaChanges.valorAnterior).length > 0) {
+                logAuditEvent({
+                    usuarioId: req.usuario.id, fabricanteId: piezaFabId, accion: 'actualizacion',
+                    tipoEntidad: 'pieza', entidadId: pieza._id, descripcionEntidad: nombre,
+                    valorAnterior: piezaChanges.valorAnterior, valorNuevo: piezaChanges.valorNuevo
+                });
+            }
+        }
         res.json('Pieza actualizada!');
     } catch (err) {
         console.error(err.message);
@@ -3594,7 +3815,15 @@ router.delete('/piezas/:id', auth, async (req, res) => {
             return res.status(401).json('No autorizado para eliminar esta pieza.');
         }
 
+        const piezaDelNombre = pieza.nombre;
+        const piezaDelFabId = pieza.fabricante ? (pieza.fabricante._id || pieza.fabricante) : null;
         await pieza.deleteOne();
+        if (piezaDelFabId) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: piezaDelFabId, accion: 'eliminacion',
+                tipoEntidad: 'pieza', entidadId: req.params.id, descripcionEntidad: piezaDelNombre
+            });
+        }
         res.json('Pieza eliminada.');
     } catch (err) {
         console.error(err.message);
@@ -3808,6 +4037,8 @@ router.put('/configuracion', auth, async (req, res) => {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
         }
 
+        const anteriorConfig = { stockBajoUmbral: fabricante.stockBajoUmbral, rangoNuevos: fabricante.rangoNuevos, umbralGarantiaPorVencer: fabricante.umbralGarantiaPorVencer };
+
         if (stockBajoUmbral !== undefined) {
             const umbral = parseInt(stockBajoUmbral, 10);
             if (isNaN(umbral) || umbral < 0) {
@@ -3833,6 +4064,14 @@ router.put('/configuracion', auth, async (req, res) => {
         }
 
         await fabricante.save();
+        const configChanges = getChangedFields(anteriorConfig, { stockBajoUmbral: fabricante.stockBajoUmbral, rangoNuevos: fabricante.rangoNuevos, umbralGarantiaPorVencer: fabricante.umbralGarantiaPorVencer });
+        if (Object.keys(configChanges.valorAnterior).length > 0) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: fabricante._id, accion: 'actualizacion',
+                tipoEntidad: 'configuracion', entidadId: fabricante._id, descripcionEntidad: 'Configuración general',
+                valorAnterior: configChanges.valorAnterior, valorNuevo: configChanges.valorNuevo
+            });
+        }
         res.json({ msg: 'Configuración actualizada', stockBajoUmbral: fabricante.stockBajoUmbral, rangoNuevos: fabricante.rangoNuevos, umbralGarantiaPorVencer: fabricante.umbralGarantiaPorVencer });
     } catch (err) {
         console.error(err.message);
@@ -3884,6 +4123,7 @@ router.put('/branding', auth, async (req, res) => {
             return res.status(404).json({ msg: 'Fabricante no encontrado' });
         }
 
+        const anteriorColor = fabricante.portalColor;
         if (portalColor) {
             // Validate hex color format
             if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(portalColor)) {
@@ -3893,6 +4133,13 @@ router.put('/branding', auth, async (req, res) => {
         }
 
         await fabricante.save();
+        if (portalColor && anteriorColor !== portalColor) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: fabricante._id, accion: 'actualizacion',
+                tipoEntidad: 'portal', entidadId: fabricante._id, descripcionEntidad: 'Color del portal',
+                valorAnterior: { portalColor: anteriorColor }, valorNuevo: { portalColor }
+            });
+        }
         res.json({ msg: 'Branding actualizado', portalColor: fabricante.portalColor, slug: fabricante.slug });
     } catch (err) {
         console.error(err.message);
@@ -3950,6 +4197,11 @@ router.post('/branding/logo', auth, checkS3Connection, async (req, res) => {
 
                 await fabricante.save();
 
+                logAuditEvent({
+                    usuarioId: req.usuario.id, fabricanteId: fabricante._id, accion: 'actualizacion',
+                    tipoEntidad: 'portal', entidadId: fabricante._id, descripcionEntidad: 'Logo del portal',
+                    detalles: { archivo: req.file.originalname }
+                });
                 res.json({
                     message: 'Logo del portal subido exitosamente',
                     portalLogo: fabricante.portalLogo
@@ -4643,6 +4895,11 @@ router.post('/checklist-config/add', auth, async (req, res) => {
         });
 
         await fabricante.save();
+        logAuditEvent({
+            usuarioId: req.usuario.id, fabricanteId: fabricante._id, accion: 'creacion',
+            tipoEntidad: 'checklist', entidadId: fabricante._id, descripcionEntidad: nombre.trim(),
+            detalles: { nombre: nombre.trim(), requiereFecha: !!requiereFecha }
+        });
         res.status(201).json({ msg: 'Item de checklist creado', checklistItems: fabricante.checklistItems });
     } catch (err) {
         console.error(err.message);
@@ -4676,10 +4933,19 @@ router.put('/checklist-config/:itemId', auth, async (req, res) => {
             return res.status(404).json({ msg: 'Item de checklist no encontrado' });
         }
 
+        const anteriorChecklist = { nombre: item.nombre, requiereFecha: item.requiereFecha };
         item.nombre = nombre.trim();
         item.requiereFecha = !!requiereFecha;
 
         await fabricante.save();
+        const checkChanges = getChangedFields(anteriorChecklist, { nombre: nombre.trim(), requiereFecha: !!requiereFecha });
+        if (Object.keys(checkChanges.valorAnterior).length > 0) {
+            logAuditEvent({
+                usuarioId: req.usuario.id, fabricanteId: fabricante._id, accion: 'actualizacion',
+                tipoEntidad: 'checklist', entidadId: fabricante._id, descripcionEntidad: nombre.trim(),
+                valorAnterior: checkChanges.valorAnterior, valorNuevo: checkChanges.valorNuevo
+            });
+        }
         res.json({ msg: 'Item de checklist actualizado', checklistItems: fabricante.checklistItems });
     } catch (err) {
         console.error(err.message);
@@ -4709,9 +4975,173 @@ router.delete('/checklist-config/:itemId', auth, async (req, res) => {
             return res.status(404).json({ msg: 'Item de checklist no encontrado' });
         }
 
+        const checkDelNombre = item.nombre;
         item.deleteOne();
         await fabricante.save();
+        logAuditEvent({
+            usuarioId: req.usuario.id, fabricanteId: fabricante._id, accion: 'eliminacion',
+            tipoEntidad: 'checklist', entidadId: fabricante._id, descripcionEntidad: checkDelNombre
+        });
         res.json({ msg: 'Item de checklist eliminado', checklistItems: fabricante.checklistItems });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// ================== AUDIT LOG ROUTES ==================
+
+// @route   GET /api/apoderado/audit-log
+// @desc    Obtener registros de auditoría paginados con filtros
+// @access  Privado (Apoderado)
+router.get('/audit-log', auth, async (req, res) => {
+    try {
+        const { search, periodo, fechaDesde, fechaHasta, page = 1, limit = 25 } = req.query;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        if (fabricanteIds.length === 0) {
+            return res.json({ logs: [], total: 0, page: 1, totalPages: 0 });
+        }
+
+        const query = { fabricante: { $in: fabricanteIds } };
+
+        // Period filter
+        if (periodo && periodo !== 'todos') {
+            const now = new Date();
+            let desde;
+            if (periodo === 'ultimo_mes') {
+                desde = new Date(now.setDate(now.getDate() - 30));
+            } else if (periodo === 'ultimos_3_meses') {
+                desde = new Date(now.setDate(now.getDate() - 90));
+            } else if (periodo === 'ultimos_6_meses') {
+                desde = new Date(now.setDate(now.getDate() - 180));
+            } else if (periodo === 'custom' && fechaDesde) {
+                query.createdAt = { $gte: new Date(fechaDesde) };
+                if (fechaHasta) {
+                    const hasta = new Date(fechaHasta);
+                    hasta.setHours(23, 59, 59, 999);
+                    query.createdAt.$lte = hasta;
+                }
+            }
+            if (desde && periodo !== 'custom') {
+                query.createdAt = { $gte: desde };
+            }
+        }
+
+        // Text search
+        if (search && search.trim()) {
+            const searchRegex = { $regex: search.trim(), $options: 'i' };
+            query.$or = [
+                { nombreUsuario: searchRegex },
+                { descripcionEntidad: searchRegex },
+                { tipoEntidad: searchRegex }
+            ];
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const total = await AuditLog.countDocuments(query);
+        const logs = await AuditLog.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .lean();
+
+        res.json({
+            logs,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/audit-log/export
+// @desc    Exportar registros de auditoría (sin paginación)
+// @access  Privado (Apoderado)
+router.get('/audit-log/export', auth, async (req, res) => {
+    try {
+        const { search, periodo, fechaDesde, fechaHasta } = req.query;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        const query = { fabricante: { $in: fabricanteIds } };
+
+        if (periodo && periodo !== 'todos') {
+            const now = new Date();
+            let desde;
+            if (periodo === 'ultimo_mes') {
+                desde = new Date(now.setDate(now.getDate() - 30));
+            } else if (periodo === 'ultimos_3_meses') {
+                desde = new Date(now.setDate(now.getDate() - 90));
+            } else if (periodo === 'ultimos_6_meses') {
+                desde = new Date(now.setDate(now.getDate() - 180));
+            } else if (periodo === 'custom' && fechaDesde) {
+                query.createdAt = { $gte: new Date(fechaDesde) };
+                if (fechaHasta) {
+                    const hasta = new Date(fechaHasta);
+                    hasta.setHours(23, 59, 59, 999);
+                    query.createdAt.$lte = hasta;
+                }
+            }
+            if (desde && periodo !== 'custom') {
+                query.createdAt = { $gte: desde };
+            }
+        }
+
+        if (search && search.trim()) {
+            const searchRegex = { $regex: search.trim(), $options: 'i' };
+            query.$or = [
+                { nombreUsuario: searchRegex },
+                { descripcionEntidad: searchRegex },
+                { tipoEntidad: searchRegex }
+            ];
+        }
+
+        const logs = await AuditLog.find(query)
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const exportData = logs.map(log => ({
+            Fecha: new Date(log.createdAt).toLocaleString('es-AR'),
+            Usuario: log.nombreUsuario,
+            Accion: ACCION_LABELS[log.accion] || log.accion,
+            Tipo: ENTITY_LABELS[log.tipoEntidad] || log.tipoEntidad,
+            Descripcion: log.descripcionEntidad || ''
+        }));
+
+        res.json(exportData);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/audit-log/:id
+// @desc    Obtener detalle de un registro de auditoría
+// @access  Privado (Apoderado)
+router.get('/audit-log/:id', auth, async (req, res) => {
+    try {
+        const log = await AuditLog.findById(req.params.id).lean();
+
+        if (!log) {
+            return res.status(404).json({ msg: 'Registro de auditoría no encontrado' });
+        }
+
+        // Verify access
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id));
+        const fabricanteIds = fabricantes.map(fab => fab._id.toString());
+
+        if (!fabricanteIds.includes(log.fabricante.toString())) {
+            return res.status(403).json({ msg: 'No autorizado' });
+        }
+
+        res.json(log);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');

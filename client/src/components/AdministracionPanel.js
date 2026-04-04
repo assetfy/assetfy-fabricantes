@@ -14,6 +14,7 @@ import ChecklistConfigForm from './ChecklistConfigForm';
 import ChecklistConfigEditForm from './ChecklistConfigEditForm';
 import Modal from './Modal';
 import Tabs from './Tabs';
+import AuditoriaLog from './AuditoriaLog';
 import api from '../api';
 import { useNotification } from './NotificationProvider';
 
@@ -694,13 +695,19 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                 />
                             </>
                         )
+                    },
+                    {
+                        label: "Auditoria",
+                        content: (
+                            <AuditoriaLog />
+                        )
                     }
                 ]}
             />
 
             {/* Modals */}
-            <Modal 
-                isOpen={showCreateUbicacionModal} 
+            <Modal
+                isOpen={showCreateUbicacionModal}
                 onClose={() => setShowCreateUbicacionModal(false)}
                 title="Crear Nueva Ubicación / Depósito"
             >
