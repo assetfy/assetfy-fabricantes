@@ -4835,5 +4835,106 @@ router.delete('/checklist-config/:itemId', auth, async (req, res) => {
     }
 });
 
+// @route   GET /api/apoderado/reportes/ventas
+// @desc    Obtener datos de ventas agrupados por fabricante/provincia/ciudad/representante
+// @access  Privado (Apoderado)
+router.get('/reportes/ventas', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+        const { desde, hasta } = req.query;
+
+        // Build date filter
+        const dateFilter = {};
+        if (desde) dateFilter.$gte = new Date(desde);
+        if (hasta) {
+            const hastaDate = new Date(hasta);
+            hastaDate.setHours(23, 59, 59, 999);
+            dateFilter.$lte = hastaDate;
+        }
+
+        // Base match: items sold by this apoderado
+        const matchStage = {
+            usuarioApoderado: new (require('mongoose').Types.ObjectId)(usuarioApoderado),
+            estado: 'vendido'
+        };
+        if (desde || hasta) {
+            matchStage.fechaVenta = dateFilter;
+        }
+
+        // Get fabricante IDs for this apoderado
+        const fabricantes = await Fabricante.find({
+            $or: [
+                { usuarioApoderado },
+                { administradores: usuarioApoderado }
+            ]
+        }).select('_id nombre');
+        const fabricanteIds = fabricantes.map(f => f._id);
+        const fabricanteMap = {};
+        fabricantes.forEach(f => { fabricanteMap[f._id.toString()] = f.nombre; });
+
+        // Get all sold items with populated references
+        const ventas = await Inventario.find(matchStage)
+            .populate({
+                path: 'producto',
+                select: 'fabricante modelo',
+                populate: { path: 'fabricante', select: 'nombre' }
+            })
+            .populate({
+                path: 'pieza',
+                select: 'fabricante nombre',
+                populate: { path: 'fabricante', select: 'nombre' }
+            })
+            .populate('representante', 'razonSocial nombre')
+            .lean();
+
+        // Filter only items belonging to this apoderado's fabricantes
+        const ventasFiltradas = ventas.filter(v => {
+            const fab = v.producto?.fabricante || v.pieza?.fabricante;
+            return fab && fabricanteIds.some(id => id.toString() === fab._id.toString());
+        });
+
+        // --- Aggregate: ventas por fabricante por provincia ---
+        const porProvincia = {};
+        const porCiudad = {};
+        const porRepresentante = {};
+
+        ventasFiltradas.forEach(v => {
+            const fab = v.producto?.fabricante || v.pieza?.fabricante;
+            const fabNombre = fab?.nombre || 'Sin fabricante';
+            const provincia = v.comprador?.provincia || 'Sin provincia';
+            const ciudad = v.comprador?.direccion || 'Sin ciudad';
+            const rep = v.representante;
+            const repNombre = rep ? (rep.razonSocial || rep.nombre) : 'Venta directa (particular)';
+
+            // Por provincia
+            const keyProv = `${fabNombre}|||${provincia}`;
+            porProvincia[keyProv] = (porProvincia[keyProv] || 0) + 1;
+
+            // Por ciudad
+            const keyCiudad = `${fabNombre}|||${ciudad}`;
+            porCiudad[keyCiudad] = (porCiudad[keyCiudad] || 0) + 1;
+
+            // Por representante
+            const keyRep = `${fabNombre}|||${repNombre}`;
+            porRepresentante[keyRep] = (porRepresentante[keyRep] || 0) + 1;
+        });
+
+        const toArray = (obj) => Object.entries(obj).map(([key, count]) => {
+            const [fabricante, dimension] = key.split('|||');
+            return { fabricante, dimension, count };
+        }).sort((a, b) => b.count - a.count);
+
+        res.json({
+            porProvincia: toArray(porProvincia),
+            porCiudad: toArray(porCiudad),
+            porRepresentante: toArray(porRepresentante),
+            totalVentas: ventasFiltradas.length
+        });
+    } catch (err) {
+        console.error('Error en reportes de ventas:', err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 module.exports = router;
 

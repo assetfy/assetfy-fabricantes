@@ -1688,3 +1688,282 @@ table .warranty-expired {
   background: #e2e3e5;
   color: #383d41;
 }
+
+/* ===== Ventas Report Panel ===== */
+.ventas-report-panel {
+  padding: 0;
+}
+
+.ventas-filters {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f8f7fa;
+  border-radius: 10px;
+  border: 1px solid #e9e5f0;
+}
+
+.ventas-periodo-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ventas-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+  white-space: nowrap;
+}
+
+.ventas-periodo-select {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1c4e9;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ventas-periodo-select:focus {
+  border-color: #5C2D91;
+}
+
+.ventas-custom-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ventas-date-field {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ventas-date-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #d1c4e9;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.ventas-date-input:focus {
+  border-color: #5C2D91;
+}
+
+.ventas-apply-btn {
+  padding: 0.45rem 1rem;
+  background: #5C2D91;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ventas-apply-btn:hover {
+  background: #4a2278;
+}
+
+.ventas-total-badge {
+  margin-left: auto;
+  padding: 0.4rem 0.9rem;
+  background: #5C2D91;
+  color: #fff;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.ventas-loading {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.ventas-gadgets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ventas-gadget {
+  background: #fff;
+  border: 1px solid #e9e5f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(92, 45, 145, 0.06);
+}
+
+.ventas-gadget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: #f8f7fa;
+  border-bottom: 1px solid #e9e5f0;
+}
+
+.ventas-gadget-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.ventas-gadget-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ventas-chart-selector {
+  display: flex;
+  gap: 2px;
+  background: #e9e5f0;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.ventas-chart-btn {
+  padding: 0.3rem 0.55rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #666;
+  transition: all 0.15s;
+}
+
+.ventas-chart-btn.active {
+  background: #fff;
+  color: #5C2D91;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-weight: 700;
+}
+
+.ventas-chart-btn:hover:not(.active) {
+  color: #5C2D91;
+}
+
+.ventas-download-btn {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #d1c4e9;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #5C2D91;
+  transition: all 0.15s;
+}
+
+.ventas-download-btn:hover:not(:disabled) {
+  background: #5C2D91;
+  color: #fff;
+}
+
+.ventas-download-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ventas-gadget-body {
+  padding: 1rem 1.25rem;
+}
+
+.ventas-table-wrapper {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ventas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.ventas-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ventas-table th {
+  background: #f3f0f7;
+  color: #5C2D91;
+  font-weight: 700;
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  border-bottom: 2px solid #d1c4e9;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ventas-table td {
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid #f0ecf5;
+  color: #444;
+}
+
+.ventas-table tbody tr:hover {
+  background: #faf8fd;
+}
+
+.ventas-count-cell {
+  font-weight: 700;
+  color: #5C2D91;
+  text-align: center;
+}
+
+.ventas-chart-container {
+  min-height: 350px;
+}
+
+.ventas-empty {
+  text-align: center;
+  padding: 2.5rem;
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ventas-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ventas-total-badge {
+    margin-left: 0;
+  }
+
+  .ventas-custom-dates {
+    width: 100%;
+  }
+
+  .ventas-gadget-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .ventas-gadget-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
