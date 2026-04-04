@@ -309,6 +309,12 @@ const MapaGeolocalizacion = () => {
                                     <small>{rep.direccion}</small>
                                     <br />
                                     <span className="mapa-popup-badge central">Sede Central</span>
+                                    {rep.tipoRepresentante && (
+                                        <>
+                                            <br />
+                                            <span style={{ fontSize: '12px', color: '#444' }}>Tipo: <strong>{rep.tipoRepresentante}</strong></span>
+                                        </>
+                                    )}
                                     {rep.cobertura && rep.cobertura.length > 0 && (
                                         <div style={{ marginTop: '6px', fontSize: '12px' }}>
                                             <strong>Áreas de Cobertura:</strong>
@@ -340,6 +346,12 @@ const MapaGeolocalizacion = () => {
                                         <small>{suc.direccion}</small>
                                         <br />
                                         <span className="mapa-popup-badge sucursal">Sucursal</span>
+                                        {rep.tipoRepresentante && (
+                                            <>
+                                                <br />
+                                                <span style={{ fontSize: '12px', color: '#444' }}>Tipo: <strong>{rep.tipoRepresentante}</strong></span>
+                                            </>
+                                        )}
                                     </div>
                                 </Popup>
                             </Marker>

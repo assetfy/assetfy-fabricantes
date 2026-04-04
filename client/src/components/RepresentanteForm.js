@@ -19,6 +19,7 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
         correo: '',
         correoAdicional: '',
         sitioWeb: '',
+        tipoRepresentante: '',
         estado: 'Activo',
         marcasRepresentadas: [],
         sucursales: [],
@@ -247,6 +248,7 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
                 correo: '',
                 correoAdicional: '',
                 sitioWeb: '',
+                tipoRepresentante: '',
                 estado: 'Activo',
                 marcasRepresentadas: [],
                 sucursales: [],
@@ -432,6 +434,16 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
                                         />
                                     </div>
                                     
+                                    <div className="form-group">
+                                        <label>Tipo de Representante</label>
+                                        <select name="tipoRepresentante" value={formData.tipoRepresentante} onChange={handleChange}>
+                                            <option value="">Seleccione un tipo...</option>
+                                            <option value="Re-Venta">Re-Venta</option>
+                                            <option value="Pos-Venta">Pos-Venta</option>
+                                            <option value="Re-Venta / Pos-Venta">Re-Venta / Pos-Venta</option>
+                                        </select>
+                                    </div>
+
                                     <div className="form-group">
                                         <label>Estado</label>
                                         <select name="estado" value={formData.estado} onChange={handleChange} required>

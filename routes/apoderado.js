@@ -2219,7 +2219,7 @@ router.get('/mapa', auth, async (req, res) => {
                 { marcasRepresentadas: { $in: marcaIds } }
             ],
             estado: 'Activo'
-        }).select('razonSocial nombre direccion coordenadas cobertura sucursales');
+        }).select('razonSocial nombre direccion coordenadas cobertura sucursales tipoRepresentante');
 
         // Build representantes map data
         const representantesData = representantes
@@ -2232,6 +2232,7 @@ router.get('/mapa', auth, async (req, res) => {
                     direccion: rep.direccion,
                     coordenadas: rep.coordenadas,
                     cobertura: rep.cobertura?.provincias || [],
+                    tipoRepresentante: rep.tipoRepresentante || null,
                     sucursales: (rep.sucursales || [])
                         .filter(s => s.coordenadas && s.coordenadas.lat && s.coordenadas.lng)
                         .map(s => ({
