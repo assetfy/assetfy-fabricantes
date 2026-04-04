@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import MapaGeolocalizacion from './MapaGeolocalizacion';
+import DistribucionProvincias from './DistribucionProvincias';
 
 const RANGO_LABELS = {
     'ultima_semana': 'Última semana',
@@ -79,7 +80,7 @@ const MetricasPanel = () => {
                             <span className="detail-label">Nuevos Productos Registrados</span>
                             <span className="detail-value">{metricas.clientes?.nuevosProductosRegistrados || 0}</span>
                         </div>
-                        <div className="dashboard-box-detail-row">
+                        <div className="dashboard-box-detail-row detail-row-sin-stock">
                             <span className="detail-dot" style={{ backgroundColor: '#ef4444' }}></span>
                             <span className="detail-label">Requieren Atención</span>
                             <span className="detail-value">{metricas.clientes?.requierenAtencion || 0}</span>
@@ -100,7 +101,7 @@ const MetricasPanel = () => {
                             <span className="notif-link placeholder-text">Reclamos por Garantías</span>
                             <span className="notif-link placeholder-text">Garantías por Vencer</span>
                         </div>
-                        <div style={{ textAlign: 'center', color: 'var(--text-gray)', fontSize: '12px', marginTop: '12px', fontStyle: 'italic' }}>
+                        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '12px', fontStyle: 'italic' }}>
                             Próximamente
                         </div>
                     </div>
@@ -122,8 +123,8 @@ const MetricasPanel = () => {
                             <span className="detail-label">Bajo Stock</span>
                             <span className="detail-value">{metricas.stockBajo?.productos || 0}</span>
                         </div>
-                        <div className="dashboard-box-detail-row">
-                            <span className="detail-dot" style={{ backgroundColor: '#8b5cf6' }}></span>
+                        <div className="dashboard-box-detail-row detail-row-sin-stock">
+                            <span className="detail-dot" style={{ backgroundColor: '#ef4444' }}></span>
                             <span className="detail-label">Sin Stock</span>
                             <span className="detail-value">{metricas.sinStock?.productos || 0}</span>
                         </div>
@@ -149,8 +150,8 @@ const MetricasPanel = () => {
                             <span className="detail-label">Stock bajo</span>
                             <span className="detail-value">{metricas.stockBajo?.piezas || 0}</span>
                         </div>
-                        <div className="dashboard-box-detail-row">
-                            <span className="detail-dot" style={{ backgroundColor: '#8b5cf6' }}></span>
+                        <div className="dashboard-box-detail-row detail-row-sin-stock">
+                            <span className="detail-dot" style={{ backgroundColor: '#ef4444' }}></span>
                             <span className="detail-label">Sin stock</span>
                             <span className="detail-value">{metricas.sinStock?.piezas || 0}</span>
                         </div>
@@ -165,8 +166,13 @@ const MetricasPanel = () => {
             <div className="section-header" style={{ marginTop: '2rem' }}>
                 <h3>Representantes, sucursales y productos registrados</h3>
             </div>
-            <div style={{ marginTop: '1.5rem' }}>
-                <MapaGeolocalizacion />
+            <div className="dashboard-map-charts-row">
+                <div className="dashboard-map-column">
+                    <MapaGeolocalizacion />
+                </div>
+                <div className="dashboard-charts-column">
+                    <DistribucionProvincias />
+                </div>
             </div>
 
             {/* Gestión de Garantías Section */}
