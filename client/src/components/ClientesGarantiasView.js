@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import ClientesList from './ClientesList';
+import GarantiasAsignadasList from './GarantiasAsignadasList';
 import PedidoGarantiaList from './PedidoGarantiaList';
 
 const RANGO_LABELS = {
@@ -17,6 +18,9 @@ const ClientesGarantiasView = ({ onOpenInventarioItem }) => {
     const [contadores, setContadores] = useState({
         clientesTotal: 0,
         clientesNuevos: 0,
+        garantiasAsignadasTotal: 0,
+        garantiasAsignadasPendientes: 0,
+        garantiasAsignadasValidadas: 0,
         garantiasTotal: 0,
         garantiasEnCurso: 0,
         garantiasCerradas: 0,
@@ -32,6 +36,9 @@ const ClientesGarantiasView = ({ onOpenInventarioItem }) => {
                 setContadores({
                     clientesTotal: data.clientes?.total || 0,
                     clientesNuevos: data.clientes?.nuevos || 0,
+                    garantiasAsignadasTotal: data.garantiasAsignadas?.total || 0,
+                    garantiasAsignadasPendientes: data.garantiasAsignadas?.pendientes || 0,
+                    garantiasAsignadasValidadas: data.garantiasAsignadas?.validadas || 0,
                     garantiasTotal: data.garantias?.total || 0,
                     garantiasEnCurso: data.garantias?.enCurso || 0,
                     garantiasCerradas: data.garantias?.cerradas || 0,
@@ -85,6 +92,29 @@ const ClientesGarantiasView = ({ onOpenInventarioItem }) => {
                 </div>
 
                 <div
+                    className={`representante-counter-box ${activeView === 'garantiasAsignadas' ? 'active' : ''}`}
+                    onClick={() => setActiveView('garantiasAsignadas')}
+                >
+                    <div className="representante-counter-title">Garantías</div>
+                    <div className="representante-counter-number" style={{ color: '#10b981' }}>
+                        {loadingContadores ? '...' : contadores.garantiasAsignadasTotal}
+                    </div>
+                    <div className="representante-counter-subtitle">Total garantías</div>
+                    <div className="counter-box-details">
+                        <div className="counter-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#f59e0b' }}></span>
+                            <span className="detail-label">Pendientes</span>
+                            <span className="detail-value">{loadingContadores ? '...' : contadores.garantiasAsignadasPendientes}</span>
+                        </div>
+                        <div className="counter-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Validadas</span>
+                            <span className="detail-value">{loadingContadores ? '...' : contadores.garantiasAsignadasValidadas}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div
                     className={`representante-counter-box ${activeView === 'garantias' ? 'active' : ''}`}
                     onClick={() => setActiveView('garantias')}
                 >
@@ -111,6 +141,9 @@ const ClientesGarantiasView = ({ onOpenInventarioItem }) => {
             {/* Content based on active view */}
             {activeView === 'clientes' && (
                 <ClientesList onOpenInventarioItem={onOpenInventarioItem} />
+            )}
+            {activeView === 'garantiasAsignadas' && (
+                <GarantiasAsignadasList />
             )}
             {activeView === 'garantias' && (
                 <PedidoGarantiaList isFabricante={true} />

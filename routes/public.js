@@ -12,6 +12,85 @@ const { s3 } = require('../middleware/upload');
 const { geocodeAddress } = require('../utils/geocoding');
 const SolicitudRepresentacion = require('../models/solicitudRepresentacion.model');
 const { generarAlertaProductoRegistrado, generarAlertaSolicitudRepresentacion } = require('../utils/alertEngine');
+const Garantia = require('../models/garantia.model');
+const GarantiaAsignada = require('../models/garantiaAsignada.model');
+const { calculateWarrantyExpiration } = require('../utils/warrantyUtils');
+const Producto = require('../models/producto.model');
+const Pieza = require('../models/pieza.model');
+
+// Helper: crear garantía asignada cuando se registra un producto con garantía
+async function crearGarantiaAsignada(inventario, itemData, garantia, tipo = 'Producto') {
+    try {
+        if (!garantia) return null;
+
+        // Verificar si ya existe una garantía asignada para este inventario
+        const existing = await GarantiaAsignada.findOne({ inventario: inventario._id });
+        if (existing) return existing;
+
+        const fechaRegistro = inventario.fechaRegistro || new Date();
+        const fechaExpiracion = calculateWarrantyExpiration(
+            fechaRegistro,
+            garantia.duracionNumero,
+            garantia.duracionUnidad
+        );
+
+        if (!fechaExpiracion) return null;
+
+        // Determinar estado inicial según validación automática
+        const estadoInicial = garantia.validacionAutomatica ? 'Validada' : 'Pendiente';
+
+        const nuevaGarantia = new GarantiaAsignada({
+            inventario: inventario._id,
+            garantiaOrigen: garantia._id,
+            clienteFinal: {
+                nombreCompleto: inventario.comprador?.nombreCompleto || '',
+                correoElectronico: inventario.comprador?.correoElectronico || ''
+            },
+            productoRepuesto: {
+                modelo: itemData.modelo || itemData.nombre || '',
+                tipo: tipo,
+                sku: itemData.idProducto || itemData.idPieza || ''
+            },
+            numeroSerie: inventario.numeroSerie,
+            fechaRegistro,
+            canal: 'Web fabricante',
+            estado: estadoInicial,
+            fechaExpiracion,
+            datosGarantia: {
+                nombre: garantia.nombre,
+                duracionNumero: garantia.duracionNumero,
+                duracionUnidad: garantia.duracionUnidad,
+                fechaInicio: garantia.fechaInicio,
+                costoGarantia: garantia.costoGarantia,
+                tipoCobertura: garantia.tipoCobertura || [],
+                partesCubiertas: garantia.partesCubiertas,
+                exclusiones: garantia.exclusiones || [],
+                limitacionesGeograficas: garantia.limitacionesGeograficas,
+                serviciosIncluidos: garantia.serviciosIncluidos || [],
+                requiereRegistro: garantia.requiereRegistro,
+                comprobanteObligatorio: garantia.comprobanteObligatorio,
+                usoAutorizado: garantia.usoAutorizado || [],
+                instalacionCertificada: garantia.instalacionCertificada,
+                mantenimientoDocumentado: garantia.mantenimientoDocumentado,
+                canalesReclamo: garantia.canalesReclamo || [],
+                tiempoRespuesta: garantia.tiempoRespuesta,
+                opcionesLogistica: garantia.opcionesLogistica,
+                maximoReclamos: garantia.maximoReclamos,
+                responsabilidadesCliente: garantia.responsabilidadesCliente || [],
+                pagoTraslado: garantia.pagoTraslado
+            },
+            fabricante: itemData.fabricante?._id || itemData.fabricante,
+            marca: itemData.marca?._id || itemData.marca,
+            usuarioApoderado: inventario.usuarioApoderado
+        });
+
+        await nuevaGarantia.save();
+        return nuevaGarantia;
+    } catch (err) {
+        console.error('Error creando garantía asignada:', err.message);
+        return null;
+    }
+}
 
 // @route   GET /api/public/fabricante/:slug
 // @desc    Get fabricante branding info for the branded registration portal
@@ -70,7 +149,8 @@ router.post('/registro', async (req, res) => {
     try {
         // Find the product by idInventario
         const inventario = await Inventario.findOne({ idInventario: idInventario.trim() })
-            .populate({ path: 'producto', select: 'fabricante modelo' });
+            .populate({ path: 'producto', select: 'fabricante marca modelo idProducto', populate: { path: 'garantia' } })
+            .populate({ path: 'pieza', select: 'fabricante marca nombre idPieza', populate: { path: 'garantia' } });
 
         if (!inventario) {
             return res.status(404).json({
@@ -113,6 +193,15 @@ router.post('/registro', async (req, res) => {
         if (inventario.producto?.fabricante) {
             generarAlertaProductoRegistrado(inventario, inventario.producto.fabricante).catch(err => {
                 console.error('Error generando alerta de registro:', err);
+            });
+        }
+
+        // Crear garantía asignada si el producto/pieza tiene garantía
+        const item = inventario.producto || inventario.pieza;
+        const tipoItem = inventario.producto ? 'Producto' : 'Pieza';
+        if (item?.garantia) {
+            crearGarantiaAsignada(inventario, item, item.garantia, tipoItem).catch(err => {
+                console.error('Error creando garantía asignada:', err);
             });
         }
 
@@ -259,6 +348,13 @@ router.post('/registro-con-usuario', async (req, res) => {
                 });
             }
 
+            // Crear garantía asignada si el producto tiene garantía
+            if (inventario.producto?.garantia) {
+                crearGarantiaAsignada(inventario, inventario.producto, inventario.producto.garantia, 'Producto').catch(err => {
+                    console.error('Error creando garantía asignada:', err);
+                });
+            }
+
             return res.status(200).json({
                 success: true,
                 message: 'Producto registrado exitosamente. El usuario ya existe y el bien ha sido agregado a su cuenta.',
@@ -345,6 +441,13 @@ router.post('/registro-con-usuario', async (req, res) => {
         if (inventario.producto?.fabricante?._id) {
             generarAlertaProductoRegistrado(inventario, inventario.producto.fabricante._id).catch(err => {
                 console.error('Error generando alerta de registro:', err);
+            });
+        }
+
+        // Crear garantía asignada si el producto tiene garantía
+        if (inventario.producto?.garantia) {
+            crearGarantiaAsignada(inventario, inventario.producto, inventario.producto.garantia, 'Producto').catch(err => {
+                console.error('Error creando garantía asignada:', err);
             });
         }
 
@@ -549,6 +652,11 @@ router.post('/registro-masivo', async (req, res) => {
                         fechaRegistro: new Date()
                     });
                     await nuevoBien.save();
+                }
+
+                // Crear garantía asignada si el producto tiene garantía
+                if (inventario.producto?.garantia) {
+                    await crearGarantiaAsignada(inventario, inventario.producto, inventario.producto.garantia, 'Producto');
                 }
 
                 registrados++;
