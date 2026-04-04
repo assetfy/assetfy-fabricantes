@@ -9,6 +9,9 @@ import MarcaEditForm from './MarcaEditForm';
 import WarrantyList from './WarrantyList';
 import WarrantyManagerForm from './WarrantyManagerForm';
 import WarrantyDetails from './WarrantyDetails';
+import ChecklistConfigList from './ChecklistConfigList';
+import ChecklistConfigForm from './ChecklistConfigForm';
+import ChecklistConfigEditForm from './ChecklistConfigEditForm';
 import Modal from './Modal';
 import Tabs from './Tabs';
 import api from '../api';
@@ -23,6 +26,9 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
     const [showEditGarantiaModal, setShowEditGarantiaModal] = useState(false);
     const [showViewGarantiaModal, setShowViewGarantiaModal] = useState(false);
     const [selectedGarantia, setSelectedGarantia] = useState(null);
+    const [showCreateChecklistItemModal, setShowCreateChecklistItemModal] = useState(false);
+    const [editingChecklistItem, setEditingChecklistItem] = useState(null);
+    const [editingChecklistFabricanteId, setEditingChecklistFabricanteId] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Branding state
@@ -127,6 +133,28 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
 
     const handleMarcaUpdated = () => {
         setEditingMarca(null);
+        handleRefresh();
+    };
+
+    // Checklist config handlers
+    const handleEditChecklistItem = (item, fabricanteId) => {
+        setEditingChecklistItem(item);
+        setEditingChecklistFabricanteId(fabricanteId);
+    };
+
+    const handleCancelEditChecklistItem = () => {
+        setEditingChecklistItem(null);
+        setEditingChecklistFabricanteId(null);
+    };
+
+    const handleChecklistItemAdded = () => {
+        setShowCreateChecklistItemModal(false);
+        handleRefresh();
+    };
+
+    const handleChecklistItemUpdated = () => {
+        setEditingChecklistItem(null);
+        setEditingChecklistFabricanteId(null);
         handleRefresh();
     };
 
@@ -641,6 +669,31 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                     {
                         label: "Portal de Registro",
                         content: brandingTab
+                    },
+                    {
+                        label: "Checklist Representantes",
+                        content: (
+                            <>
+                                <div className="list-container">
+                                    <div className="section-header">
+                                        <h3>Checklist Representantes</h3>
+                                        <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '13px' }}>
+                                            Configure los items del checklist que se mostrarán al crear o editar un representante.
+                                        </p>
+                                        <button
+                                            className="create-button"
+                                            onClick={() => setShowCreateChecklistItemModal(true)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                <ChecklistConfigList
+                                    refreshTrigger={refreshKey}
+                                    onEdit={handleEditChecklistItem}
+                                />
+                            </>
+                        )
                     }
                 ]}
             />
@@ -759,6 +812,33 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                     <WarrantyDetails
                         garantia={selectedGarantia}
                         onClose={handleCancelViewGarantia}
+                    />
+                )}
+            </Modal>
+
+            {/* Checklist config modals */}
+            <Modal
+                isOpen={showCreateChecklistItemModal}
+                onClose={() => setShowCreateChecklistItemModal(false)}
+                title="Crear Item de Checklist"
+            >
+                <ChecklistConfigForm
+                    onItemAdded={handleChecklistItemAdded}
+                    fabricantes={fabricantes}
+                />
+            </Modal>
+
+            <Modal
+                isOpen={!!editingChecklistItem}
+                onClose={handleCancelEditChecklistItem}
+                title="Editar Item de Checklist"
+            >
+                {editingChecklistItem && (
+                    <ChecklistConfigEditForm
+                        item={editingChecklistItem}
+                        fabricanteId={editingChecklistFabricanteId}
+                        onEditFinished={handleChecklistItemUpdated}
+                        onCancelEdit={handleCancelEditChecklistItem}
                     />
                 )}
             </Modal>

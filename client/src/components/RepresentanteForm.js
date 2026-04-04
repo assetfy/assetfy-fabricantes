@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useNotification } from './NotificationProvider';
 import Tabs from './Tabs';
+import ChecklistRepresentante from './ChecklistRepresentante';
 
 const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillData }) => {
     const [formData, setFormData] = useState({
@@ -20,7 +21,8 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
         sitioWeb: '',
         estado: 'Activo',
         marcasRepresentadas: [],
-        sucursales: []
+        sucursales: [],
+        checklistData: []
     });
     const [regions, setRegions] = useState({ provincias: [], localidades: {} });
     const [availableLocalidades, setAvailableLocalidades] = useState([]);
@@ -30,6 +32,7 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
     const [availableMarcas, setAvailableMarcas] = useState([]);
     const [editingSucursalIndex, setEditingSucursalIndex] = useState(null);
     const [sucursalForm, setSucursalForm] = useState({ nombre: '', direccion: '', telefono: '', correo: '' });
+    const [checklistItems, setChecklistItems] = useState([]);
     const { showSuccess, showError } = useNotification();
 
     useEffect(() => {
@@ -46,6 +49,19 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
             }
         };
         fetchRegions();
+
+        const fetchChecklistConfig = async () => {
+            try {
+                const res = await api.get('/apoderado/checklist-config');
+                if (res && res.data && res.data.fabricantes) {
+                    const allItems = res.data.fabricantes.flatMap(f => f.checklistItems || []);
+                    setChecklistItems(allItems);
+                }
+            } catch (err) {
+                console.error('Error al obtener checklist config:', err);
+            }
+        };
+        fetchChecklistConfig();
     }, []);
 
     // Pre-fill form data from solicitud (when accepting a representation request)
@@ -233,7 +249,8 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
                 sitioWeb: '',
                 estado: 'Activo',
                 marcasRepresentadas: [],
-                sucursales: []
+                sucursales: [],
+                checklistData: []
             });
             setSelectedFabricantes([]);
             if (onRepresentanteAdded) {
@@ -559,6 +576,16 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
                                         </div>
                                     )}
                                 </>
+                            )
+                        },
+                        {
+                            label: "Checklist",
+                            content: (
+                                <ChecklistRepresentante
+                                    checklistItems={checklistItems}
+                                    checklistData={formData.checklistData}
+                                    onChange={(data) => setFormData(prev => ({ ...prev, checklistData: data }))}
+                                />
                             )
                         }
                     ]}
