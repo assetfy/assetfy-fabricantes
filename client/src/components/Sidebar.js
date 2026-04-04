@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logoImg from '../logo.png';
 
-const Sidebar = ({ items, basePath = '' }) => {
+const Sidebar = ({ items, basePath = '', footerContent }) => {
     const location = useLocation();
     const [expandedItems, setExpandedItems] = useState(new Set());
 
@@ -64,6 +64,7 @@ const Sidebar = ({ items, basePath = '' }) => {
                         <div key={index}>
                             <div
                                 className={`sidebar-item ${isItemActive ? 'active' : ''}`}
+                                data-tour-id={item.tourId || undefined}
                                 onClick={() => {
                                     if (hasSubItems) {
                                         toggleExpand(index);
@@ -112,6 +113,7 @@ const Sidebar = ({ items, basePath = '' }) => {
                                                 key={subIndex}
                                                 to={basePath + subItem.path}
                                                 className={`sidebar-sub-item ${isSubActive ? 'active' : ''}`}
+                                                data-tour-id={subItem.tourId || undefined}
                                             >
                                                 <span className="sidebar-sub-item-icon">{subItem.icon || '·'}</span>
                                                 <span className="sidebar-sub-item-label">{subItem.label}</span>
@@ -133,6 +135,11 @@ const Sidebar = ({ items, basePath = '' }) => {
                     );
                 })}
             </nav>
+            {footerContent && (
+                <div className="sidebar-footer">
+                    {footerContent}
+                </div>
+            )}
         </div>
     );
 };

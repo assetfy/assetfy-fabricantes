@@ -23,6 +23,7 @@ import AlertasPanel from './AlertasPanel';
 import ReportesPanel from './ReportesPanel';
 import Sidebar from './Sidebar';
 import { useNotification } from './NotificationProvider';
+import { useTour } from './TourProvider';
 
 const ApoderadoPanel = () => {
     const [userData, setUserData] = useState(null);
@@ -52,6 +53,7 @@ const ApoderadoPanel = () => {
 
     const navigate = useNavigate();
     const { showSuccess, showError } = useNotification();
+    const { startTour } = useTour();
     
     // Check authentication status
     const token = localStorage.getItem('token');
@@ -298,12 +300,14 @@ const ApoderadoPanel = () => {
 
     return (
         <div className="apoderado-panel apoderado-panel-with-sidebar">
-            <UserHeader 
-                user={userData}
-                onProfileUpdated={handleProfileUpdated}
-                userType={getUserType()}
-                welcomeMessage={`Bienvenido/a ${userData?.usuario?.nombreCompleto || ''}`}
-            />
+            <div data-tour-id="tour-header">
+                <UserHeader
+                    user={userData}
+                    onProfileUpdated={handleProfileUpdated}
+                    userType={getUserType()}
+                    welcomeMessage={`Bienvenido/a ${userData?.usuario?.nombreCompleto || ''}`}
+                />
+            </div>
             
             <div className="panel-with-sidebar">
                 {isAuthenticated && (
@@ -314,27 +318,32 @@ const ApoderadoPanel = () => {
                                 label: 'Dashboard',
                                 description: 'Métricas del sistema',
                                 path: '/metricas',
-                                icon: '▣'
+                                icon: '▣',
+                                tourId: 'tour-dashboard'
                             },
                             {
                                 label: 'Mis productos',
                                 description: 'Productos, piezas e historial',
                                 icon: '◫',
+                                tourId: 'tour-mis-productos',
                                 subItems: [
                                     {
                                         label: 'Productos',
                                         path: '/productos',
-                                        icon: '◫'
+                                        icon: '◫',
+                                        tourId: 'tour-productos'
                                     },
                                     {
                                         label: 'Repuestos & Piezas',
                                         path: '/piezas',
-                                        icon: '⚙'
+                                        icon: '⚙',
+                                        tourId: 'tour-piezas'
                                     },
                                     {
                                         label: 'Historial',
                                         path: '/inventario',
-                                        icon: '≡'
+                                        icon: '≡',
+                                        tourId: 'tour-historial'
                                     }
                                 ]
                             },
@@ -342,29 +351,34 @@ const ApoderadoPanel = () => {
                                 label: 'Representantes',
                                 description: 'Representantes Oficiales y Canales Comerciales',
                                 path: '/representantes',
-                                icon: '◉'
+                                icon: '◉',
+                                tourId: 'tour-representantes'
                             },
                             {
                                 label: 'Alertas & Notificaciones',
                                 description: 'Alertas del sistema',
                                 path: '/alertas',
-                                icon: '⚠'
+                                icon: '⚠',
+                                tourId: 'tour-alertas'
                             },
                             {
                                 label: 'Clientes',
                                 description: 'Gestión de Activación de Productos y Garantías',
                                 path: '/garantias',
-                                icon: '◈'
+                                icon: '◈',
+                                tourId: 'tour-clientes'
                             },
                             {
                                 label: 'Reportes',
                                 description: 'Reportes y exportación de datos',
                                 icon: '📊',
+                                tourId: 'tour-reportes-group',
                                 subItems: [
                                     {
                                         label: 'Exportación',
                                         path: '/reportes',
-                                        icon: '↗'
+                                        icon: '↗',
+                                        tourId: 'tour-reportes'
                                     }
                                 ]
                             },
@@ -372,9 +386,16 @@ const ApoderadoPanel = () => {
                                 label: 'Administración',
                                 description: 'Configuración y datos',
                                 path: '/administracion',
-                                icon: '⚑'
+                                icon: '⚑',
+                                tourId: 'tour-administracion'
                             }
                         ]}
+                        footerContent={
+                            <button className="tour-trigger-btn" onClick={startTour}>
+                                <span className="tour-trigger-icon">?</span>
+                                <span>Guia de uso rapida</span>
+                            </button>
+                        }
                     />
                 )}
 
