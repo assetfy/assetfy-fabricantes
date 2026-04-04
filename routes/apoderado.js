@@ -37,29 +37,8 @@ const transformMarcaLegacyUrls = (marca) => {
 const XLSX = require('xlsx');
 
 // Utility function to calculate warranty expiration date
-const calculateWarrantyExpiration = (fechaVenta, plazoNumero, plazoUnidad) => {
-    if (!fechaVenta || !plazoNumero || !plazoUnidad) {
-        return null;
-    }
-    
-    const fecha = new Date(fechaVenta);
-    
-    switch (plazoUnidad) {
-        case 'dias':
-            fecha.setDate(fecha.getDate() + plazoNumero);
-            break;
-        case 'meses':
-            fecha.setMonth(fecha.getMonth() + plazoNumero);
-            break;
-        case 'años':
-            fecha.setFullYear(fecha.getFullYear() + plazoNumero);
-            break;
-        default:
-            return null;
-    }
-    
-    return fecha;
-};
+const { calculateWarrantyExpiration } = require('../utils/warrantyUtils');
+const GarantiaAsignada = require('../models/garantiaAsignada.model');
 
 // Utility function to generate alphanumeric serial numbers
 const generateSerialNumber = () => {
@@ -2133,6 +2112,13 @@ router.get('/metricas', auth, async (req, res) => {
         ]);
         const clientesRequierenAtencion = clientesConReclamosAbiertos.length;
 
+        // Contar garantías asignadas
+        const garantiasAsignadasQuery = { fabricante: { $in: fabricanteIds } };
+        const garantiasAsignadasTotal = await GarantiaAsignada.countDocuments(garantiasAsignadasQuery);
+        const garantiasAsignadasPendientes = await GarantiaAsignada.countDocuments({ ...garantiasAsignadasQuery, estado: 'Pendiente' });
+        const garantiasAsignadasValidadas = await GarantiaAsignada.countDocuments({ ...garantiasAsignadasQuery, estado: 'Validada' });
+        const garantiasAsignadasRechazadas = await GarantiaAsignada.countDocuments({ ...garantiasAsignadasQuery, estado: 'Rechazada' });
+
         // Products descontinuados count
         const productosDescontinuados = await Producto.countDocuments({
             fabricante: { $in: fabricanteIds },
@@ -2171,6 +2157,12 @@ router.get('/metricas', auth, async (req, res) => {
                 nuevos: clientesNuevos,
                 nuevosProductosRegistrados,
                 requierenAtencion: clientesRequierenAtencion
+            },
+            garantiasAsignadas: {
+                total: garantiasAsignadasTotal,
+                pendientes: garantiasAsignadasPendientes,
+                validadas: garantiasAsignadasValidadas,
+                rechazadas: garantiasAsignadasRechazadas
             },
             productosDescontinuados,
             piezasActivas,
@@ -3329,6 +3321,144 @@ router.delete('/garantias/:id', auth, async (req, res) => {
 
         await Garantia.findByIdAndDelete(req.params.id);
         res.json('Garantía eliminada!');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// ================== GARANTÍAS ASIGNADAS ROUTES ==================
+
+// @route   GET /api/apoderado/garantias-asignadas
+// @desc    Listar garantías asignadas con filtros
+// @access  Privado (Apoderado)
+router.get('/garantias-asignadas', auth, async (req, res) => {
+    try {
+        const usuarioApoderado = req.usuario.id;
+        const { search, estado } = req.query;
+
+        const fabricantes = await Fabricante.find(getFabricantesQuery(usuarioApoderado));
+        const fabricanteIds = fabricantes.map(fab => fab._id);
+
+        let query = {
+            $or: [
+                { usuarioApoderado },
+                { fabricante: { $in: fabricanteIds } }
+            ]
+        };
+
+        if (estado) {
+            query.estado = estado;
+        }
+
+        let garantias = await GarantiaAsignada.find(query)
+            .sort({ createdAt: -1 })
+            .lean();
+
+        if (search) {
+            const s = search.toLowerCase();
+            garantias = garantias.filter(g =>
+                (g.idGarantia && g.idGarantia.toLowerCase().includes(s)) ||
+                (g.clienteFinal?.nombreCompleto && g.clienteFinal.nombreCompleto.toLowerCase().includes(s)) ||
+                (g.clienteFinal?.correoElectronico && g.clienteFinal.correoElectronico.toLowerCase().includes(s)) ||
+                (g.productoRepuesto?.modelo && g.productoRepuesto.modelo.toLowerCase().includes(s)) ||
+                (g.numeroSerie && g.numeroSerie.toLowerCase().includes(s))
+            );
+        }
+
+        res.json(garantias);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   GET /api/apoderado/garantias-asignadas/:id
+// @desc    Obtener detalle de una garantía asignada
+// @access  Privado (Apoderado)
+router.get('/garantias-asignadas/:id', auth, async (req, res) => {
+    try {
+        const garantia = await GarantiaAsignada.findById(req.params.id)
+            .populate('inventario', 'idInventario numeroSerie')
+            .populate('garantiaOrigen', 'nombre')
+            .populate('extensiones.usuarioExtension', 'nombreCompleto');
+
+        if (!garantia) {
+            return res.status(404).json({ message: 'Garantía asignada no encontrada.' });
+        }
+
+        res.json(garantia);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   PUT /api/apoderado/garantias-asignadas/:id/estado
+// @desc    Cambiar estado de garantía asignada (Pendiente -> Validada o Rechazada)
+// @access  Privado (Apoderado)
+router.put('/garantias-asignadas/:id/estado', auth, async (req, res) => {
+    try {
+        const { estado } = req.body;
+
+        if (!['Validada', 'Rechazada'].includes(estado)) {
+            return res.status(400).json({ message: 'Estado inválido. Debe ser Validada o Rechazada.' });
+        }
+
+        const garantia = await GarantiaAsignada.findById(req.params.id);
+
+        if (!garantia) {
+            return res.status(404).json({ message: 'Garantía asignada no encontrada.' });
+        }
+
+        if (garantia.estado !== 'Pendiente') {
+            return res.status(400).json({ message: `No se puede cambiar el estado desde ${garantia.estado}.` });
+        }
+
+        garantia.estado = estado;
+        await garantia.save();
+
+        res.json(garantia);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
+// @route   POST /api/apoderado/garantias-asignadas/:id/extender
+// @desc    Extender una garantía asignada
+// @access  Privado (Apoderado)
+router.post('/garantias-asignadas/:id/extender', auth, async (req, res) => {
+    try {
+        const { nuevaFechaExpiracion, comentarios } = req.body;
+
+        if (!nuevaFechaExpiracion) {
+            return res.status(400).json({ message: 'La nueva fecha de expiración es obligatoria.' });
+        }
+
+        const garantia = await GarantiaAsignada.findById(req.params.id);
+
+        if (!garantia) {
+            return res.status(404).json({ message: 'Garantía asignada no encontrada.' });
+        }
+
+        const nuevaFecha = new Date(nuevaFechaExpiracion);
+        if (nuevaFecha <= garantia.fechaExpiracion) {
+            return res.status(400).json({ message: 'La nueva fecha debe ser posterior a la fecha de expiración actual.' });
+        }
+
+        garantia.extensiones.push({
+            fechaAnterior: garantia.fechaExpiracion,
+            nuevaFechaExpiracion: nuevaFecha,
+            comentarios: comentarios || '',
+            fechaExtension: new Date(),
+            usuarioExtension: req.usuario.id
+        });
+
+        garantia.fechaExpiracion = nuevaFecha;
+        await garantia.save();
+
+        res.json(garantia);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error del servidor');

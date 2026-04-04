@@ -18,6 +18,7 @@ const WarrantyManagerForm = ({
         duracionUnidad: garantia?.duracionUnidad || 'meses',
         fechaInicio: garantia?.fechaInicio || 'Compra',
         costoGarantia: garantia?.costoGarantia || 'Incluido',
+        validacionAutomatica: garantia?.validacionAutomatica || false,
         tipoCobertura: garantia?.tipoCobertura || [],
         partesCubiertas: garantia?.partesCubiertas || 'Producto completo',
         exclusiones: garantia?.exclusiones || [],
@@ -154,6 +155,31 @@ const WarrantyManagerForm = ({
                     <option value="Incluido">Incluido</option>
                     <option value="Adicional">Adicional</option>
                 </select>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '16px' }}>
+                <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input
+                        type="checkbox"
+                        checked={formData.validacionAutomatica}
+                        onChange={(e) => handleChange('validacionAutomatica', e.target.checked)}
+                    />
+                    Validación automática
+                </label>
+                {formData.validacionAutomatica && (
+                    <div style={{
+                        marginTop: '8px',
+                        padding: '10px 14px',
+                        backgroundColor: '#fff5f5',
+                        border: '1px solid #fed7d7',
+                        borderRadius: '6px',
+                        color: '#c53030',
+                        fontSize: '13px',
+                        lineHeight: '1.4'
+                    }}>
+                        Al activar validación automática las garantías de los items registrados con garantía vigente serán aprobados automáticamente
+                    </div>
+                )}
             </div>
         </div>
     );

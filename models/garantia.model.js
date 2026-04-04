@@ -55,7 +55,11 @@ const garantiaSchema = new Schema({
         enum: ['Incluido', 'Adicional'],
         default: 'Incluido'
     },
-    
+    validacionAutomatica: {
+        type: Boolean,
+        default: false
+    },
+
     // TAB 2: Alcance de la cobertura
     tipoCobertura: [{
         type: String,
