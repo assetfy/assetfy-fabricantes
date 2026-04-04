@@ -54,7 +54,7 @@ const getDateRange = (periodo) => {
     return { desde: desde?.toISOString().split('T')[0], hasta: now.toISOString().split('T')[0] };
 };
 
-const ReportGadget = ({ title, data, dimensionLabel }) => {
+const ReportGadget = ({ title, data, dimensionLabel, badge }) => {
     const [chartType, setChartType] = useState('tabla');
 
     const downloadExcel = () => {
@@ -168,6 +168,7 @@ const ReportGadget = ({ title, data, dimensionLabel }) => {
 
     return (
         <div className="ventas-gadget">
+            {badge && <div className="ventas-gadget-badge" style={{ margin: '0.75rem 1.25rem 0' }}>{badge}</div>}
             <div className="ventas-gadget-header">
                 <h4 className="ventas-gadget-title">{title}</h4>
                 <div className="ventas-gadget-controls">
@@ -201,7 +202,7 @@ const ReportGadget = ({ title, data, dimensionLabel }) => {
 };
 
 const VentasReportPanel = () => {
-    const [periodo, setPeriodo] = useState('ultimo_mes');
+    const [periodo, setPeriodo] = useState('sin_filtro');
     const [fechaDesde, setFechaDesde] = useState('');
     const [fechaHasta, setFechaHasta] = useState('');
     const [data, setData] = useState(null);
@@ -315,16 +316,19 @@ const VentasReportPanel = () => {
                         title="Ventas por Fabricante por Provincia"
                         data={data?.porProvincia}
                         dimensionLabel="Provincia"
+                        badge="Geograf\u00eda"
                     />
                     <ReportGadget
                         title="Ventas por Fabricante por Ciudad"
                         data={data?.porCiudad}
                         dimensionLabel="Ciudad"
+                        badge="Localidad"
                     />
                     <ReportGadget
                         title="Ventas por Fabricante por Representante"
                         data={data?.porRepresentante}
                         dimensionLabel="Representante"
+                        badge="Canal Comercial"
                     />
                 </div>
             )}
