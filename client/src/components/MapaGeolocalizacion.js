@@ -264,7 +264,7 @@ const MapaGeolocalizacion = () => {
                     <input
                         type="text"
                         className="mapa-search-input"
-                        placeholder="Buscar representante, sucursal, dirección o usuario..."
+                        placeholder="Buscar representante, sucursal, dirección o cliente..."
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
