@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import Modal from './Modal';
 import Pagination from './Pagination';
-import XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 const ENTITY_LABELS = {
