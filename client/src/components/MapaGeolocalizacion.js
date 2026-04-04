@@ -38,6 +38,36 @@ const iconSucursal = createSvgIcon('#DC2626', false);              // Red normal
 const iconProducto = createSvgIcon('#2563EB', false);              // Blue
 const iconFabricante = createSvgIcon('#16A34A', false);            // Green
 
+// Helper component to fit map bounds to all markers
+const FitBounds = ({ mapData }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (!mapData) return;
+        const points = [];
+
+        (mapData.representantes || []).forEach(rep => {
+            if (rep.coordenadas) points.push([rep.coordenadas.lat, rep.coordenadas.lng]);
+            (rep.sucursales || []).forEach(suc => {
+                if (suc.coordenadas) points.push([suc.coordenadas.lat, suc.coordenadas.lng]);
+            });
+        });
+
+        (mapData.productosRegistrados || []).forEach(prod => {
+            if (prod.coordenadas) points.push([prod.coordenadas.lat, prod.coordenadas.lng]);
+        });
+
+        (mapData.fabricantes || []).forEach(fab => {
+            if (fab.coordenadas) points.push([fab.coordenadas.lat, fab.coordenadas.lng]);
+        });
+
+        if (points.length > 0) {
+            const bounds = L.latLngBounds(points);
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        }
+    }, [mapData, map]);
+    return null;
+};
+
 // Helper component to fly to a location and open popup
 const FlyToMarker = ({ target, onDone }) => {
     const map = useMap();
@@ -290,6 +320,7 @@ const MapaGeolocalizacion = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
+                <FitBounds mapData={mapData} />
                 <FlyToMarker target={flyTarget} onDone={handleClearFlyTarget} />
 
                 {/* Representantes - Central pins (red with star) */}
