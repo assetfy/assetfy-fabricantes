@@ -3281,7 +3281,7 @@ td .action-buttons button {
 
 .sidebar-sub-items {
     background: #f9f6fd;
-    border-left: 3px solid var(--primary-purple);
+    border-left: 4px solid var(--primary-purple);
     margin-left: 0;
     padding-left: 0;
 }
@@ -3291,7 +3291,7 @@ td .action-buttons button {
     align-items: center;
     justify-content: flex-start;
     gap: 0.5rem;
-    padding: 0.5rem 1.2rem 0.5rem 2.2rem;
+    padding: 0.5rem 1.2rem 0.5rem 2.95rem;
     cursor: pointer;
     font-size: 0.82rem;
     color: var(--text-dark);

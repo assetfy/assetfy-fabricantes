@@ -372,7 +372,7 @@ const ApoderadoPanel = () => {
                             {
                                 label: 'Reportes',
                                 description: 'Reportes y exportación de datos',
-                                icon: '📊',
+                                icon: '◰',
                                 tourId: 'tour-reportes-group',
                                 subItems: [
                                     {
