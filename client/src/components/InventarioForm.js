@@ -133,13 +133,13 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                     [name]: value
                 };
                 
-                // Set default date when estado changes to 'vendido'
-                if (name === 'estado' && value === 'vendido' && !prev.fechaVenta) {
+                // Set default date when estado changes to 'vendido' or 'consignacion'
+                if (name === 'estado' && (value === 'vendido' || value === 'consignacion') && !prev.fechaVenta) {
                     newFormData.fechaVenta = new Date().toISOString().split('T')[0];
-                } else if (name === 'estado' && value !== 'vendido') {
+                } else if (name === 'estado' && value !== 'vendido' && value !== 'consignacion') {
                     newFormData.fechaVenta = '';
                 }
-                
+
                 // Clear rental dates when estado is not 'alquilado'
                 if (name === 'estado' && value !== 'alquilado') {
                     newFormData.fechaInicioAlquiler = '';
@@ -382,6 +382,7 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                                         >
                                             <option value="stock">En Stock</option>
                                             <option value="vendido">Vendido</option>
+                                            <option value="consignacion">En Consignación</option>
                                             <option value="alquilado">Alquilado</option>
                                         </select>
                                     </div>
@@ -401,9 +402,9 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                                         </select>
                                     </div>
 
-                                    {formData.estado === 'vendido' && (
+                                    {(formData.estado === 'vendido' || formData.estado === 'consignacion') && (
                                         <div className="form-group">
-                                            <label>Fecha de Venta</label>
+                                            <label>{formData.estado === 'consignacion' ? 'Fecha de Consignación' : 'Fecha de Venta'}</label>
                                             <input
                                                 type="date"
                                                 name="fechaVenta"
@@ -461,10 +462,10 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                                         </div>
                                     )}
 
-                                    {(formData.estado === 'vendido' || formData.estado === 'alquilado') && !readOnly && (
+                                    {(formData.estado === 'vendido' || formData.estado === 'alquilado' || formData.estado === 'consignacion') && !readOnly && (
                                         <>
                                             <div className="form-group">
-                                                <label>{formData.estado === 'vendido' ? 'Vendido a' : 'Alquilado a'} (Representante Oficial)</label>
+                                                <label>{formData.estado === 'vendido' ? 'Vendido a' : formData.estado === 'consignacion' ? 'En consignación con' : 'Alquilado a'} (Representante Oficial)</label>
                                                 <select
                                                     name="representante"
                                                     value={formData.representante}
@@ -552,7 +553,7 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                                         </>
                                     )}
 
-                                    {(formData.estado === 'vendido' || formData.estado === 'alquilado') && readOnly && (
+                                    {(formData.estado === 'vendido' || formData.estado === 'alquilado' || formData.estado === 'consignacion') && readOnly && (
                                         <div className="comprador-fields">
                                             <h4>Información del Comprador/Inquilino</h4>
                                             {formData.representante && (

@@ -15,6 +15,14 @@ const PiezaList = ({ refreshTrigger, onEdit, onView, onEditStock }) => {
     const [itemsPerPage, setItemsPerPage] = useState(25);
     const { showSuccess, showError } = useNotification();
 
+    // Compute counters from data
+    const counters = {
+        total: allPiezas.length,
+        activas: allPiezas.filter(p => (p.stockCount ?? 0) > 0).length,
+        stockBajo: allPiezas.filter(p => (p.stockCount ?? 0) > 0 && (p.stockCount ?? 0) <= 5).length,
+        sinStock: allPiezas.filter(p => (p.stockCount ?? 0) === 0).length,
+    };
+
     useEffect(() => {
         const fetchPiezas = async () => {
             try {
@@ -107,7 +115,6 @@ const PiezaList = ({ refreshTrigger, onEdit, onView, onEditStock }) => {
     if (allPiezas.length === 0 && !searchTerm) {
         return (
             <div className="list-container">
-                <h3>Lista de Piezas</h3>
                 <p>No tienes piezas registradas aún.</p>
             </div>
         );
@@ -115,7 +122,29 @@ const PiezaList = ({ refreshTrigger, onEdit, onView, onEditStock }) => {
 
     return (
         <div className="list-container">
-            <h3>Lista de Piezas</h3>
+            <div className="view-counters">
+                <div className="view-counter-box">
+                    <div className="view-counter-box-title">Total de repuestos</div>
+                    <div className="view-counter-box-number">{counters.total}</div>
+                    <div className="view-counter-box-details">
+                        <div className="view-counter-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Activas</span>
+                            <span className="detail-value">{counters.activas}</span>
+                        </div>
+                        <div className="view-counter-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#f59e0b' }}></span>
+                            <span className="detail-label">Stock bajo</span>
+                            <span className="detail-value">{counters.stockBajo}</span>
+                        </div>
+                        <div className="view-counter-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#ef4444' }}></span>
+                            <span className="detail-label">Sin stock</span>
+                            <span className="detail-value">{counters.sinStock}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div className="search-filter-container">
                 <input
                     type="text"

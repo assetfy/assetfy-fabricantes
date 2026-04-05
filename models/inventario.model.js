@@ -23,7 +23,7 @@ const inventarioSchema = new Schema({
     estado: {
         type: String,
         required: true,
-        enum: ['stock', 'vendido', 'alquilado'],
+        enum: ['stock', 'vendido', 'alquilado', 'consignacion'],
         default: 'stock'
     },
     producto: {
@@ -47,7 +47,7 @@ const inventarioSchema = new Schema({
             type: String,
             required: function() { 
                 // Only required if estado is 'vendido' and registrado is 'Si', or if estado is 'alquilado'
-                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado'; 
+                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado' || this.estado === 'consignacion'; 
             },
             default: ''
         },
@@ -55,7 +55,7 @@ const inventarioSchema = new Schema({
             type: String,
             required: function() { 
                 // Only required if estado is 'vendido' and registrado is 'Si', or if estado is 'alquilado'
-                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado'; 
+                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado' || this.estado === 'consignacion'; 
             },
             default: ''
         },
@@ -68,7 +68,7 @@ const inventarioSchema = new Schema({
             type: String,
             required: function() {
                 // Only required if estado is 'vendido' and registrado is 'Si', or if estado is 'alquilado'
-                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado';
+                return (this.estado === 'vendido' && this.registrado === 'Si') || this.estado === 'alquilado' || this.estado === 'consignacion';
             },
             default: ''
         },
