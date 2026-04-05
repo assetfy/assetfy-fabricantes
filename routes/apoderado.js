@@ -3181,8 +3181,8 @@ router.post('/validate/:type', auth, async (req, res) => {
                 case 'inventario':
                     if (!row.numeroSerie) errors.push({ row: rowNumber, message: 'El campo "numeroSerie" es obligatorio' });
                     if (!row.producto) errors.push({ row: rowNumber, message: 'El campo "producto" es obligatorio' });
-                    if (row.estado && !['stock', 'vendido', 'alquilado'].includes(row.estado)) {
-                        errors.push({ row: rowNumber, message: 'El estado debe ser "stock", "vendido" o "alquilado"' });
+                    if (row.estado && !['stock', 'vendido', 'alquilado', 'consignacion'].includes(row.estado)) {
+                        errors.push({ row: rowNumber, message: 'El estado debe ser "stock", "vendido", "alquilado" o "consignacion"' });
                     }
                     break;
                     

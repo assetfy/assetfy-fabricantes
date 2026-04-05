@@ -188,17 +188,17 @@ button:hover {
 /* Estilos de la lista */
 .list-container {
   background: var(--card-white);
-  padding: 1.5rem;
+  padding: 1.2rem;
   border-radius: 8px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   overflow-x: auto;
 }
 
 .list-container h3 {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   color: var(--text-dark);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -216,15 +216,20 @@ table {
 
 table th, table td {
   text-align: left;
-  padding: 0.75rem;
-  border-bottom: 1px solid #ddd;
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.85rem;
 }
 
 table th {
-  background-color: #ede7f6;
+  background-color: #faf8fd;
   font-weight: 600;
   color: #5C2D91;
-  padding: 1rem 0.75rem;
+  padding: 0.6rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid #ede7f6;
 }
 
 /* Specific column width controls for ProductList */
@@ -354,8 +359,8 @@ table th:nth-child(8), table td:nth-child(8) {
 
 .search-container, .search-filter-container {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .search-container input, .search-filter-container input, .search-filter-container select {
@@ -1268,27 +1273,27 @@ table th:nth-child(8), table td:nth-child(8) {
 }
 
 .bulk-action-btn {
-    background-color: #2196f3;
+    background-color: var(--primary-purple);
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
     white-space: nowrap;
 }
 
 .bulk-action-btn:hover {
-    background-color: #1976d2;
+    background-color: var(--primary-purple-light);
 }
 
 .bulk-action-cancel {
-    background-color: #6c757d;
+    background-color: #9B6FD4;
 }
 
 .bulk-action-cancel:hover {
-    background-color: #545b62;
+    background-color: #7B4DB4;
 }
 
 /* Bulk QR Preview Modal */
@@ -1415,15 +1420,20 @@ table td:first-child {
     background: var(--primary-purple);
     color: white;
     border: none;
-    padding: 0.35rem 0.7rem;
+    width: 30px;
+    height: 30px;
+    padding: 0;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 700;
+    line-height: 1;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(92, 45, 145, 0.2);
-    min-width: 32px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .create-button:hover {
@@ -1594,7 +1604,7 @@ table td:first-child {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     padding: 0;
     background-color: transparent;
     border-radius: 0;
@@ -1603,7 +1613,7 @@ table td:first-child {
 .section-header h3 {
     margin: 0;
     color: var(--text-dark);
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -1972,68 +1982,106 @@ td button:last-child:not(.qr-btn):hover {
 /* QR button specific styling - black color and narrower width */
 button.qr-btn,
 .action-buttons button.qr-btn {
-    color: #000000;
-    min-width: 35px !important;
-    max-width: 45px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
     flex: 0 0 auto !important;
-    padding: 0.4rem 0.3rem !important;
-    font-size: 0.8rem !important;
+    padding: 0 !important;
+    font-size: 0.72rem !important;
 }
 
 button.qr-btn:hover,
 .action-buttons button.qr-btn:hover {
-    background-color: #000000 !important;
+    background: var(--primary-purple-light) !important;
     color: white !important;
 }
 
 /* Action buttons container styling for consistent sizing */
 .action-buttons {
     display: flex;
-    gap: 0.1rem;
+    gap: 0.25rem;
     flex-wrap: nowrap;
-    min-width: 150px;
     justify-content: flex-start;
 }
 
 .action-buttons button {
     flex: 0 0 auto;
-    min-width: 35px;
-    max-width: 45px;
-    padding: 0.4rem 0.3rem;
-    font-size: 0.8rem;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    padding: 0;
+    font-size: 0.72rem;
     white-space: nowrap;
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.action-buttons button:hover {
+    background: var(--primary-purple-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(92, 45, 145, 0.25);
 }
 
 /* Table action buttons styling */
 td .action-buttons {
-    min-width: 150px;
+    min-width: auto;
 }
 
 td .action-buttons button {
-    min-width: 35px;
-    max-width: 45px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    max-width: 28px;
     flex: 0 0 auto;
 }
 
 /* Product grid action buttons */
 .product-actions {
     display: flex;
-    gap: 0.2rem;
+    gap: 0.25rem;
     flex-wrap: nowrap;
 }
 
 .product-actions button {
     flex: 0 0 auto;
-    padding: 0.4rem 0.3rem;
-    font-size: 0.8rem;
-    min-width: 35px;
-    max-width: 45px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    padding: 0;
+    font-size: 0.72rem;
     white-space: nowrap;
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.product-actions button:hover {
+    background: var(--primary-purple-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(92, 45, 145, 0.25);
 }
 
 .product-actions button.qr-btn {
-    min-width: 35px !important;
-    max-width: 45px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
     flex: 0 0 auto !important;
 }
 
@@ -2677,83 +2725,194 @@ td .action-buttons button {
     }
 }
 
-/* Representantes Counter Boxes */
-.representantes-counters {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+/* ===== View Counter Boxes (reusable across all views) ===== */
+/* These are smaller versions of the dashboard boxes for use in sub-views */
+.view-counters {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
 }
 
-.representante-counter-box {
-    background: linear-gradient(135deg, #f3e8ff 0%, #ede0fb 100%);
-    border: 1px solid rgba(92, 45, 145, 0.12);
-    border-top: 3px solid var(--primary-purple-lighter, #9B6FD4);
-    padding: 0.85rem;
+.view-counter-box {
+    background: var(--primary-purple);
+    border: none;
     border-radius: 8px;
+    padding: 0.6rem 0.8rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 140px;
+    flex: 1;
+    max-width: 220px;
+    cursor: default;
+    transition: all 0.2s ease;
+}
+
+.view-counter-box.clickable {
+    cursor: pointer;
+}
+
+.view-counter-box.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(92, 45, 145, 0.3);
+}
+
+.view-counter-box.active {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary-purple);
+}
+
+.view-counter-box-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.view-counter-box-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    line-height: 1;
+}
+
+.view-counter-box-subtitle {
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.65);
+    text-align: center;
+    margin-top: 0.15rem;
+}
+
+.view-counter-box-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    width: 100%;
+    margin-top: 0.4rem;
+    background: rgba(255,255,255,0.12);
+    border-radius: 4px;
+    padding: 0.3rem 0.4rem;
+}
+
+.view-counter-box-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.65rem;
+}
+
+.view-counter-box-detail-row .detail-dot {
+    width: 6px;
+    height: 6px;
+}
+
+.view-counter-box-detail-row .detail-label {
+    flex: 1;
+    color: rgba(255,255,255,0.85);
+}
+
+.view-counter-box-detail-row .detail-value {
+    font-weight: 600;
+    color: #fff;
+}
+
+.view-counter-box-link {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.62rem;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 0.35rem;
+}
+
+.view-counter-box-link:hover {
+    text-decoration: underline;
+    color: #fff;
+}
+
+/* Legacy representante counter aliases */
+.representantes-counters {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+}
+
+.representante-counter-box {
+    background: var(--primary-purple);
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 140px;
+    flex: 1;
+    max-width: 220px;
     cursor: pointer;
     transition: all 0.2s ease;
-    animation: breathe 3s ease-in-out infinite;
 }
 
 .representante-counter-box:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(92, 45, 145, 0.18);
-    animation-play-state: paused;
+    box-shadow: 0 4px 12px rgba(92, 45, 145, 0.3);
 }
 
 .representante-counter-box.active {
-    background: linear-gradient(135deg, #ede0fb 0%, #ddd0f5 100%);
-    border-top-color: var(--primary-purple, #5C2D91);
-    box-shadow: 0 2px 8px rgba(92, 45, 145, 0.20);
-    border-bottom: 3px solid var(--primary-purple, #5C2D91);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary-purple);
 }
 
 .representante-counter-title {
-    font-size: 0.9rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--text-dark, #333);
+    color: rgba(255,255,255,0.9);
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .representante-counter-number {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 700;
+    color: #fff !important;
     text-align: center;
+    line-height: 1;
 }
 
 .representante-counter-subtitle {
-    font-size: 0.7rem;
-    color: var(--text-gray, #888);
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.65);
     text-align: center;
-    margin-top: 0.2rem;
+    margin-top: 0.15rem;
 }
 
 /* Counter box sub-details */
 .counter-box-details {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.2rem;
     width: 100%;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border-color, #e0e0e0);
+    margin-top: 0.4rem;
+    background: rgba(255,255,255,0.12);
+    border-radius: 4px;
+    padding: 0.3rem 0.4rem;
 }
 
 .counter-box-detail-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
+    gap: 0.3rem;
+    font-size: 0.65rem;
 }
 
 @media (max-width: 640px) {
-    .representantes-counters {
-        grid-template-columns: 1fr;
+    .representantes-counters,
+    .view-counters {
+        flex-direction: column;
+    }
+    .view-counter-box,
+    .representante-counter-box {
+        max-width: 100%;
     }
 }
 
@@ -2961,8 +3120,8 @@ td .action-buttons button {
 .sidebar-link {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1.2rem;
     text-decoration: none;
     color: var(--text-dark);
     cursor: pointer;
@@ -2986,10 +3145,12 @@ td .action-buttons button {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
-    width: 24px;
+    font-size: 1.1rem;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
     color: var(--primary-purple);
+    text-align: center;
 }
 
 .sidebar-item:not(.active):hover .sidebar-icon {
@@ -3005,13 +3166,13 @@ td .action-buttons button {
 
 .sidebar-item-label {
     font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1.2;
+    font-size: 0.88rem;
+    line-height: 1.3;
 }
 
 .sidebar-item-description {
-    font-size: 0.75rem;
-    opacity: 0.6;
+    font-size: 0.7rem;
+    opacity: 0.55;
     line-height: 1.2;
 }
 
@@ -3050,9 +3211,9 @@ td .action-buttons button {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.6rem 1.5rem 0.6rem 1.2rem;
+    padding: 0.5rem 1.2rem 0.5rem 1.2rem;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-dark);
     transition: background 0.15s ease, color 0.15s ease;
     border-bottom: 1px solid #ede7f6;
@@ -3082,8 +3243,13 @@ a.sidebar-sub-item.active {
 }
 
 .sidebar-sub-item-icon {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-sub-item-label {
@@ -3138,13 +3304,13 @@ a.sidebar-sub-item.active {
     background: var(--primary-purple);
     color: white;
     border: none;
-    padding: 0.35rem 0.7rem;
+    padding: 0.3rem 0.6rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: 0.78rem;
+    font-weight: 600;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(92, 45, 145, 0.2);
+    box-shadow: 0 1px 3px rgba(92, 45, 145, 0.15);
 }
 
 .inventory-create-btn:hover {

@@ -46,6 +46,13 @@ const InventarioList = ({ refreshTrigger, onEdit, onView, excludeStock = false }
     const [itemsPerPage, setItemsPerPage] = useState(25);
     const { showSuccess, showError } = useNotification();
 
+    // Compute counters from data
+    const counters = {
+        vendidos: allInventario.filter(i => i.estado === 'vendido').length,
+        consignacion: allInventario.filter(i => i.estado === 'consignacion').length,
+        alquilados: allInventario.filter(i => i.estado === 'alquilado').length,
+    };
+
     const handlePrintQR = (item) => {
         setQrPreviewModal({ isOpen: true, item });
     };
@@ -166,7 +173,6 @@ const InventarioList = ({ refreshTrigger, onEdit, onView, excludeStock = false }
     if (inventario.length === 0 && !searchTerm && estadoFilter === 'todos') {
         return (
             <div className="list-container">
-                <h3>Lista de Inventario</h3>
                 <p>No tienes artículos en inventario.</p>
             </div>
         );
@@ -174,7 +180,23 @@ const InventarioList = ({ refreshTrigger, onEdit, onView, excludeStock = false }
 
     return (
         <div className="list-container">
-            <h3>Lista de Inventario</h3>
+            <div className="view-counters">
+                <div className="view-counter-box">
+                    <div className="view-counter-box-title">Items vendidos</div>
+                    <div className="view-counter-box-number">{counters.vendidos}</div>
+                    <div className="view-counter-box-subtitle">Vendidos</div>
+                </div>
+                <div className="view-counter-box">
+                    <div className="view-counter-box-title">Items en consignación</div>
+                    <div className="view-counter-box-number">{counters.consignacion}</div>
+                    <div className="view-counter-box-subtitle">En consignación</div>
+                </div>
+                <div className="view-counter-box">
+                    <div className="view-counter-box-title">Items alquilados</div>
+                    <div className="view-counter-box-number">{counters.alquilados}</div>
+                    <div className="view-counter-box-subtitle">Alquilados</div>
+                </div>
+            </div>
             <div className="search-filter-container">
                 <input
                     type="text"
@@ -189,6 +211,7 @@ const InventarioList = ({ refreshTrigger, onEdit, onView, excludeStock = false }
                     <option value="todos">Todos los estados</option>
                     <option value="stock">En Stock</option>
                     <option value="vendido">Vendido</option>
+                    <option value="consignacion">En Consignación</option>
                     <option value="alquilado">Alquilado</option>
                 </select>
             </div>

@@ -202,7 +202,7 @@ const RepresentanteList = ({ refreshTrigger, onEdit, onAccepted }) => {
                     onClick={() => handleViewChange('representantes')}
                 >
                     <div className="representante-counter-title">Representantes Oficiales</div>
-                    <div className="representante-counter-number" style={{ color: '#3b82f6' }}>
+                    <div className="representante-counter-number">
                         {loadingContadores ? '...' : contadores.representantes}
                     </div>
                     <div className="representante-counter-subtitle">Activos</div>
@@ -213,7 +213,7 @@ const RepresentanteList = ({ refreshTrigger, onEdit, onAccepted }) => {
                     onClick={() => handleViewChange('solicitudes')}
                 >
                     <div className="representante-counter-title">Solicitudes de Representación</div>
-                    <div className="representante-counter-number" style={{ color: '#8b5cf6' }}>
+                    <div className="representante-counter-number">
                         {loadingContadores ? '...' : contadores.solicitudes}
                     </div>
                     <div className="representante-counter-subtitle">En evaluación</div>

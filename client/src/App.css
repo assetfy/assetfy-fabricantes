@@ -1414,7 +1414,7 @@ table .warranty-expired {
 .attributes-table tbody tr:nth-child(even) {
   background-color: #f8f9fa;
 }
-}
+
 /* ── Stock integration styles ────────────────────────────────────────────── */
 
 .stock-btn:hover {
