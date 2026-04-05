@@ -119,7 +119,8 @@ const TourProvider = ({ children }) => {
         if (findTargetTimerRef.current) {
             clearTimeout(findTargetTimerRef.current);
         }
-    }, []);
+        navigate('/apoderado/metricas');
+    }, [navigate]);
 
     const nextStep = useCallback(() => {
         if (currentStep < totalSteps - 1) {
