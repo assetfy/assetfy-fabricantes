@@ -12,10 +12,11 @@ const Modal = ({ isOpen, onClose, title, children }) => {
     return (
         <div className="modal-backdrop" onClick={handleBackdropClick}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h3>{title}</h3>
-                    <button className="modal-close" onClick={onClose}>×</button>
-                </div>
+                {title && (
+                    <div className="modal-header">
+                        <h3>{title}</h3>
+                    </div>
+                )}
                 <div className="modal-body">
                     {children}
                 </div>

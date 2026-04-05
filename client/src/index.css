@@ -1018,16 +1018,16 @@ table th:nth-child(8), table td:nth-child(8) {
 }
 
 .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #ddd;
+    padding: 0.6rem 1.5rem 0.4rem;
+    border-bottom: 1px solid #eee;
+    text-align: center;
 }
 
 .modal-header h3 {
     margin: 0;
-    color: #2c3e50;
+    color: var(--primary-purple);
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .modal-close {
@@ -1647,7 +1647,7 @@ table td:first-child {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.15rem;
     padding: 0;
     background-color: transparent;
     border-radius: 0;
@@ -2773,8 +2773,8 @@ td .action-buttons button {
 .view-counters {
     display: flex;
     gap: 0.75rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.75rem;
+    margin-top: 0.15rem;
+    margin-bottom: 0.5rem;
     flex-wrap: wrap;
 }
 
@@ -2879,8 +2879,8 @@ td .action-buttons button {
 .representantes-counters {
     display: flex;
     gap: 0.75rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.75rem;
+    margin-top: 0.15rem;
+    margin-bottom: 0.5rem;
     flex-wrap: wrap;
 }
 
