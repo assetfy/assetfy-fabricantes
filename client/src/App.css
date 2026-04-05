@@ -710,7 +710,7 @@ table .warranty-expired {
   z-index: 1000;
 }
 
-.modal-content {
+.modal-overlay .modal-preview-content {
   position: relative;
   max-width: 90%;
   max-height: 90%;

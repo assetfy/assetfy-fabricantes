@@ -323,7 +323,7 @@ const MultimediaForm = ({ productId, multimedia, manuales, onMultimediaChange, o
             {/* Modal para previsualizar imagen */}
             {showImagePreview && multimedia?.imagenPrincipal && (
                 <div className="modal-overlay" onClick={closeImagePreview}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="modal-preview-content" onClick={e => e.stopPropagation()}>
                         <img 
                             src={getAuthenticatedUrl(multimedia.imagenPrincipal.url)} 
                             alt="Imagen principal"
