@@ -3195,7 +3195,7 @@ td .action-buttons button {
     color: var(--text-dark);
     cursor: pointer;
     transition: all 0.2s ease;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .sidebar-item.active .sidebar-link {
@@ -3232,7 +3232,7 @@ td .action-buttons button {
     flex-direction: column;
     gap: 0.15rem;
     flex: 1;
-    text-align: center;
+    text-align: left;
 }
 
 .sidebar-item-label {
@@ -3282,7 +3282,7 @@ td .action-buttons button {
 .sidebar-sub-item {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 0.5rem;
     padding: 0.5rem 1.2rem;
     cursor: pointer;
