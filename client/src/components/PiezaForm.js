@@ -112,7 +112,6 @@ const PiezaForm = ({ onPiezaAdded, productos, fabricantes, marcas }) => {
 
     return (
         <div className="form-container">
-            <h3>Crear Nueva Pieza</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -228,7 +227,9 @@ const PiezaForm = ({ onPiezaAdded, productos, fabricantes, marcas }) => {
                         }
                     ]}
                 />
-                <button type="submit">Crear Pieza</button>
+                <div className="form-actions-modal">
+                    <button type="submit" className="modal-btn-primary">Crear Pieza</button>
+                </div>
             </form>
         </div>
     );

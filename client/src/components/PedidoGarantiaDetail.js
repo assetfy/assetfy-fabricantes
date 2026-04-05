@@ -159,7 +159,7 @@ const PedidoGarantiaDetail = ({ pedido, onClose, onUpdated, isFabricante }) => {
                     />
                     {error && <p style={{ color: 'red', margin: '4px 0' }}>{error}</p>}
                     <button
-                        className="create-button"
+                        className="modal-btn-primary"
                         onClick={handleResponder}
                         disabled={loading || !nuevoMensaje.trim()}
                     >
@@ -183,7 +183,7 @@ const PedidoGarantiaDetail = ({ pedido, onClose, onUpdated, isFabricante }) => {
                             <option value="Cerrado">Cerrado</option>
                         </select>
                         <button
-                            className="create-button"
+                            className="modal-btn-primary"
                             onClick={handleCambiarEstado}
                             disabled={loading || nuevoEstado === pedido.estado}
                         >
@@ -194,7 +194,7 @@ const PedidoGarantiaDetail = ({ pedido, onClose, onUpdated, isFabricante }) => {
             )}
 
             <div style={{ marginTop: '16px', textAlign: 'right' }}>
-                <button className="cancel-button" onClick={onClose}>
+                <button className="modal-btn-primary" onClick={onClose}>
                     Cerrar
                 </button>
             </div>

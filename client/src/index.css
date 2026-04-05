@@ -188,15 +188,15 @@ button:hover {
 /* Estilos de la lista */
 .list-container {
   background: var(--card-white);
-  padding: 1.2rem;
+  padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .list-container h3 {
   margin-top: 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   color: var(--text-dark);
   font-size: 1rem;
   font-weight: 600;
@@ -1052,6 +1052,49 @@ table th:nth-child(8), table td:nth-child(8) {
     padding: 1.5rem;
 }
 
+/* Modal form container - remove extra shadow/margin when inside modal */
+.modal-body .form-container {
+    box-shadow: none;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+/* Modal action buttons - purple with white text */
+.modal-btn-primary {
+    background: var(--primary-purple) !important;
+    color: white !important;
+    border: none !important;
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(92, 45, 145, 0.2) !important;
+}
+
+.modal-btn-primary:hover {
+    background: var(--primary-purple-light) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(92, 45, 145, 0.3) !important;
+}
+
+.modal-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Modal form actions container */
+.form-actions-modal {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
 /* QR Preview Modal Styles */
 .qr-preview-container {
     max-width: 100%;
@@ -1604,7 +1647,7 @@ table td:first-child {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     padding: 0;
     background-color: transparent;
     border-radius: 0;
@@ -2730,7 +2773,8 @@ td .action-buttons button {
 .view-counters {
     display: flex;
     gap: 0.75rem;
-    margin-bottom: 1.2rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
     flex-wrap: wrap;
 }
 
@@ -2835,7 +2879,8 @@ td .action-buttons button {
 .representantes-counters {
     display: flex;
     gap: 0.75rem;
-    margin-bottom: 1.2rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
     flex-wrap: wrap;
 }
 
@@ -3126,6 +3171,7 @@ td .action-buttons button {
     color: var(--text-dark);
     cursor: pointer;
     transition: all 0.2s ease;
+    justify-content: center;
 }
 
 .sidebar-item.active .sidebar-link {
@@ -3162,6 +3208,7 @@ td .action-buttons button {
     flex-direction: column;
     gap: 0.15rem;
     flex: 1;
+    text-align: center;
 }
 
 .sidebar-item-label {
@@ -3204,14 +3251,16 @@ td .action-buttons button {
 .sidebar-sub-items {
     background: #f9f6fd;
     border-left: 3px solid var(--primary-purple);
-    margin-left: 1rem;
+    margin-left: 0;
+    padding-left: 0;
 }
 
 .sidebar-sub-item {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    padding: 0.5rem 1.2rem 0.5rem 1.2rem;
+    padding: 0.5rem 1.2rem;
     cursor: pointer;
     font-size: 0.82rem;
     color: var(--text-dark);
@@ -3265,6 +3314,7 @@ a.sidebar-sub-item.active {
     flex: 1;
     min-width: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 /* Inventory Card Styles */

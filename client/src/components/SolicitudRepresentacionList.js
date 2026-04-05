@@ -148,13 +148,15 @@ const SolicitudRepresentacionList = ({ onAccepted, initialSolicitudId, onRefresh
                                     <td>{formatDate(solicitud.createdAt)}</td>
                                     <td style={{ textAlign: 'center' }}>{solicitud.mensajes?.length || 0}</td>
                                     <td className="actions-cell">
-                                        <button
-                                            className="action-btn view-btn"
-                                            onClick={() => setSelectedSolicitud(solicitud)}
-                                            title="Ver detalles"
-                                        >
-                                            👁️
-                                        </button>
+                                        <div className="action-buttons">
+                                            <button
+                                                className="action-btn view-btn"
+                                                onClick={() => setSelectedSolicitud(solicitud)}
+                                                title="Ver detalles"
+                                            >
+                                                👁️
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

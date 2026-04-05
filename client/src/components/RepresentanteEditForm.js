@@ -288,7 +288,6 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
 
     return (
         <div className="form-container">
-            <h3>Editar Representante</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -616,9 +615,9 @@ const RepresentanteEditForm = ({ representante, onEditFinished, onCancelEdit, fa
                         }
                     ]}
                 />
-                <div className="form-buttons">
-                    <button type="submit">Actualizar Representante</button>
-                    <button type="button" onClick={onCancelEdit}>Cancelar</button>
+                <div className="form-actions-modal">
+                    <button type="submit" className="modal-btn-primary">Actualizar Representante</button>
+                    <button type="button" className="modal-btn-primary" onClick={onCancelEdit}>Cancelar</button>
                 </div>
             </form>
         </div>

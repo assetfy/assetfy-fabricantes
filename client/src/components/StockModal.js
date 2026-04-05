@@ -629,7 +629,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                         </button>
                                         <button
                                             type="button"
-                                            className="cancel-button"
+                                            className="modal-btn-primary"
                                             onClick={() => {
                                                 setShowAddForm(false);
                                                 setSlots([emptySlot(itemAttrs)]);
@@ -762,7 +762,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="cancel-button"
+                                                className="modal-btn-primary"
                                                 onClick={() => {
                                                     setShowRemoveForm(false);
                                                     setRemoveFoundItem(null);
@@ -779,7 +779,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                     <div className="stock-form-actions">
                                         <button
                                             type="button"
-                                            className="cancel-button"
+                                            className="modal-btn-primary"
                                             onClick={() => {
                                                 setShowRemoveForm(false);
                                                 setRemoveSearchTerm('');
@@ -1020,7 +1020,7 @@ const StockModal = ({ isOpen, onClose, item, itemType, productos, piezas }) => {
                                                             )}
                                                             <div className="inline-edit-actions">
                                                                 <button type="button" onClick={() => handleSaveEdit(invItem)}>Guardar</button>
-                                                                <button type="button" className="cancel-button" onClick={handleCancelEdit}>Cancelar</button>
+                                                                <button type="button" className="modal-btn-primary" onClick={handleCancelEdit}>Cancelar</button>
                                                             </div>
                                                         </div>
                                                     </td>

@@ -80,12 +80,12 @@ const ExtenderGarantiaModal = ({ garantia, isOpen, onClose, onExtended }) => {
                     />
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                    <button type="button" className="btn-secondary" onClick={onClose} disabled={saving}>
-                        Cancelar
-                    </button>
-                    <button type="submit" className="btn-primary" disabled={saving}>
+                <div className="form-actions-modal">
+                    <button type="submit" className="modal-btn-primary" disabled={saving}>
                         {saving ? 'Guardando...' : 'Extender Garantía'}
+                    </button>
+                    <button type="button" className="modal-btn-primary" onClick={onClose} disabled={saving}>
+                        Cancelar
                     </button>
                 </div>
             </form>

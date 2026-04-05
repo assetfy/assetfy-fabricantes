@@ -170,7 +170,7 @@ const SolicitudRepresentacionDetail = ({ solicitud, onClose, onUpdated, onAccept
                     />
                     {error && <p style={{ color: 'red', margin: '4px 0' }}>{error}</p>}
                     <button
-                        className="create-button"
+                        className="modal-btn-primary"
                         onClick={handleEnviarMensaje}
                         disabled={loading || !nuevoMensaje.trim()}
                     >
@@ -197,7 +197,7 @@ const SolicitudRepresentacionDetail = ({ solicitud, onClose, onUpdated, onAccept
                         <option value="Rechazada">Rechazada</option>
                     </select>
                     <button
-                        className="create-button"
+                        className="modal-btn-primary"
                         onClick={handleCambiarEstado}
                         disabled={loading || nuevoEstado === solicitud.estado}
                     >
@@ -235,7 +235,7 @@ const SolicitudRepresentacionDetail = ({ solicitud, onClose, onUpdated, onAccept
             </div>
 
             <div style={{ marginTop: '16px', textAlign: 'right' }}>
-                <button className="cancel-button" onClick={onClose}>
+                <button className="modal-btn-primary" onClick={onClose}>
                     Cerrar
                 </button>
             </div>

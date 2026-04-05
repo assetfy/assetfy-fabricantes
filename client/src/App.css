@@ -1011,22 +1011,27 @@ table .warranty-expired {
 }
 
 .warranty-table-wrapper {
-  overflow-x: auto;
+  overflow-x: hidden;
   border: 1px solid #ddd;
   border-radius: 4px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .warranty-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
+  table-layout: auto;
 }
 
 .warranty-table th,
 .warranty-table td {
-  padding: 0.75rem;
+  padding: 0.5rem 0.6rem;
   text-align: left;
   border-bottom: 1px solid #ddd;
+  font-size: 0.85rem;
+  word-break: break-word;
 }
 
 .warranty-table th {
@@ -1042,7 +1047,7 @@ table .warranty-expired {
 }
 
 .name-cell {
-  min-width: 200px;
+  min-width: 120px;
 }
 
 .name-container .name {
@@ -1112,46 +1117,55 @@ table .warranty-expired {
 
 .actions-cell {
   white-space: nowrap;
+  width: 1%;
 }
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .action-btn {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.25rem 0.5rem;
+  background: var(--primary-purple);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  max-width: 28px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s;
+  font-size: 0.72rem;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-btn:hover {
-  background-color: #f8f9fa;
+  background: var(--primary-purple-light);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(92, 45, 145, 0.25);
+  color: white;
 }
 
 .view-btn:hover {
-  border-color: #73bd69;
-  background-color: #73bd69;
+  background: var(--primary-purple-light);
   color: white;
 }
 
 .edit-btn {
-  color: #28a745;
+  color: white;
 }
 
 .edit-btn:hover {
-  border-color: #28a745;
-  background-color: #28a745;
+  background: var(--primary-purple-light);
   color: white;
 }
 
 .delete-btn:hover {
-  border-color: #dc3545;
-  background-color: #dc3545;
+  background: var(--primary-purple-light);
   color: white;
 }
 
