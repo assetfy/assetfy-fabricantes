@@ -119,7 +119,6 @@ const PiezaEditForm = ({ pieza, productos, fabricantes, marcas, onEditFinished, 
 
     return (
         <div className="form-container">
-            <h3>{readOnly ? 'Ver Pieza' : 'Editar Pieza'}</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -251,8 +250,10 @@ const PiezaEditForm = ({ pieza, productos, fabricantes, marcas, onEditFinished, 
                         }
                     ]}
                 />
-                {!readOnly && <button type="submit">Actualizar Pieza</button>}
-                <button type="button" onClick={onCancelEdit}>{readOnly ? 'Cerrar' : 'Cancelar'}</button>
+                <div className="form-actions-modal">
+                    {!readOnly && <button type="submit" className="modal-btn-primary">Actualizar Pieza</button>}
+                    <button type="button" className="modal-btn-primary" onClick={onCancelEdit}>{readOnly ? 'Cerrar' : 'Cancelar'}</button>
+                </div>
             </form>
         </div>
     );

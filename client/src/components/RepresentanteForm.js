@@ -274,7 +274,6 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
 
     return (
         <div className="form-container">
-            <h3>Crear Nuevo Representante</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -602,7 +601,9 @@ const RepresentanteForm = ({ onRepresentanteAdded, fabricantes, marcas, prefillD
                         }
                     ]}
                 />
-                <button type="submit">Crear Representante</button>
+                <div className="form-actions-modal">
+                    <button type="submit" className="modal-btn-primary">Crear Representante</button>
+                </div>
             </form>
         </div>
     );

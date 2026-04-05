@@ -57,7 +57,6 @@ const ProductForm = ({ onProductAdded, fabricantes, marcas }) => {
 
     return (
         <div className="form-container">
-            <h3>Crear Nuevo Producto</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -137,7 +136,9 @@ const ProductForm = ({ onProductAdded, fabricantes, marcas }) => {
                         }
                     ]}
                 />
-                <button type="submit">Crear Producto</button>
+                <div className="form-actions-modal">
+                    <button type="submit" className="modal-btn-primary">Crear Producto</button>
+                </div>
             </form>
         </div>
     );

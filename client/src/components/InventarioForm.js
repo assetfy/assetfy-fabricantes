@@ -289,7 +289,6 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
 
     return (
         <div className="form-container">
-            <h3>{readOnly ? 'Ver Artículo de Inventario' : (editingItem ? 'Editar Artículo de Inventario' : 'Agregar Artículo a Inventario')}</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -664,13 +663,15 @@ const InventarioForm = ({ onInventarioAdded, productos, piezas = [], editingItem
                         }
                     ]}
                 />
-                {!readOnly && <button type="submit">{editingItem ? 'Actualizar Artículo' : 'Agregar a Inventario'}</button>}
-                {editingItem && (
-                    <button type="button" onClick={onCancelEdit}>{readOnly ? 'Cerrar' : 'Cancelar Edición'}</button>
-                )}
-                {!editingItem && readOnly && (
-                    <button type="button" onClick={onCancelEdit}>Cerrar</button>
-                )}
+                <div className="form-actions-modal">
+                    {!readOnly && <button type="submit" className="modal-btn-primary">{editingItem ? 'Actualizar Artículo' : 'Agregar a Inventario'}</button>}
+                    {editingItem && (
+                        <button type="button" className="modal-btn-primary" onClick={onCancelEdit}>{readOnly ? 'Cerrar' : 'Cancelar Edición'}</button>
+                    )}
+                    {!editingItem && readOnly && (
+                        <button type="button" className="modal-btn-primary" onClick={onCancelEdit}>Cerrar</button>
+                    )}
+                </div>
             </form>
         </div>
     );

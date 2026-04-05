@@ -149,43 +149,42 @@ const GarantiasAsignadasList = () => {
                                         </span>
                                     </td>
                                     <td className="actions-cell">
-                                        <button
-                                            className="action-btn view-btn"
-                                            onClick={() => handleViewDetail(garantia)}
-                                            title="Ver detalles"
-                                        >
-                                            &#128065;
-                                        </button>
-                                        {garantia.estado === 'Validada' && (
+                                        <div className="action-buttons">
                                             <button
-                                                className="action-btn edit-btn"
-                                                onClick={() => setExtendTarget(garantia)}
-                                                title="Extender garantía"
-                                                style={{ fontSize: '14px' }}
+                                                className="action-btn view-btn"
+                                                onClick={() => handleViewDetail(garantia)}
+                                                title="Ver detalles"
                                             >
-                                                &#128197;+
+                                                &#128065;
                                             </button>
-                                        )}
-                                        {garantia.estado === 'Pendiente' && (
-                                            <>
+                                            {garantia.estado === 'Validada' && (
                                                 <button
-                                                    className="action-btn"
-                                                    onClick={() => handleEstadoChange(garantia._id, 'Validada')}
-                                                    title="Validar"
-                                                    style={{ color: '#22c55e', fontSize: '16px' }}
+                                                    className="action-btn edit-btn"
+                                                    onClick={() => setExtendTarget(garantia)}
+                                                    title="Extender garantía"
                                                 >
-                                                    &#10003;
+                                                    &#128197;
                                                 </button>
-                                                <button
-                                                    className="action-btn"
-                                                    onClick={() => handleEstadoChange(garantia._id, 'Rechazada')}
-                                                    title="Rechazar"
-                                                    style={{ color: '#ef4444', fontSize: '16px' }}
-                                                >
-                                                    &#10007;
-                                                </button>
-                                            </>
-                                        )}
+                                            )}
+                                            {garantia.estado === 'Pendiente' && (
+                                                <>
+                                                    <button
+                                                        className="action-btn"
+                                                        onClick={() => handleEstadoChange(garantia._id, 'Validada')}
+                                                        title="Validar"
+                                                    >
+                                                        &#10003;
+                                                    </button>
+                                                    <button
+                                                        className="action-btn"
+                                                        onClick={() => handleEstadoChange(garantia._id, 'Rechazada')}
+                                                        title="Rechazar"
+                                                    >
+                                                        &#10007;
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

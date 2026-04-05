@@ -121,13 +121,15 @@ const PedidoGarantiaList = ({ isFabricante = true }) => {
                                     <td>{formatDate(pedido.createdAt)}</td>
                                     <td style={{ textAlign: 'center' }}>{pedido.mensajes?.length || 0}</td>
                                     <td className="actions-cell">
-                                        <button
-                                            className="action-btn view-btn"
-                                            onClick={() => setSelectedPedido(pedido)}
-                                            title="Ver detalles"
-                                        >
-                                            👁️
-                                        </button>
+                                        <div className="action-buttons">
+                                            <button
+                                                className="action-btn view-btn"
+                                                onClick={() => setSelectedPedido(pedido)}
+                                                title="Ver detalles"
+                                            >
+                                                👁️
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

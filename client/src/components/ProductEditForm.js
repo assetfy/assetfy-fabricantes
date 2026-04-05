@@ -121,7 +121,6 @@ const ProductEditForm = ({ product, fabricantes, marcas, onEditFinished, onCance
 
     return (
         <div className="form-container">
-            <h3>{readOnly ? 'Ver Producto' : 'Editar Producto'}</h3>
             <form onSubmit={handleSubmit}>
                 <Tabs
                     tabs={[
@@ -245,8 +244,10 @@ const ProductEditForm = ({ product, fabricantes, marcas, onEditFinished, onCance
                         }
                     ]}
                 />
-                {!readOnly && <button type="submit">Actualizar Producto</button>}
-                <button type="button" onClick={onCancelEdit}>{readOnly ? 'Cerrar' : 'Cancelar'}</button>
+                <div className="form-actions-modal">
+                    {!readOnly && <button type="submit" className="modal-btn-primary">Actualizar Producto</button>}
+                    <button type="button" className="modal-btn-primary" onClick={onCancelEdit}>{readOnly ? 'Cerrar' : 'Cancelar'}</button>
+                </div>
             </form>
         </div>
     );
