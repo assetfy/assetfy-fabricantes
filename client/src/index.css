@@ -1018,16 +1018,18 @@ table th:nth-child(8), table td:nth-child(8) {
 }
 
 .modal-header {
-    padding: 0.6rem 1.5rem 0.4rem;
-    border-bottom: 1px solid #eee;
+    padding: 0.8rem 1.5rem 0.6rem;
+    border-bottom: none;
     text-align: center;
 }
 
 .modal-header h3 {
     margin: 0;
     color: var(--primary-purple);
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .modal-close {
@@ -1049,7 +1051,7 @@ table th:nth-child(8), table td:nth-child(8) {
 }
 
 .modal-body {
-    padding: 1.5rem;
+    padding: 0.8rem 1rem;
 }
 
 /* Modal form container - remove extra shadow/margin when inside modal */
@@ -1057,6 +1059,28 @@ table th:nth-child(8), table td:nth-child(8) {
     box-shadow: none;
     margin-bottom: 0;
     padding: 0;
+    background: transparent;
+    border: none;
+}
+
+/* Compact form spacing inside modals */
+.modal-body .form-group {
+    margin-bottom: 0.5rem;
+}
+
+.modal-body .form-group label {
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.modal-body .form-group input:not([type="checkbox"]),
+.modal-body .form-group select {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9rem;
+}
+
+.modal-body .tabs-content {
+    padding: 0.5rem 0;
 }
 
 /* Modal action buttons - purple with white text */
@@ -1089,10 +1113,10 @@ table th:nth-child(8), table td:nth-child(8) {
 .form-actions-modal {
     display: flex;
     gap: 0.75rem;
-    justify-content: flex-end;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
+    justify-content: center;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: none;
 }
 
 /* QR Preview Modal Styles */
@@ -1667,21 +1691,21 @@ table td:first-child {
 
 .tabs-header {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem;
     border-bottom: 3px solid #667eea;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
 }
 
 .tab-button {
     background: linear-gradient(135deg, #f3e8ff 0%, #ede0fb 100%);
     border: none;
-    padding: 10px 16px;
+    padding: 6px 12px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     color: #495057;
-    border-radius: 10px 10px 0 0;
+    border-radius: 8px 8px 0 0;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(92, 45, 145, 0.08);
 }
