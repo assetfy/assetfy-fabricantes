@@ -106,20 +106,22 @@ const ChecklistConfigList = ({ refreshTrigger, onEdit }) => {
                                     </span>
                                 </td>
                                 <td>
-                                    <button
-                                        className="action-button edit-button"
-                                        onClick={() => onEdit && onEdit(item, selectedFabricanteId)}
-                                        title="Editar"
-                                    >
-                                        ✏️
-                                    </button>
-                                    <button
-                                        className="action-button delete-button"
-                                        onClick={() => handleDeleteClick(item)}
-                                        title="Eliminar"
-                                    >
-                                        🗑️
-                                    </button>
+                                    <div className="action-buttons">
+                                        <button
+                                            className="edit-btn"
+                                            onClick={() => onEdit && onEdit(item, selectedFabricanteId)}
+                                            title="Editar"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            className="delete-btn"
+                                            onClick={() => handleDeleteClick(item)}
+                                            title="Eliminar"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

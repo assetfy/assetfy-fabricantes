@@ -313,7 +313,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                             <select
                                 value={selectedConfigFabricanteId || ''}
                                 onChange={handleConfigFabricanteSelect}
-                                style={{ width: '100%' }}
+                                style={{ width: '100%', borderColor: 'var(--primary-purple)', borderWidth: '2px' }}
                             >
                                 {configFabricantes.map(f => (
                                     <option key={f._id} value={f._id}>{f.razonSocial}</option>
@@ -347,7 +347,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                             <select
                                 value={rangoNuevos}
                                 onChange={e => setRangoNuevos(e.target.value)}
-                                style={{ width: '250px' }}
+                                style={{ width: '250px', borderColor: 'var(--primary-purple)', borderWidth: '2px' }}
                             >
                                 <option value="ultima_semana">Última semana</option>
                                 <option value="ultimas_2_semanas">Últimas 2 semanas</option>
@@ -368,7 +368,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                             <select
                                 value={umbralGarantiaPorVencer}
                                 onChange={e => setUmbralGarantiaPorVencer(e.target.value)}
-                                style={{ width: '250px' }}
+                                style={{ width: '250px', borderColor: 'var(--primary-purple)', borderWidth: '2px' }}
                             >
                                 <option value="2_semanas">2 semanas</option>
                                 <option value="3_semanas">3 semanas</option>
@@ -449,13 +449,14 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                     onClick={handleCopyPortalLink}
                                     title="Clic para copiar"
                                 />
-                                <button className="create-button" onClick={handleCopyPortalLink} title="Copiar URL">
+                                <button className="create-button save-config-button" onClick={handleCopyPortalLink} title="Copiar URL" style={{ fontSize: '0.8rem' }}>
                                     Copiar
                                 </button>
                                 <button
-                                    className="create-button"
+                                    className="create-button save-config-button"
                                     onClick={() => window.open(portalUrl, '_blank', 'noopener,noreferrer')}
                                     title="Abrir portal en nueva pestaña"
+                                    style={{ fontSize: '0.8rem' }}
                                 >
                                     Abrir portal
                                 </button>
@@ -475,13 +476,14 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                     onClick={handleCopyRepresentacionLink}
                                     title="Clic para copiar"
                                 />
-                                <button className="create-button" onClick={handleCopyRepresentacionLink} title="Copiar URL">
+                                <button className="create-button save-config-button" onClick={handleCopyRepresentacionLink} title="Copiar URL" style={{ fontSize: '0.8rem' }}>
                                     Copiar
                                 </button>
                                 <button
-                                    className="create-button"
+                                    className="create-button save-config-button"
                                     onClick={() => window.open(portalRepresentacionUrl, '_blank', 'noopener,noreferrer')}
                                     title="Abrir portal en nueva pestaña"
+                                    style={{ fontSize: '0.8rem' }}
                                 >
                                     Abrir portal
                                 </button>
