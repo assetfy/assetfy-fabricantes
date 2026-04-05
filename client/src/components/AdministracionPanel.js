@@ -380,7 +380,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                     </div>
 
                     <button
-                        className="create-button"
+                        className="create-button save-config-button"
                         onClick={handleSaveConfig}
                         disabled={savingConfig}
                     >
@@ -507,7 +507,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                                 style={{ width: '120px' }}
                             />
                             <button
-                                className="create-button"
+                                className="create-button save-config-button"
                                 onClick={handleSaveColor}
                                 disabled={savingColor}
                             >
@@ -563,7 +563,7 @@ const AdministracionPanel = ({ fabricantes = [], allMarcas = [], garantias = [],
                             />
                             {logoFile && (
                                 <button
-                                    className="create-button"
+                                    className="create-button save-config-button"
                                     onClick={handleUploadLogo}
                                     disabled={uploadingLogo}
                                 >

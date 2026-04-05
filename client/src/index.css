@@ -1503,6 +1503,13 @@ table td:first-child {
     flex-shrink: 0;
 }
 
+.create-button.save-config-button {
+    width: auto;
+    height: auto;
+    padding: 10px 20px;
+    white-space: nowrap;
+}
+
 .create-button:hover {
     background: var(--primary-purple-light);
     transform: translateY(-1px);
