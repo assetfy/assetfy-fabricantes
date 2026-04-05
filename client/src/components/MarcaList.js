@@ -187,7 +187,11 @@ const MarcaList = ({ refreshTrigger, onEdit }) => {
                             <tr key={marca._id}>
                                 <td>{marca.nombre}</td>
                                 <td>{marca.fabricante.razonSocial}</td>
-                                <td>{marca.estado || 'Activa'}</td>
+                                <td>
+                                    <span className={`status-badge ${(marca.estado || 'Activa').toLowerCase()}`}>
+                                        {marca.estado || 'Activa'}
+                                    </span>
+                                </td>
                                 <td>
                                     <div className="action-buttons">
                                         <button 
@@ -250,7 +254,11 @@ const MarcaList = ({ refreshTrigger, onEdit }) => {
                             <div className="marca-info">
                                 <h4>{marca.nombre}</h4>
                                 <p>{marca.fabricante.razonSocial}</p>
-                                <p className="estado">{marca.estado || 'Activa'}</p>
+                                <p className="estado">
+                                    <span className={`status-badge ${(marca.estado || 'Activa').toLowerCase()}`}>
+                                        {marca.estado || 'Activa'}
+                                    </span>
+                                </p>
                                 <div className="marca-actions">
                                     <button 
                                         className="action-btn edit-btn" 

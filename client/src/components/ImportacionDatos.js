@@ -148,15 +148,16 @@ const ImportacionDatos = () => {
                 
                 <div className="form-group">
                     <label htmlFor="importDataType">Tipo de Colección:</label>
-                    <select 
+                    <select
                         id="importDataType"
-                        value={selectedType} 
+                        value={selectedType}
                         onChange={(e) => {
                             setSelectedType(e.target.value);
                             setValidationResults(null);
                             setValidatedData(null);
                         }}
                         className="form-control"
+                        style={{ borderColor: 'var(--primary-purple)', borderWidth: '2px' }}
                     >
                         {dataTypes.map(type => (
                             <option key={type.value} value={type.value}>
@@ -169,10 +170,11 @@ const ImportacionDatos = () => {
                 <div className="form-group">
                     <label>Plantilla de Ejemplo:</label>
                     <p>Descarga la plantilla con la estructura correcta para {dataTypes.find(t => t.value === selectedType)?.label}.</p>
-                    <button 
+                    <button
                         onClick={downloadTemplate}
-                        className="template-button"
+                        className="create-button save-config-button"
                         type="button"
+                        style={{ width: '100%', fontSize: '0.95rem' }}
                     >
                         Descargar Plantilla (.xlsx)
                     </button>
@@ -195,19 +197,19 @@ const ImportacionDatos = () => {
                 </div>
 
                 <div className="form-actions">
-                    <button 
+                    <button
                         onClick={validateData}
                         disabled={!selectedFile || isValidating}
-                        className="validate-button"
+                        className="create-button save-config-button"
                     >
                         {isValidating ? 'Validando...' : 'Validar Datos'}
                     </button>
-                    
+
                     {validationResults?.isValid && (
-                        <button 
+                        <button
                             onClick={importData}
                             disabled={isImporting}
-                            className="import-button"
+                            className="create-button save-config-button"
                         >
                             {isImporting ? 'Importando...' : 'Importar Datos'}
                         </button>

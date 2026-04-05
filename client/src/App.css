@@ -1090,7 +1090,8 @@ table .warranty-expired {
   color: #155724;
 }
 
-.status-badge.inactiva {
+.status-badge.inactiva,
+.status-badge.desactivada {
   background-color: #f8d7da;
   color: #721c24;
 }
