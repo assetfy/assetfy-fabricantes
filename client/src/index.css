@@ -431,6 +431,8 @@ table th:nth-child(8), table td:nth-child(8) {
     font-weight: 600;
     color: var(--text-dark);
     margin: 0;
+    line-height: 1.4;
+    overflow: visible;
 }
 
 .header-right {
@@ -1689,6 +1691,8 @@ table td:first-child {
     color: var(--text-dark);
     font-size: 1rem;
     font-weight: 600;
+    line-height: 1.4;
+    overflow: visible;
 }
 
 /* Tabs styles */
@@ -1707,7 +1711,7 @@ table td:first-child {
 .tab-button {
     background: linear-gradient(135deg, #f3e8ff 0%, #ede0fb 100%);
     border: none;
-    padding: 6px 12px;
+    padding: 8px 12px;
     cursor: pointer;
     font-size: 11px;
     font-weight: 600;
@@ -1715,6 +1719,8 @@ table td:first-child {
     border-radius: 8px 8px 0 0;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(92, 45, 145, 0.08);
+    line-height: 1.4;
+    overflow: visible;
 }
 
 .tab-button:hover {
@@ -2571,6 +2577,10 @@ td .action-buttons button {
     color: #fff;
     margin-bottom: 0.5rem;
     text-align: center;
+    line-height: 1.4;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .dashboard-box-number {
@@ -2843,6 +2853,10 @@ td .action-buttons button {
     color: rgba(255,255,255,0.9);
     text-align: center;
     margin-bottom: 0.25rem;
+    line-height: 1.4;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .view-counter-box-number {
@@ -3184,7 +3198,7 @@ td .action-buttons button {
     background: white;
     border-radius: 0;
     transition: all 0.2s ease;
-    overflow: hidden;
+    overflow: visible;
     border-left: 4px solid transparent;
 }
 
@@ -3245,13 +3259,17 @@ td .action-buttons button {
 .sidebar-item-label {
     font-weight: 600;
     font-size: 0.88rem;
-    line-height: 1.3;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .sidebar-item-description {
     font-size: 0.7rem;
     opacity: 0.55;
-    line-height: 1.2;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .sidebar-item:not(.active):hover .sidebar-item-description {
@@ -3334,11 +3352,10 @@ a.sidebar-sub-item.active {
 
 .sidebar-sub-item-label {
     font-weight: 500;
-    line-height: 1.2;
+    line-height: 1.3;
     flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 .sidebar-content {
