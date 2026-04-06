@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useNotification } from './NotificationProvider';
+import Pagination from './Pagination';
 
 const TIPO_LABELS = {
     'producto_registrado': 'Producto Registrado',
@@ -27,6 +28,7 @@ const AlertasPanel = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [noLeidas, setNoLeidas] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(25);
     const { showSuccess, showError } = useNotification();
     const navigate = useNavigate();
 
@@ -41,10 +43,10 @@ const AlertasPanel = () => {
         }
     };
 
-    const fetchNotificaciones = async (page = 1, tipo = '') => {
+    const fetchNotificaciones = async (page = 1, tipo = '', limit = itemsPerPage) => {
         setLoadingNotificaciones(true);
         try {
-            const params = { page, limit: 15 };
+            const params = { page, limit };
             if (tipo) params.tipo = tipo;
             const res = await api.get('/apoderado/alertas', { params });
             setNotificaciones(res.data.notificaciones);
@@ -65,7 +67,7 @@ const AlertasPanel = () => {
     }, []);
 
     useEffect(() => {
-        fetchNotificaciones(1, filtroTipo);
+        fetchNotificaciones(1, filtroTipo, itemsPerPage);
     }, [filtroTipo]);
 
     const handleMarcarLeida = async (id) => {
@@ -90,7 +92,13 @@ const AlertasPanel = () => {
     };
 
     const handlePageChange = (page) => {
-        fetchNotificaciones(page, filtroTipo);
+        fetchNotificaciones(page, filtroTipo, itemsPerPage);
+    };
+
+    const handleItemsPerPageChange = (newItemsPerPage) => {
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(1);
+        fetchNotificaciones(1, filtroTipo, newItemsPerPage);
     };
 
     const formatFecha = (fecha) => {
@@ -149,24 +157,10 @@ const AlertasPanel = () => {
                 </div>
             </div>
 
-            {/* Notifications List */}
-            <div style={{ marginTop: '24px' }}>
+            {/* Notifications Panel */}
+            <div className="list-container" style={{ marginTop: '24px' }}>
                 <div className="section-header" style={{ marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <h3 style={{ margin: 0 }}>Notificaciones</h3>
-                        {noLeidas > 0 && (
-                            <span style={{
-                                backgroundColor: '#ef4444',
-                                color: '#fff',
-                                borderRadius: '12px',
-                                padding: '2px 10px',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                            }}>
-                                {noLeidas} sin leer
-                            </span>
-                        )}
-                    </div>
+                    <h3 style={{ margin: 0 }}>Notificaciones</h3>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <select
                             value={filtroTipo}
@@ -183,7 +177,7 @@ const AlertasPanel = () => {
                             <button
                                 className="create-button"
                                 onClick={handleMarcarTodasLeidas}
-                                style={{ fontSize: '12px', padding: '6px 12px' }}
+                                style={{ fontSize: '12px', padding: '6px 12px', width: 'auto' }}
                             >
                                 Marcar todas como leídas
                             </button>
@@ -199,88 +193,80 @@ const AlertasPanel = () => {
                     </div>
                 ) : (
                     <>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {notificaciones.map(notif => (
-                                <div
-                                    key={notif._id}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        gap: '12px',
-                                        padding: '12px 16px',
-                                        backgroundColor: notif.leida ? '#fff' : '#f0f4ff',
-                                        border: '1px solid',
-                                        borderColor: notif.leida ? '#e5e7eb' : '#c7d2fe',
-                                        borderRadius: '8px',
-                                        cursor: (!notif.leida || notif.tipo === 'solicitud_representacion') ? 'pointer' : 'default',
-                                        transition: 'background-color 0.2s'
-                                    }}
-                                    onClick={() => {
-                                        if (!notif.leida) handleMarcarLeida(notif._id);
-                                        if (notif.tipo === 'solicitud_representacion' && notif.referencia?.id) {
-                                            navigate(`/apoderado/representantes?view=solicitudes&solicitudId=${notif.referencia.id}`);
-                                        }
-                                    }}
-                                >
-                                    <span style={{
-                                        display: 'inline-block',
-                                        width: '8px',
-                                        height: '8px',
-                                        borderRadius: '50%',
-                                        backgroundColor: notif.leida ? '#d1d5db' : TIPO_COLORS[notif.tipo] || '#6b7280',
-                                        marginTop: '6px',
-                                        flexShrink: 0
-                                    }} />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style={{ width: '30px' }}></th>
+                                    <th>Tipo</th>
+                                    <th>Título</th>
+                                    <th>Mensaje</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {notificaciones.map(notif => (
+                                    <tr
+                                        key={notif._id}
+                                        style={{
+                                            backgroundColor: notif.leida ? 'transparent' : '#f0f4ff',
+                                            cursor: notif.tipo === 'solicitud_representacion' && notif.referencia?.id ? 'pointer' : 'default'
+                                        }}
+                                        onClick={() => {
+                                            if (notif.tipo === 'solicitud_representacion' && notif.referencia?.id) {
+                                                if (!notif.leida) handleMarcarLeida(notif._id);
+                                                navigate(`/apoderado/representantes?view=solicitudes&solicitudId=${notif.referencia.id}`);
+                                            }
+                                        }}
+                                    >
+                                        <td>
                                             <span style={{
-                                                fontSize: '11px',
-                                                fontWeight: '600',
-                                                color: TIPO_COLORS[notif.tipo] || '#6b7280',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.5px'
-                                            }}>
-                                                {TIPO_LABELS[notif.tipo] || notif.tipo}
-                                            </span>
-                                            <span style={{ fontSize: '12px', color: '#9ca3af', flexShrink: 0 }}>
-                                                {formatFecha(notif.createdAt)}
-                                            </span>
-                                        </div>
-                                        <div style={{ fontWeight: notif.leida ? '400' : '600', fontSize: '14px', marginTop: '2px' }}>
+                                                display: 'inline-block',
+                                                width: '8px',
+                                                height: '8px',
+                                                borderRadius: '50%',
+                                                backgroundColor: notif.leida ? '#d1d5db' : TIPO_COLORS[notif.tipo] || '#6b7280'
+                                            }} />
+                                        </td>
+                                        <td style={{ fontSize: '0.82rem', color: TIPO_COLORS[notif.tipo] || '#6b7280', fontWeight: '500' }}>
+                                            {TIPO_LABELS[notif.tipo] || notif.tipo}
+                                        </td>
+                                        <td style={{ fontWeight: notif.leida ? '400' : '600' }}>
                                             {notif.titulo}
-                                        </div>
-                                        <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>
+                                        </td>
+                                        <td style={{ color: '#6b7280', fontSize: '0.83rem' }}>
                                             {notif.mensaje}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                        </td>
+                                        <td style={{ fontSize: '0.82rem', color: '#9ca3af', whiteSpace: 'nowrap' }}>
+                                            {formatFecha(notif.createdAt)}
+                                        </td>
+                                        <td>
+                                            {!notif.leida && (
+                                                <button
+                                                    className="action-btn view-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarcarLeida(notif._id);
+                                                    }}
+                                                    title="Marcar como leída"
+                                                >
+                                                    ✓
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
-                                <button
-                                    className="create-button"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage <= 1}
-                                    style={{ fontSize: '12px', padding: '6px 12px' }}
-                                >
-                                    Anterior
-                                </button>
-                                <span style={{ fontSize: '13px', color: '#666' }}>
-                                    Página {currentPage} de {totalPages} ({total} total)
-                                </span>
-                                <button
-                                    className="create-button"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage >= totalPages}
-                                    style={{ fontSize: '12px', padding: '6px 12px' }}
-                                >
-                                    Siguiente
-                                </button>
-                            </div>
-                        )}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalItems={total}
+                            itemsPerPage={itemsPerPage}
+                            onPageChange={handlePageChange}
+                            onItemsPerPageChange={handleItemsPerPageChange}
+                            pageSizeOptions={[15, 25, 50]}
+                        />
                     </>
                 )}
             </div>
