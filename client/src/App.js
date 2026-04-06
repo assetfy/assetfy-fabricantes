@@ -120,9 +120,11 @@ function App() {
                 <Route path="/:slug/representacion" element={<SolicitudRepresentacionForm />} />
                 <Route path="/:slug" element={<RegistroFabricante />} />
 
+                {/* Plasmic Studio Host */}
+                <Route path="/plasmic-host" element={<PlasmicCanvasHost />} />
+
                 {/* Catch-all para Plasmic */}
                 <Route path="*" element={<PlasmicHandler />} />
-                  <Route path="/plasmic-host" element={<PlasmicCanvasHost />} />
               </Routes>
             </div>
           </TourProvider>
