@@ -1,5 +1,14 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { PlasmicRootProvider, PlasmicComponent } from '@plasmicapp/loader-react';
+
+// Forzamos la extensión .js para que el bundler no se pierda
+import { PLASMIC } from './plasmic-init.js'; 
+import { PlasmicCanvasHost } from '@plasmicapp/loader-react';
+
+
+
+// Tus componentes actuales
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import ApoderadoPanel from './components/ApoderadoPanel';
@@ -15,6 +24,38 @@ import ActivateAccount from './components/ActivateAccount';
 import { NotificationProvider } from './components/NotificationProvider';
 import TourProvider from './components/TourProvider';
 
+
+// --- COMPONENTE MANEJADOR DE PLASMIC (JS PURO) ---
+function PlasmicHandler() {
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [pageData, setPageData] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      try {
+        const data = await PLASMIC.maybeFetchComponentData(location.pathname);
+        if (isMounted) {
+          setPageData(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error cargando Plasmic:", error);
+        if (isMounted) setLoading(false);
+      }
+    }
+    load();
+    return () => { isMounted = false; };
+  }, [location.pathname]);
+
+  if (loading) return <div style={{ padding: '20px', textAlign: 'center' }}>Cargando...</div>;
+  
+  if (!pageData) return <Navigate to="/login" />;
+
+  return <PlasmicComponent component={location.pathname} />;
+}
+
 function App() {
   const token = localStorage.getItem('token');
   const rol = localStorage.getItem('rol');
@@ -28,65 +69,66 @@ function App() {
   }
   if (roles.length === 0 && rol) roles = [rol];
 
-  const isAuthenticated = token && (roles.length > 0 || rol);
+  const isAuthenticated = !!(token && (roles.length > 0 || rol));
   const hasAnyRole = (requiredRoles) => requiredRoles.some(r => roles.includes(r));
 
   return (
-    <NotificationProvider>
-      <Router>
-        <TourProvider>
-        <div className="App">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/activate/:token" element={<ActivateAccount />} />
-            <Route path="/registro" element={<RegistroProducto />} />
-            <Route path="/demo" element={<DemoPage />} />
-            <Route path="/demo/metricas" element={<DemoMetricasPage />} />
-            <Route path="/demo/admin/*" element={<DemoAdminPanel />} />
-            <Route path="/demo/apoderado/*" element={<DemoApoderadoPanel />} />
+    <PlasmicRootProvider loader={PLASMIC}>
+      <NotificationProvider>
+        <Router>
+          <TourProvider>
+            <div className="App">
+              <Routes>
+                {/* Rutas Públicas */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/activate/:token" element={<ActivateAccount />} />
+                <Route path="/registro" element={<RegistroProducto />} />
+                <Route path="/demo" element={<DemoPage />} />
+                <Route path="/demo/metricas" element={<DemoMetricasPage />} />
+                <Route path="/demo/admin/*" element={<DemoAdminPanel />} />
+                <Route path="/demo/apoderado/*" element={<DemoApoderadoPanel />} />
 
-            {/* Protected routes - explicit top-level paths so React Router v6 ranks them
-                higher (static > dynamic) than the /:slug branded portal route below.
-                IMPORTANT: any new protected top-level route must be added here to avoid
-                being captured by the /:slug route. */}
-            {/* Default redirect: apoderado (Fabricantes) has priority for multi-panel users.
-                Any user with the apoderado role lands on /apoderado regardless of also
-                having admin. Only pure-admin users (no apoderado) go to /admin. */}
-            <Route path="/" element={
-              isAuthenticated && (hasAnyRole(['apoderado']) || rol === 'apoderado') ? (
-                <Navigate to="/apoderado" />
-              ) : isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? (
-                <Navigate to="/admin" />
-              ) : isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? (
-                <Navigate to="/usuario" />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } />
-            <Route path="/admin" element={
-              isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin')
-                ? <AdminPanel />
-                : <Navigate to="/login" />
-            } />
-            <Route path="/apoderado/*" element={<ApoderadoPanel />} />
-            <Route path="/usuario" element={
-              isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes')
-                ? <UsuarioPanel />
-                : <Navigate to="/login" />
-            } />
+                {/* Home Logic */}
 
-            {/* Fabricante branded registration portals - must come after explicit protected paths */}
-            <Route path="/:slug/representacion" element={<SolicitudRepresentacionForm />} />
-            <Route path="/:slug" element={<RegistroFabricante />} />
 
-            {/* Catch-all */}
-            <Route path="*" element={<Navigate to="/login" />} />
-          </Routes>
-        </div>
-        </TourProvider>
-      </Router>
-    </NotificationProvider>
+                <Route path="/" element={
+                  isAuthenticated && (hasAnyRole(['apoderado']) || rol === 'apoderado') ? (
+                    <Navigate to="/apoderado" />
+                  ) : isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin') ? (
+                    <Navigate to="/admin" />
+                  ) : isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes') ? (
+                    <Navigate to="/usuario" />
+                  ) : (
+                    <PlasmicHandler /> 
+                  )
+                } />
+
+                {/* Rutas Protegidas */}
+                <Route path="/admin" element={
+                  isAuthenticated && (hasAnyRole(['admin']) || rol === 'admin')
+                    ? <AdminPanel />
+                    : <Navigate to="/login" />
+                } />
+                <Route path="/apoderado/*" element={<ApoderadoPanel />} />
+                <Route path="/usuario" element={
+                  isAuthenticated && (hasAnyRole(['usuario_bienes']) || rol === 'usuario_bienes')
+                    ? <UsuarioPanel />
+                    : <Navigate to="/login" />
+                } />
+
+                {/* Portales Branded */}
+                <Route path="/:slug/representacion" element={<SolicitudRepresentacionForm />} />
+                <Route path="/:slug" element={<RegistroFabricante />} />
+
+                {/* Catch-all para Plasmic */}
+                <Route path="*" element={<PlasmicHandler />} />
+                  <Route path="/plasmic-host" element={<PlasmicCanvasHost />} />
+              </Routes>
+            </div>
+          </TourProvider>
+        </Router>
+      </NotificationProvider>
+    </PlasmicRootProvider>
   );
 }
 
