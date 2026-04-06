@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const CHART_COLORS = {
-    representantes: '#5C2D91',
-    clientes: '#2563EB',
-    garantias: '#DC2626'
+    representantes: ['#5C2D91', '#8B5CF6', '#A78BFA', '#C4B5FD', '#7C3AED', '#6D28D9', '#4C1D95', '#DDD6FE', '#EDE9FE', '#9333EA'],
+    clientes: ['#2563EB', '#3b82f6', '#60a5fa', '#93bbfd', '#bfdbfe', '#1d4ed8', '#1e40af', '#dbeafe', '#6495ED', '#4169E1'],
+    garantias: ['#DC2626', '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#b91c1c', '#991b1b', '#fee2e2', '#E74C3C', '#CD5C5C']
 };
 
-const BarChart = ({ title, data, color }) => {
+const PieChartCard = ({ title, data, colors }) => {
     if (!data || Object.keys(data).length === 0) {
         return (
             <div className="dashboard-chart-card">
@@ -19,31 +20,33 @@ const BarChart = ({ title, data, color }) => {
         );
     }
 
-    const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
-    const maxValue = Math.max(...entries.map(e => e[1]));
+    const chartData = Object.entries(data)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, value]) => ({ name, value }));
 
     return (
         <div className="dashboard-chart-card">
             <h4>{title}</h4>
-            <div className="chart-bar-container">
-                {entries.map(([provincia, count]) => (
-                    <div className="chart-bar-row" key={provincia}>
-                        <span className="chart-bar-label" title={provincia}>
-                            {provincia.length > 10 ? provincia.substring(0, 10) + '.' : provincia}
-                        </span>
-                        <div className="chart-bar-track">
-                            <div
-                                className="chart-bar-fill"
-                                style={{
-                                    width: `${(count / maxValue) * 100}%`,
-                                    backgroundColor: color
-                                }}
-                            />
-                        </div>
-                        <span className="chart-bar-value">{count}</span>
-                    </div>
-                ))}
-            </div>
+            <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                    <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="value"
+                        label={({ name, percent }) =>
+                            `${name.length > 10 ? name.substring(0, 10) + '.' : name} ${(percent * 100).toFixed(0)}%`
+                        }
+                        labelLine={true}
+                    >
+                        {chartData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                        ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value, 'Cantidad']} />
+                </PieChart>
+            </ResponsiveContainer>
         </div>
     );
 };
@@ -78,20 +81,20 @@ const DistribucionProvincias = () => {
 
     return (
         <>
-            <BarChart
+            <PieChartCard
                 title="Distribución de Representantes por Provincia"
                 data={data?.representantes}
-                color={CHART_COLORS.representantes}
+                colors={CHART_COLORS.representantes}
             />
-            <BarChart
+            <PieChartCard
                 title="Distribución de Clientes por Provincia"
                 data={data?.clientes}
-                color={CHART_COLORS.clientes}
+                colors={CHART_COLORS.clientes}
             />
-            <BarChart
+            <PieChartCard
                 title="Cantidad de Garantías Activas por Provincia"
                 data={data?.garantias}
-                color={CHART_COLORS.garantias}
+                colors={CHART_COLORS.garantias}
             />
         </>
     );

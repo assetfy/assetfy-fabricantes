@@ -55,7 +55,7 @@ const getDateRange = (periodo) => {
 };
 
 const ReportGadget = ({ title, data, dimensionLabel, badge }) => {
-    const [chartType, setChartType] = useState('tabla');
+    const [chartType, setChartType] = useState('tarta');
 
     const downloadExcel = () => {
         if (!data || data.length === 0) return;
