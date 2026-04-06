@@ -4918,6 +4918,28 @@ router.put('/alertas/:id/leer', auth, async (req, res) => {
     }
 });
 
+// @route   PUT /api/apoderado/alertas/:id/no-leer
+// @desc    Mark a notification as unread
+// @access  Privado (Apoderado)
+router.put('/alertas/:id/no-leer', auth, async (req, res) => {
+    try {
+        const fabricantes = await Fabricante.find(getFabricantesQuery(req.usuario.id)).select('_id');
+        const fabricanteIds = fabricantes.map(f => f._id.toString());
+
+        const notificacion = await Notificacion.findById(req.params.id);
+        if (!notificacion || !fabricanteIds.includes(notificacion.fabricante.toString())) {
+            return res.status(404).json({ msg: 'Notificación no encontrada' });
+        }
+
+        notificacion.leida = false;
+        await notificacion.save();
+        res.json({ msg: 'Notificación marcada como no leída' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Error del servidor');
+    }
+});
+
 // @route   PUT /api/apoderado/alertas/leer-todas
 // @desc    Mark all notifications as read
 // @access  Privado (Apoderado)

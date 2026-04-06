@@ -15,6 +15,7 @@ const RANGO_LABELS = {
 
 const MetricasPanel = () => {
     const [metricas, setMetricas] = useState(null);
+    const [contadoresAlertas, setContadoresAlertas] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -32,7 +33,17 @@ const MetricasPanel = () => {
             }
         };
 
+        const fetchContadoresAlertas = async () => {
+            try {
+                const response = await api.get('/apoderado/alertas/contadores');
+                setContadoresAlertas(response.data);
+            } catch (err) {
+                console.error('Error al obtener contadores de alertas:', err);
+            }
+        };
+
         fetchMetricas();
+        fetchContadoresAlertas();
     }, []);
 
     if (loading) {
@@ -94,17 +105,35 @@ const MetricasPanel = () => {
                 {/* Box 2: Alertas & Notificaciones */}
                 <div className="dashboard-box">
                     <div className="dashboard-box-title">Alertas &amp; Notificaciones</div>
-                    <div className="dashboard-box-placeholder">
-                        <div className="dashboard-box-notif-links">
-                            <span className="notif-link placeholder-text">Mensajes Nuevos</span>
-                            <span className="notif-link placeholder-text">Mensajes Pendientes</span>
-                            <span className="notif-link placeholder-text">Reclamos por Garantías</span>
-                            <span className="notif-link placeholder-text">Garantías por Vencer</span>
+                    <div className="dashboard-box-number" style={{ color: '#3b82f6' }}>
+                        {contadoresAlertas ? (contadoresAlertas.pedidosGarantia + contadoresAlertas.garantiasPorVencer + contadoresAlertas.solicitudesRepresentacion + contadoresAlertas.productosRegistrados) : '...'}
+                    </div>
+                    <div className="dashboard-box-subtitle">Alertas activas</div>
+                    <div className="dashboard-box-details">
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#3b82f6' }}></span>
+                            <span className="detail-label">Pedidos de Garantía</span>
+                            <span className="detail-value">{contadoresAlertas?.pedidosGarantia || 0}</span>
                         </div>
-                        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginTop: '12px', fontStyle: 'italic' }}>
-                            Próximamente
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#f59e0b' }}></span>
+                            <span className="detail-label">Garantías por Vencer</span>
+                            <span className="detail-value">{contadoresAlertas?.garantiasPorVencer || 0}</span>
+                        </div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#8b5cf6' }}></span>
+                            <span className="detail-label">Solicitudes de Representación</span>
+                            <span className="detail-value">{contadoresAlertas?.solicitudesRepresentacion || 0}</span>
+                        </div>
+                        <div className="dashboard-box-detail-row">
+                            <span className="detail-dot" style={{ backgroundColor: '#22c55e' }}></span>
+                            <span className="detail-label">Productos Registrados</span>
+                            <span className="detail-value">{contadoresAlertas?.productosRegistrados || 0}</span>
                         </div>
                     </div>
+                    <Link to="/apoderado/alertas" className="dashboard-box-link">
+                        Ver todas las alertas →
+                    </Link>
                 </div>
 
                 {/* Box 3: Productos */}

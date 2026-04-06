@@ -75,8 +75,20 @@ const AlertasPanel = () => {
             await api.put(`/apoderado/alertas/${id}/leer`);
             setNotificaciones(prev => prev.map(n => n._id === id ? { ...n, leida: true } : n));
             setNoLeidas(prev => Math.max(0, prev - 1));
+            fetchContadores();
         } catch (err) {
             showError('Error al marcar como leída');
+        }
+    };
+
+    const handleMarcarNoLeida = async (id) => {
+        try {
+            await api.put(`/apoderado/alertas/${id}/no-leer`);
+            setNotificaciones(prev => prev.map(n => n._id === id ? { ...n, leida: false } : n));
+            setNoLeidas(prev => prev + 1);
+            fetchContadores();
+        } catch (err) {
+            showError('Error al marcar como no leída');
         }
     };
 
@@ -241,7 +253,7 @@ const AlertasPanel = () => {
                                             {formatFecha(notif.createdAt)}
                                         </td>
                                         <td>
-                                            {!notif.leida && (
+                                            {!notif.leida ? (
                                                 <button
                                                     className="action-btn view-btn"
                                                     onClick={(e) => {
@@ -251,6 +263,18 @@ const AlertasPanel = () => {
                                                     title="Marcar como leída"
                                                 >
                                                     ✓
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="action-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarcarNoLeida(notif._id);
+                                                    }}
+                                                    title="Marcar como no leída"
+                                                    style={{ opacity: 0.5, fontSize: '14px', padding: '2px 6px' }}
+                                                >
+                                                    ✉
                                                 </button>
                                             )}
                                         </td>
